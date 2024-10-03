@@ -1,0 +1,33 @@
+FROM public.ecr.aws/lambda/nodejs:20 AS base
+
+### Build the project ###
+FROM base AS builder
+ARG svc_name
+
+RUN corepack enable
+WORKDIR /usr/src/app/backend
+
+COPY ./package.json ./
+COPY ./tsconfig.* ./
+COPY ./apps/common ./apps/common
+COPY ./apps/roles ./apps/roles
+
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --lockfile=false --ignore-workspace
+
+RUN pnpm build:roles
+
+### Run the project ###
+FROM base AS runner
+ARG svc_name
+
+ENV NODE_ENV=production
+
+ENV ROLES_PORT=3002
+
+WORKDIR /usr/src/app/backend
+
+COPY --from=builder /usr/src/app/backend/package.json ./
+COPY --from=builder /usr/src/app/backend/node_modules ${LAMBDA_TASK_ROOT}/node_modules
+COPY --from=builder /usr/src/app/backend/dist ${LAMBDA_TASK_ROOT}
+
+CMD [ "apps/roles/src/lambda.handler" ]
