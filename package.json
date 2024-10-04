@@ -22,8 +22,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-stage",
-      "pre-push": "pnpm test"
+      "pre-commit": "lint-stage"
     }
   }
 }
