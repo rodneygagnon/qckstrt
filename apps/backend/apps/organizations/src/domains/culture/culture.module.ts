@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { CultureService } from './culture.service';
 
 @Module({
-  providers: [ CultureService ],
+  providers: [CultureService],
 })
 export class CultureModule {
   constructor() {

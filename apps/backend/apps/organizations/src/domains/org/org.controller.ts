@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, HttpStatus, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpStatus,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
 
 import { CreateOrgDto } from './dto/create-org.dto';
@@ -21,13 +30,19 @@ export class OrgController {
     return this.orgService.findOne(+id);
   }
 
-  @ApiResponse({ status: HttpStatus.OK, description: 'Organization Business Data...' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Organization Business Data...',
+  })
   @Get(':id/business')
   getOrgBusiness(@Param('id') id: string) {
     return this.orgService.getOrgBusiness(id);
   }
 
-  @ApiResponse({ status: HttpStatus.OK, description: 'Organization Culture Data...' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Organization Culture Data...',
+  })
   @Get(':id/culture')
   getOrgCulture(@Param('id') id: string) {
     return this.orgService.getOrgCulture(id);

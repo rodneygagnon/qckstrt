@@ -7,7 +7,7 @@ describe('DogsApiController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [ BusinessApiController ],
+      controllers: [BusinessApiController],
     }).compile();
 
     controller = module.get<BusinessApiController>(BusinessApiController);

@@ -1,6 +1,17 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 
-import { LazyModuleFactory, LazyModuleKey } from '../../factories/lazy-module.factory';
+import {
+  LazyModuleFactory,
+  LazyModuleKey,
+} from '../../factories/lazy-module.factory';
 import { CreateBusinessDto } from '../business/dto/create-business.dto';
 import { UpdateBusinessDto } from '../business/dto/update-business.dto';
 
@@ -39,7 +50,10 @@ export class BusinessApiController {
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateBusinessDto: UpdateBusinessDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateBusinessDto: UpdateBusinessDto,
+  ) {
     const dogsService = await this.lazyLoadBusinessService();
 
     return dogsService.update(+id, updateBusinessDto);
@@ -54,7 +68,10 @@ export class BusinessApiController {
 
   private async lazyLoadBusinessService() {
     const { BusinessModule } = await import('../business/business.module');
-    const moduleRef = await LazyModuleFactory.instance.getRef(LazyModuleKey.Business, BusinessModule);
+    const moduleRef = await LazyModuleFactory.instance.getRef(
+      LazyModuleKey.Business,
+      BusinessModule,
+    );
 
     const { BusinessService } = await import('../business/business.service');
     return moduleRef.get(BusinessService);

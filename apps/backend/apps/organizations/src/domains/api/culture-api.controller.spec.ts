@@ -7,7 +7,7 @@ describe('CultureApiController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [ CultureApiController ],
+      controllers: [CultureApiController],
     }).compile();
 
     controller = module.get<CultureApiController>(CultureApiController);

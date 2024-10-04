@@ -19,7 +19,10 @@ export class LazyModuleFactory {
 
   public async getRef(
     key: LazyModuleKey,
-    moduleCls: Promise<Type<unknown> | DynamicModule> | Type<unknown> | DynamicModule,
+    moduleCls:
+      | Promise<Type<unknown> | DynamicModule>
+      | Type<unknown>
+      | DynamicModule,
   ) {
     let _module = this.moduleInstances.get(key);
     if (_module) {

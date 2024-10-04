@@ -5,9 +5,24 @@
   "main": "index.js",
   "scripts": {
     "dev": "pnpm run --parallel dev",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10"
+  },
+  "lint-staged": {
+    "**/*.+(js|jsx|ts|tsx|json|css)": [
+      "pnpm -r format"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  }
 }

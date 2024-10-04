@@ -11,7 +11,9 @@ export class BusinessService {
     if (!this.uniqIdentifier) {
       this.uniqIdentifier = uuidv4();
     }
-    console.log(`${this.constructor.name} initialized - ${this.uniqIdentifier}`);
+    console.log(
+      `${this.constructor.name} initialized - ${this.uniqIdentifier}`,
+    );
   }
 
   talk() {
@@ -19,7 +21,7 @@ export class BusinessService {
   }
 
   create(createBusinessDto: CreateBusinessDto) {
-    return 'This action adds a new business';
+    return `This action adds a new business (${JSON.stringify(createBusinessDto)})`;
   }
 
   findAll() {
@@ -35,7 +37,7 @@ export class BusinessService {
   }
 
   update(id: number, updateBusinessDto: UpdateBusinessDto) {
-    return `This action updates a #${id} business`;
+    return `This action updates a business #${JSON.stringify(updateBusinessDto)} at #${id}`;
   }
 
   remove(id: number) {

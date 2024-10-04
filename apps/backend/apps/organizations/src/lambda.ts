@@ -16,12 +16,14 @@ process.on('uncaughtException', (reason) => {
 });
 
 export const handler: Handler = async (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   event: any, // TODO: properly define this, any on tutorial
   context: Context,
   callback: Callback,
 ) => {
-  server = server ?? (
-    await bootstrap(
+  server =
+    server ??
+    (await bootstrap(
       AppModule,
       env.ORGANIZATIONS_PORT || 3000,
       pkg.name,

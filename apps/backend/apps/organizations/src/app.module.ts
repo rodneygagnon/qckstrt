@@ -9,11 +9,10 @@ import { OrgModule } from './domains/org/org.module';
 import { LazyModuleFactory } from './factories/lazy-module.factory';
 
 @Module({
-  imports: [ ConfigModule.forRoot(), ApiModule, OrgModule ],
-  controllers: [ AppController ],
-  providers: [ AppService ],
+  imports: [ConfigModule.forRoot(), ApiModule, OrgModule],
+  controllers: [AppController],
+  providers: [AppService],
 })
-
 export class AppModule {
   constructor(private lazyModuleLoader: LazyModuleLoader) {
     LazyModuleFactory.instance.setLazyModuleLoader(lazyModuleLoader);

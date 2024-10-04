@@ -8,8 +8,8 @@ describe('OrgController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [ OrgController ],
-      providers: [ OrgService ],
+      controllers: [OrgController],
+      providers: [OrgService],
     }).compile();
 
     controller = module.get<OrgController>(OrgController);

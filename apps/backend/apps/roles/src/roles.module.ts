@@ -5,8 +5,8 @@ import { RolesController } from './roles.controller';
 import { RolesService } from './roles.service';
 
 @Module({
-  imports: [ ConfigModule.forRoot() ],
-  controllers: [ RolesController ],
-  providers: [ RolesService ],
+  imports: [ConfigModule.forRoot()],
+  controllers: [RolesController],
+  providers: [RolesService],
 })
 export class RolesModule {}

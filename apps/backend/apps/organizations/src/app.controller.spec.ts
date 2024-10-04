@@ -8,8 +8,8 @@ describe('AppController', () => {
 
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
-      controllers: [ AppController ],
-      providers: [ AppService ],
+      controllers: [AppController],
+      providers: [AppService],
     }).compile();
 
     orgController = app.get<AppController>(AppController);
@@ -17,7 +17,9 @@ describe('AppController', () => {
 
   describe('root', () => {
     it('should return "Hello World!"', () => {
-      expect(orgController.getGreeting()).toBe('Welcome to the Organization App Service!');
+      expect(orgController.getGreeting()).toBe(
+        'Welcome to the Organization App Service!',
+      );
     });
   });
 });

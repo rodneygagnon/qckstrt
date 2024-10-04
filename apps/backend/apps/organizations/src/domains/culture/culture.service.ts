@@ -11,11 +11,13 @@ export class CultureService {
     if (!this.uniqIdentifier) {
       this.uniqIdentifier = uuidv4();
     }
-    console.log(`${this.constructor.name} initialized - ${this.uniqIdentifier}`);
+    console.log(
+      `${this.constructor.name} initialized - ${this.uniqIdentifier}`,
+    );
   }
 
   create(createCultureDto: CreateCultureDto) {
-    return 'This action adds a new culture';
+    return `This action adds a new culture (${JSON.stringify(createCultureDto)})`;
   }
 
   findAll() {
@@ -31,7 +33,7 @@ export class CultureService {
   }
 
   update(id: number, updateCultureDto: UpdateCultureDto) {
-    return `This action updates a #${id} culture`;
+    return `This action updates a culture (${JSON.stringify(updateCultureDto)} at #${id}`;
   }
 
   remove(id: number) {

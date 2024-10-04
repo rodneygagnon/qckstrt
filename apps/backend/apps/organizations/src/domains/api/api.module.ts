@@ -4,7 +4,7 @@ import { BusinessApiController } from './business-api.controller';
 import { CultureApiController } from './culture-api.controller';
 
 @Module({
-  controllers: [ BusinessApiController, CultureApiController],
+  controllers: [BusinessApiController, CultureApiController],
 })
 export class ApiModule {
   constructor() {

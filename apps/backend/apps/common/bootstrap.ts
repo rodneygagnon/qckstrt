@@ -22,6 +22,7 @@ function setupSwagger(
 }
 
 export default async function bootstrap(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   AppModule: any,
   port: string | number,
   appName: string = 'app',
