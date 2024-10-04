@@ -22,6 +22,6 @@ export class PersonsService {
   }
 
   remove(id: number) {
-    return `This action removes a #${id} person`;
+    return `This action removes a #${id} person!`;
   }
 }
