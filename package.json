@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "pnpm run --parallel dev",
     "lint": "pnpm -r lint",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -19,10 +20,5 @@
     "**/*.+(js|jsx|ts|tsx|json|css)": [
       "pnpm -r format"
     ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
   }
 }
