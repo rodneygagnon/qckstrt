@@ -20,7 +20,7 @@ const patchedConfig = fixupConfigRules([
 const config = [
   ...patchedConfig,
   prettierConfigRecommended, // Last since it disables some previously set rules
-  { ignores: [".next/*", "jest.config.js"] },
+  { ignores: [".next/*", "jest.config.js", "cypress.config.ts"] },
 ];
 
 export default config;
