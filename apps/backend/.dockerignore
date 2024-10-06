@@ -1,0 +1,12 @@
+coverage
+
+dist
+
+docker/*
+.dockerignore
+
+node_modules
+
+README.md
+
+.git

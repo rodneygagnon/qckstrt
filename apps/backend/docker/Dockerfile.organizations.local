@@ -20,6 +20,8 @@ FROM base AS runner
 
 ENV NODE_ENV=production
 
+EXPOSE 3001
+
 ENV ORGANIZATIONS_PORT=3001
 
 WORKDIR /usr/src/app/backend
