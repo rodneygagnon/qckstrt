@@ -22,6 +22,8 @@ ARG svc_name
 
 ENV NODE_ENV=production
 
+EXPOSE 3003
+
 ENV ROLES_PORT=3003
 
 WORKDIR /usr/src/app/backend
