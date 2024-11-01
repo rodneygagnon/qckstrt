@@ -1,3 +1,0 @@
-# Terraform Cloud Formation
-
-TBD ...
