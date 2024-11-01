@@ -1,5 +1,5 @@
 # External DNS Controller
-resource "kubectl_manifest" "external-dns-service-account" {
+resource "kubectl_manifest" "external_dns_service_account" {
   yaml_body = <<-YAML
     apiVersion: v1
     kind: ServiceAccount
@@ -11,7 +11,7 @@ resource "kubectl_manifest" "external-dns-service-account" {
 YAML
 }
 
-resource "kubectl_manifest" "external-dns-cluster-role" {
+resource "kubectl_manifest" "external_dns_cluster_role" {
   yaml_body = <<-YAML
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRole
@@ -30,7 +30,7 @@ resource "kubectl_manifest" "external-dns-cluster-role" {
 YAML
 }
 
-resource "kubectl_manifest" "external-dns-cluster-role-binding" {
+resource "kubectl_manifest" "external_dns_cluster_role_binding" {
   yaml_body = <<-YAML
     apiVersion: rbac.authorization.k8s.io/v1
     kind: ClusterRoleBinding
@@ -47,7 +47,7 @@ resource "kubectl_manifest" "external-dns-cluster-role-binding" {
 YAML
 }
 
-resource "kubectl_manifest" "external-dns-deployment" {
+resource "kubectl_manifest" "external_dns_deployment" {
   yaml_body = <<-YAML
     apiVersion: apps/v1
     kind: Deployment

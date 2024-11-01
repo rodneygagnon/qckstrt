@@ -1,0 +1,33 @@
+FROM node:20-slim AS base
+
+### Build the project ###
+FROM base AS builder
+
+RUN corepack enable
+WORKDIR /usr/src/api
+
+COPY ./package.json ./
+COPY ./tsconfig.* ./
+COPY ./src/common ./src/common
+COPY ./src/config ./src/config
+COPY ./src/providers ./src/providers
+COPY ./src/api ./src/api
+
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --lockfile=false --ignore-workspace
+
+RUN pnpm build:api
+
+### Run the project ###
+FROM base AS runner
+
+ENV PORT=8080
+
+EXPOSE 8080
+
+WORKDIR /usr/src/api
+
+COPY --from=builder /usr/src/api/package.json ./
+COPY --from=builder /usr/src/api/node_modules ./node_modules
+COPY --from=builder /usr/src/api/dist ./
+
+CMD [ "node", "api/src/main" ]

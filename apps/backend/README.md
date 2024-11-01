@@ -69,3 +69,14 @@ Check out a few resources that may come in handy when working with NestJS:
 - Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
 - To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
 - Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+
+## Kong API Gateway
+
+### DecK
+Use decK to backup and restore Kong Gateway Configuration. Store the output in src/api/config using
+```bash
+deck gateway dump -o kong.yaml
+deck gateway diff kong.yaml
+```
+- [Deck Install](https://docs.konghq.com/deck/1.40.x/installation/)
+- [Deck Backup/Restore](https://docs.konghq.com/deck/latest/guides/backup-restore/)

@@ -74,12 +74,3 @@ module "eks" {
   eks_node_max_size = var.eks_node_max_size
   eks_node_desired_size = var.eks_node_desired_size
 }
-
-module "api" {
-  source = "./modules/api"
- 
-  project = var.project
-  stage = var.stage
-
-  lambdas = var.lambdas
-}
