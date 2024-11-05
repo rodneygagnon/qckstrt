@@ -116,11 +116,6 @@ variable "repositories" {
   }))
 }
 
-variable "lambdas" {
-  type = list(string)
-  description = "API Lambda Services"
-}
-
 variable "eks_node_instance_types" {
   type = list(string)
   description = "Cluster node types"

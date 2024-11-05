@@ -1,0 +1,89 @@
+
+x-apps-config: &apps-env
+  PROJECT: ${PROJECT:-qckstrt}
+  NODE_ENV: ${NODE_ENV:-dev}
+  AWS_PROFILE: ${AWS_PROFILE:-default}
+  SECRETS: ${SECRETS}
+
+x-api-config: &api-env
+  <<: *apps-env
+  APPLICATION: ${API_APPLICATION}
+  VERSION: ${API_VERSION}
+  DESCRIPTION: ${API_DESCRIPTION}
+  MICROSERVICES: ${API_MICROSERVICES}
+  PORT: 8080
+
+x-users-config: &users-env
+  <<: *apps-env
+  APPLICATION: ${USERS_APPLICATION}
+  VERSION: ${USERS_VERSION}
+  DESCRIPTION: ${USERS_DESCRIPTION}
+  PORT: 8080
+
+x-posts-config: &posts-env
+  <<: *apps-env
+  APPLICATION: ${POSTS_APPLICATION}
+  VERSION: ${POSTS_VERSION}
+  DESCRIPTION: ${POSTS_DESCRIPTION}
+  PORT: 8080
+
+networks:
+  backend:
+    name: ${PROJECT}-${NODE_ENV}-backend
+    external: false
+
+services:
+  api:
+    build:
+      context: ..
+      platforms:
+        - "linux/amd64"
+      dockerfile: docker/Dockerfile.${API_APPLICATION}
+    image: ${PROJECT}-${NODE_ENV}-${API_APPLICATION}:latest
+    container_name: nestjs-${API_APPLICATION}
+    platform: "linux/amd64"
+    environment:
+      <<: *api-env
+    networks:
+      - backend
+    volumes:
+      - ~/.aws/:/root/.aws:ro
+    ports:
+      - "${API_PORT}:8080"
+    restart: always
+  users:
+    build:
+      context: ..
+      platforms:
+        - "linux/amd64"
+      dockerfile: docker/Dockerfile.${USERS_APPLICATION}
+    image: ${PROJECT}-${NODE_ENV}-${USERS_APPLICATION}:latest
+    container_name: nestjs-${USERS_APPLICATION}
+    platform: "linux/amd64"
+    environment:
+      <<: *users-env
+    networks:
+      - backend
+    volumes:
+      - ~/.aws/:/root/.aws:ro
+    ports:
+      - "${USERS_PORT}:8080"
+    restart: always
+  posts:
+    build:
+      context: ..
+      platforms:
+        - "linux/amd64"
+      dockerfile: docker/Dockerfile.${POSTS_APPLICATION}
+    image: ${PROJECT}-${NODE_ENV}-${POSTS_APPLICATION}:latest
+    container_name: nestjs-${POSTS_APPLICATION}
+    platform: "linux/amd64"
+    environment:
+      <<: *posts-env
+    networks:
+      - backend
+    volumes:
+      - ~/.aws/:/root/.aws:ro
+    ports:
+      - "${POSTS_PORT}:8080"
+    restart: always

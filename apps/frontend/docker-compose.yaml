@@ -1,3 +1,14 @@
+x-apps-config: &apps-env
+  PROJECT: ${PROJECT:-qckstrt}
+  NODE_ENV: ${NODE_ENV:-dev}
+  AWS_PROFILE: ${AWS_PROFILE:-default}
+  SECRETS: ${SECRETS:-secrets}
+
+networks:
+  frontend:
+    name: ${PROJECT}-${NODE_ENV}-frontend
+    external: false
+
 services:
   nextjs:
     build:
@@ -5,8 +16,11 @@ services:
       platforms:
         - "linux/amd64"
       dockerfile: Dockerfile
-    image: ${PROJECT}-${STAGE}-nextjs:latest
+    image: ${PROJECT}-${NODE_ENV}-nextjs:latest
     container_name: nextjs
+    platform: "linux/amd64"
+    networks:
+      - frontend
     ports:
       - "3000:3000"
     restart: always
@@ -16,8 +30,11 @@ services:
       platforms:
         - "linux/amd64"
       dockerfile: Dockerfile.nginx
-    image: ${PROJECT}-${STAGE}-nginx:latest
+    image: ${PROJECT}-${NODE_ENV}-nginx:latest
     container_name: nginx
+    platform: "linux/amd64"
+    networks:
+      - frontend
     ports:
       - "80:80"
       - "443:443"

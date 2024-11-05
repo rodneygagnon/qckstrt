@@ -57,3 +57,7 @@ Open [http://localhost](http://localhost) with your browser to see the result.
 or
 
 Open [https://localhost](https://localhost) with your browser to see the result.
+
+### Packages
+
+- [Husky](https://typicode.github.io/husky/)

@@ -13,29 +13,56 @@
   "projects": {
     "organizations": {
       "type": "application",
-      "root": "apps/organizations",
+      "root": "src/apps/organizations",
       "entryFile": "main",
-      "sourceRoot": "apps/organizations/src",
+      "sourceRoot": "src/apps/organizations/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/organizations/tsconfig.app.json"
+        "tsConfigPath": "src/apps/organizations/tsconfig.app.json"
       }
     },
     "persons": {
       "type": "application",
-      "root": "apps/persons",
+      "root": "src/apps/persons",
       "entryFile": "main",
-      "sourceRoot": "apps/persons/src",
+      "sourceRoot": "src/apps/persons/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/persons/tsconfig.app.json"
+        "tsConfigPath": "src/apps/persons/tsconfig.app.json"
       }
     },
     "roles": {
       "type": "application",
-      "root": "apps/roles",
+      "root": "src/apps/roles",
       "entryFile": "main",
-      "sourceRoot": "apps/roles/src",
+      "sourceRoot": "src/apps/roles/src",
       "compilerOptions": {
-        "tsConfigPath": "apps/roles/tsconfig.app.json"
+        "tsConfigPath": "src/apps/roles/tsconfig.app.json"
+      }
+    },
+    "users": {
+      "type": "application",
+      "root": "src/apps/users",
+      "entryFile": "main",
+      "sourceRoot": "src/apps/users/src",
+      "compilerOptions": {
+        "tsConfigPath": "src/apps/users/tsconfig.app.json"
+      }
+    },
+    "posts": {
+      "type": "application",
+      "root": "src/apps/posts",
+      "entryFile": "main",
+      "sourceRoot": "src/apps/posts/src",
+      "compilerOptions": {
+        "tsConfigPath": "src/apps/posts/tsconfig.app.json"
+      }
+    },
+    "api": {
+      "type": "application",
+      "root": "src/api",
+      "entryFile": "main",
+      "sourceRoot": "src/api/src",
+      "compilerOptions": {
+        "tsConfigPath": "src/api/tsconfig.app.json"
       }
     }
   }

@@ -14,6 +14,7 @@ A NextJs / NestJs Full Stack project complete with AWS infrastructure.
 - [Jest](https://jestjs.io) - Unit Testing
 
 ## Backend ([README.md](/apps/backend/README.md))
+- [Kong](https://konghq.com) - API Gateway
 - [Nest.js](https://nestjs.com) - Scalable Server-Side Node.js Framework
 - [Jest](https://jestjs.io) - Unit Testing
 
@@ -22,10 +23,12 @@ A NextJs / NestJs Full Stack project complete with AWS infrastructure.
 - [AWS VPC](https://aws.amazon.com/vpc/) - Amazon Virtual Private Cloud
 - [AWS ECR](https://aws.amazon.com/ecr/) - Amazon Elastic Container Registry
 - [AWS EKS](https://aws.amazon.com/eks/) - Amazon Elastic Kubernetes Service
-- [AWS API Gateway](https://aws.amazon.com/api-gateway/) - Amazon API Management
+- ~~[AWS API Gateway](https://aws.amazon.com/api-gateway/) - Amazon API Management~~ *(Will be replaced by Kong in EKS)*
 - [AWS Lambda](https://aws.amazon.com/lambda/) - Amazon Serverless Functions
 - [AWS S3](https://aws.amazon.com/s3/) - Amazon Cloud Storage
 - [AWS CloudWatch](https://aws.amazon.com/cloudwatch/) - Amazon Cloud Watch Observability
+- [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) - Amazon Secrets Managmenent
+- [AWS RDS](https://aws.amazon.com/rds/) - Relational Database Service
 
 ## Containerization
 - [Docker](https://www.docker.com) - Images & Containers
