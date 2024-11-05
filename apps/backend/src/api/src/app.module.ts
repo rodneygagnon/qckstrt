@@ -15,7 +15,7 @@ import { AppService } from './app.service';
 
 import configuration from 'src/config';
 
-import { LoggerMiddleware } from 'src/common/middleware/logger.middleware';
+import { HMACMiddleware } from 'src/common/middleware/hmac.middleware';
 
 @Module({
   imports: [
@@ -52,7 +52,7 @@ import { LoggerMiddleware } from 'src/common/middleware/logger.middleware';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(LoggerMiddleware)
+      .apply(HMACMiddleware)
       .forRoutes({ path: '*', method: RequestMethod.ALL });
   }
 }

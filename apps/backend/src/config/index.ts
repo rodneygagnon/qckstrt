@@ -1,4 +1,5 @@
 import { ConfigService } from '@nestjs/config';
+import { getSecrets } from '../providers/secrets';
 
 export interface IAppConfig {
   project: string;
@@ -6,6 +7,7 @@ export interface IAppConfig {
   version: string;
   description: string;
   port: number;
+  secrets: Map<string, string>;
 }
 
 export default async (): Promise<IAppConfig> => {
@@ -18,7 +20,18 @@ export default async (): Promise<IAppConfig> => {
   const port = configService.get('PORT');
 
   if (!project || !application || !version || !description || !port) {
-    throw new Error('Missing required configuration values');
+    throw new Error(
+      `Missing required configuration values: project=${project} application=${application} version=${version} description=${description} port=${port}`,
+    );
+  }
+
+  // Get Secrets. They should only be found in the .env in local dev environments.
+  const secrets =
+    configService.get<string>('SECRETS') ||
+    (await getSecrets(project, configService.get('NODE_ENV') || 'dev'));
+
+  if (!secrets) {
+    throw new Error('Failed to access secrets');
   }
 
   return Promise.resolve({
@@ -27,5 +40,6 @@ export default async (): Promise<IAppConfig> => {
     version,
     description,
     port,
+    secrets: new Map<string, string>(Object.entries(JSON.parse(secrets))),
   });
 };

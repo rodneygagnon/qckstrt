@@ -1,6 +1,6 @@
 import { getSecretValue } from './aws';
 
-export const getConfig = async (
+export const getSecrets = async (
   project: string,
   stage: string,
 ): Promise<string> =>

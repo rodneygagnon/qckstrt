@@ -3,6 +3,7 @@ x-apps-config: &apps-env
   PROJECT: ${PROJECT:-qckstrt}
   NODE_ENV: ${NODE_ENV:-dev}
   AWS_PROFILE: ${AWS_PROFILE:-default}
+  SECRETS: ${SECRETS}
 
 x-api-config: &api-env
   <<: *apps-env
@@ -28,7 +29,7 @@ x-posts-config: &posts-env
 
 networks:
   backend:
-    name: ${PROJECT}-${NODE_ENV}
+    name: ${PROJECT}-${NODE_ENV}-backend
     external: false
 
 services:
