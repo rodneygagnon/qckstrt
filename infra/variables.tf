@@ -18,6 +18,16 @@ variable "domain_name" {
   description = "root domain name"
 }
 
+variable "mail_from_subdomain" {
+  type        = string
+  description = "mail from subdomain for SES"
+}
+
+variable "email_identity" {
+  type        = string
+  description = "email identity for SES"
+}
+
 variable region {
     type = string
     description = "the region this infrastructure is in"

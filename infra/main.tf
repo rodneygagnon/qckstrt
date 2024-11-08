@@ -53,6 +53,45 @@ module "docker" {
   repositories = var.repositories
 }
 
+## SES
+module "ses" {
+  source = "./modules/ses"
+ 
+  project = var.project
+  stage = var.stage
+
+  region = var.region
+
+  domain = var.domain_name
+
+  mail_from_subdomain = var.mail_from_subdomain
+  email_identity = var.email_identity
+}
+
+## SES
+module "cognito" {
+  source = "./modules/cognito"
+ 
+  project = var.project
+  stage = var.stage
+
+  region = var.region
+
+  domain = var.domain_name
+
+  email_identity = var.email_identity
+  email_identity_source_arn = module.ses.email_identity_source_arn
+}
+
+module "secrets" {
+  source = "./modules/secrets"
+
+  project = var.project
+  stage = var.stage
+
+  userPoolId = module.cognito.userPoolId
+}
+
 ## EKS
 module "eks" {
   source = "./modules/eks"

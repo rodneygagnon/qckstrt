@@ -10,6 +10,10 @@ enable_dns_hostnames  = true
 
 domain_name           = "qckstrt.com"
 
+# SES
+mail_from_subdomain   = "mail"
+email_identity        = "rodneygagnon@mac.com"
+
 # Elastic IP
 domain_eip = "vpc"
 

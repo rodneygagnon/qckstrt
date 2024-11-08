@@ -1,13 +1,17 @@
 import { ConfigService } from '@nestjs/config';
 import { getSecrets } from '../providers/secrets';
 
+export interface IAuthConfig {
+  userPoolId: string;
+}
 export interface IAppConfig {
   project: string;
   application: string;
   version: string;
   description: string;
   port: number;
-  secrets: Map<string, string>;
+  apiKeys: Map<string, string>;
+  auth: IAuthConfig;
 }
 
 export default async (): Promise<IAppConfig> => {
@@ -26,9 +30,12 @@ export default async (): Promise<IAppConfig> => {
   }
 
   // Get Secrets. They should only be found in the .env in local dev environments.
-  const secrets =
-    configService.get<string>('SECRETS') ||
-    (await getSecrets(project, configService.get('NODE_ENV') || 'dev'));
+  const envSecrets = configService.get('SECRETS');
+  const secrets = JSON.parse(
+    envSecrets && envSecrets !== ''
+      ? envSecrets
+      : await getSecrets(project, configService.get('NODE_ENV') || 'dev'),
+  );
 
   if (!secrets) {
     throw new Error('Failed to access secrets');
@@ -40,6 +47,7 @@ export default async (): Promise<IAppConfig> => {
     version,
     description,
     port,
-    secrets: new Map<string, string>(Object.entries(JSON.parse(secrets))),
+    apiKeys: new Map<string, string>(Object.entries(secrets.apiKeys)),
+    auth: secrets.auth as IAuthConfig,
   });
 };
