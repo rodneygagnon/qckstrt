@@ -53,9 +53,9 @@ module "docker" {
   repositories = var.repositories
 }
 
-## EKS
-module "eks" {
-  source = "./modules/eks"
+## SES
+module "ses" {
+  source = "./modules/ses"
  
   project = var.project
   stage = var.stage
@@ -63,23 +63,56 @@ module "eks" {
   region = var.region
 
   domain = var.domain_name
-  
-  vpc_id = module.vpc.vpc_id
-  private_subnet_ids = module.vpc.vpc_private_subnets
-  public_subnet_ids = module.vpc.vpc_public_subnets
 
-  eks_node_instance_types = var.eks_node_instance_types
-  eks_node_disk_size = var.eks_node_disk_size
-  eks_node_min_size = var.eks_node_min_size
-  eks_node_max_size = var.eks_node_max_size
-  eks_node_desired_size = var.eks_node_desired_size
+  mail_from_subdomain = var.mail_from_subdomain
+  email_identity = var.email_identity
 }
 
-module "api" {
-  source = "./modules/api"
+## SES
+module "cognito" {
+  source = "./modules/cognito"
  
   project = var.project
   stage = var.stage
 
-  lambdas = var.lambdas
+  region = var.region
+
+  domain = var.domain_name
+
+  email_identity = var.email_identity
+  email_identity_source_arn = module.ses.email_identity_source_arn
+
+  groups = var.groups
+  schema_attributes = var.schema_attributes
 }
+
+module "secrets" {
+  source = "./modules/secrets"
+
+  project = var.project
+  stage = var.stage
+
+  userPoolId = module.cognito.userPoolId
+}
+
+## EKS
+# module "eks" {
+#   source = "./modules/eks"
+ 
+#   project = var.project
+#   stage = var.stage
+
+#   region = var.region
+
+#   domain = var.domain_name
+  
+#   vpc_id = module.vpc.vpc_id
+#   private_subnet_ids = module.vpc.vpc_private_subnets
+#   public_subnet_ids = module.vpc.vpc_public_subnets
+
+#   eks_node_instance_types = var.eks_node_instance_types
+#   eks_node_disk_size = var.eks_node_disk_size
+#   eks_node_min_size = var.eks_node_min_size
+#   eks_node_max_size = var.eks_node_max_size
+#   eks_node_desired_size = var.eks_node_desired_size
+# }

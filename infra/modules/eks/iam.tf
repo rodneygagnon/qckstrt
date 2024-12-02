@@ -1,4 +1,58 @@
-resource "aws_iam_role" "node-group-iam-role" {
+# EKS Cluster Roles and Policies
+resource "aws_iam_role" "eks_cluster_role" {
+  name = "${var.project}-${var.stage}-cluster-role"
+  description = "Allow cluster to manage node groups and cloudwatch logs"
+
+  assume_role_policy = jsonencode({
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = [
+          "eks.amazonaws.com"
+        ]
+      }
+    }]
+    Version = "2012-10-17"
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "AmazonEKSClusterPolicy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
+  role       = aws_iam_role.eks_cluster_role.name
+}
+
+resource "aws_iam_role_policy_attachment" "AmazonEKSVPCResourceController" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
+  role       = aws_iam_role.eks_cluster_role.name
+}
+
+# EKS Cluster Fargate Roles and Policies
+resource "aws_iam_role" "eks_fargate_role" {
+  name = "${var.project}-${var.stage}-fargate-role"
+  description = "Allow cluster to manage node groups, fargate nodes and cloudwatch logs"
+
+  assume_role_policy = jsonencode({
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = [
+          "eks-fargate-pods.amazonaws.com"
+        ]
+      }
+    }]
+    Version = "2012-10-17"
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "AmazonEKSFargatePodExecutionRolePolicy" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy"
+  role       = aws_iam_role.eks_fargate_role.name
+}
+
+# EKS Cluster Node Group Roles and Policies
+resource "aws_iam_role" "node_group_iam_role" {
   name = "eks-node-group-role"
 
   assume_role_policy = jsonencode({
@@ -15,49 +69,17 @@ resource "aws_iam_role" "node-group-iam-role" {
 
 resource "aws_iam_role_policy_attachment" "AmazonEKSWorkerNodePolicy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
-  role       = aws_iam_role.node-group-iam-role.name
+  role       = aws_iam_role.node_group_iam_role.name
 }
 
 resource "aws_iam_role_policy_attachment" "AmazonEKS_CNI_Policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
-  role       = aws_iam_role.node-group-iam-role.name
+  role       = aws_iam_role.node_group_iam_role.name
 }
 
 resource "aws_iam_role_policy_attachment" "AmazonEC2ContainerRegistryReadOnly" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-  role       = aws_iam_role.node-group-iam-role.name
-}
-
-data "aws_iam_policy_document" "assume_role" {
-  statement {
-    effect = "Allow"
-
-    principals {
-      type        = "Service"
-      identifiers = [ "eks.amazonaws.com" ]
-    }
-
-    actions = [ "sts:AssumeRole" ]
-  }
-}
-
-resource "aws_iam_role" "cluster_role" {
-  name               = "${var.project}-${var.stage}-cluster-role"
-  assume_role_policy = data.aws_iam_policy_document.assume_role.json
-}
-
-resource "aws_iam_role_policy_attachment" "AmazonEKSClusterPolicy" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
-  role       = aws_iam_role.cluster_role.name
-}
-
-resource "aws_iam_role_policy_attachment" "AmazonEKSVPCResourceController" {
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSVPCResourceController"
-  role       = aws_iam_role.cluster_role.name
-}
-
-data "tls_certificate" "tls_cert" {
-  url = aws_eks_cluster.eks_cluster.identity[0].oidc[0].issuer
+  role       = aws_iam_role.node_group_iam_role.name
 }
 
 resource "aws_iam_openid_connect_provider" "eks_oidc_provider" {
@@ -86,7 +108,7 @@ data "aws_iam_policy_document" "assume_role_policy" {
 
 resource "aws_iam_role" "vpc_cni_role" {
   assume_role_policy = data.aws_iam_policy_document.assume_role_policy.json
-  name               = "vpc-cni-role"
+  name                = "${var.project}-${var.stage}-vpc-cni-role"
 }
 
 resource "aws_iam_role_policy_attachment" "vpc_cni_policy" {
@@ -97,7 +119,7 @@ resource "aws_iam_role_policy_attachment" "vpc_cni_policy" {
 ### AWS Load Balancer Policies & Roles
 resource "aws_iam_policy" "aws_load_balancer_controller" {
   policy = file("${path.module}/policies/AWSLoadBalancerController.json")
-  name   = "AWSLoadBalancerController"
+  name   = "${var.project}-${var.stage}-alb-policy"
 }
 
 data "aws_iam_policy_document" "aws_load_balancer_controller_assume_role_policy" {
@@ -120,7 +142,7 @@ data "aws_iam_policy_document" "aws_load_balancer_controller_assume_role_policy"
 
 resource "aws_iam_role" "aws_load_balancer_controller" {
   assume_role_policy = data.aws_iam_policy_document.aws_load_balancer_controller_assume_role_policy.json
-  name               = "aws-load-balancer-controller"
+  name                = "${var.project}-${var.stage}-alb-role"
 }
 
 resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller_attach" {
@@ -129,12 +151,10 @@ resource "aws_iam_role_policy_attachment" "aws_load_balancer_controller_attach" 
 }
 
 ### Load Route53 Policies & Roles
-data "aws_route53_zone" "domain_zone" {
-  name = var.domain
-}
 
 # External DNS Access
 resource "aws_iam_policy" "route53_zone_policy" {
+  name   = "${var.project}-${var.stage}-route53-policy"
   policy = jsonencode({
     Statement = [
       {
@@ -178,8 +198,8 @@ data "aws_iam_policy_document" "route53_assume_role_policy" {
 }
 
 resource "aws_iam_role" "route53_zone_controller" {
-  assume_role_policy = data.aws_iam_policy_document.route53_assume_role_policy.json
-  name               = "route53-dns-controller"
+  assume_role_policy  = data.aws_iam_policy_document.route53_assume_role_policy.json
+  name                = "${var.project}-${var.stage}-route53-role"
 }
 
 resource "aws_iam_role_policy_attachment" "route53_zone_controller_attach" {

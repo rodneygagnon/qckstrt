@@ -10,6 +10,10 @@ enable_dns_hostnames  = true
 
 domain_name           = "qckstrt.com"
 
+# SES
+mail_from_subdomain   = "mail"
+email_identity        = "rodneygagnon@mac.com"
+
 # Elastic IP
 domain_eip = "vpc"
 
@@ -72,41 +76,73 @@ repositories = {
     platform = "linux/amd64",
     image_tag = "latest"
   },
-  "organizations" = {
+  "api" = {
     image_tag_mutability = "MUTABLE",
     scan_on_push = true,
     expiration_after_days = 5,
     base_dir = "apps/backend",
-    dockerfile = "docker/Dockerfile.organizations.aws",
+    dockerfile = "docker/Dockerfile.api",
     platform = "linux/amd64",
     image_tag = "latest"
   },
-  # "persons" = {
-  #   image_tag_mutability = "MUTABLE",
-  #   scan_on_push = true,
-  #   expiration_after_days = 5,
-  #   base_dir = "apps/backend",
-  #   dockerfile = "docker/Dockerfile.persons.aws",
-  #   platform = "linux/amd64",
-  #   image_tag = "latest"
-  # },
-  # "roles" = {
-  #   image_tag_mutability = "MUTABLE",
-  #   scan_on_push = true,
-  #   expiration_after_days = 5,
-  #   base_dir = "apps/backend",
-  #   dockerfile = "docker/Dockerfile.roles.aws",
-  #   platform = "linux/amd64",
-  #   image_tag = "latest"
-  # }
+  "users" = {
+    image_tag_mutability = "MUTABLE",
+    scan_on_push = true,
+    expiration_after_days = 5,
+    base_dir = "apps/backend",
+    dockerfile = "docker/Dockerfile.users",
+    platform = "linux/amd64",
+    image_tag = "latest"
+  },
+  "posts" = {
+    image_tag_mutability = "MUTABLE",
+    scan_on_push = true,
+    expiration_after_days = 5,
+    base_dir = "apps/backend",
+    dockerfile = "docker/Dockerfile.posts",
+    platform = "linux/amd64",
+    image_tag = "latest"
+  }
 }
-
-# API Lambda Services
-lambdas = [ "organizations" ]
 
 # Elastic Kubernetes Service
 eks_node_instance_types   = [ "t3.medium" ]
 eks_node_disk_size        = 20
-eks_node_min_size         = 1
-eks_node_max_size         = 2
-eks_node_desired_size     = 1
+eks_node_min_size         = 2
+eks_node_max_size         = 4
+eks_node_desired_size     = 2
+
+# Cognito Service
+groups = [
+  {
+    name        = "admin"
+    description = "Adminstrators",
+    precedence  = 0
+  },
+  {
+    name        = "user"
+    description = "Users",
+    precedence  = 100
+  },
+]
+
+schema_attributes = [
+  {
+    name                     = "department"
+    type                     = "String"
+    developer_only_attribute = false,
+    mutable                  = true,
+    required                 = false,
+    min_length               = 0,
+    max_length               = 128
+  },
+    {
+    name                     = "clearance"
+    type                     = "String"
+    developer_only_attribute = false,
+    mutable                  = true,
+    required                 = false,
+    min_length               = 0,
+    max_length               = 128
+  }
+]

@@ -1,19 +1,19 @@
-resource "helm_release" "aws-load-balancer-controller" {
-  name = "aws-load-balancer-controller"
+resource "helm_release" "aws_load_balancer_controller" {
+  name = "${var.project}-${var.stage}-alb"
 
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
   namespace  = "kube-system"
-  version    = "1.4.4"
+  version    = "1.5.3"
+
+  set {
+    name  = "clusterName"
+    value = aws_eks_cluster.eks_cluster.id
+  }
 
   set {
     name  = "replicaCount"
     value = 1
-  }
-
-  set {
-    name  = "vpcId"
-    value = var.vpc_id
   }
 
   set {
@@ -22,8 +22,8 @@ resource "helm_release" "aws-load-balancer-controller" {
   }
 
   set {
-    name  = "clusterName"
-    value = aws_eks_cluster.eks_cluster.id
+    name  = "vpcId"
+    value = var.vpc_id
   }
 
   set {
