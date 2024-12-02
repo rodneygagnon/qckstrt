@@ -1,30 +1,49 @@
 import {
+  ApolloFederationDriver,
+  ApolloFederationDriverConfig,
+} from '@nestjs/apollo';
+import {
   MiddlewareConsumer,
   Module,
   NestModule,
   RequestMethod,
 } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloServerPluginInlineTrace } from '@apollo/server/plugin/inlineTrace';
 
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-
+import { AuthModule } from './domains/auth/auth.module';
 import { UsersModule } from './domains/user/users.module';
 
 import configuration from 'src/config';
 
 import { LoggerMiddleware } from 'src/common/middleware/logger.middleware';
+import { DbModule } from 'src/db/db.module';
+import { User } from 'src/apps/users/src/domains/user/models/user.model';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { GraphQLExceptionFilter } from 'src/common/exceptions/graphql-exception.filter';
+import { RolesGuard } from 'src/common/guards/roles.guard';
+import { CaslModule } from 'src/permissions/casl.module';
+import { PoliciesGuard } from 'src/common/guards/policies.guard';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      load: [configuration],
-      isGlobal: true,
+    ConfigModule.forRoot({ load: [configuration], isGlobal: true }),
+    DbModule.forRoot({ entities: [User] }),
+    GraphQLModule.forRoot<ApolloFederationDriverConfig>({
+      driver: ApolloFederationDriver,
+      autoSchemaFile: { path: 'schema.gql', federation: 2 },
+      plugins: [ApolloServerPluginInlineTrace()],
     }),
+    CaslModule.forRoot(),
     UsersModule,
+    AuthModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    { provide: APP_FILTER, useClass: GraphQLExceptionFilter },
+    { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: PoliciesGuard },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

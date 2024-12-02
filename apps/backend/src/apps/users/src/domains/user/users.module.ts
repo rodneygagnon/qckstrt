@@ -1,21 +1,14 @@
-import {
-  ApolloFederationDriver,
-  ApolloFederationDriverConfig,
-} from '@nestjs/apollo';
-import { Module } from '@nestjs/common';
-import { GraphQLModule } from '@nestjs/graphql';
+import { Module, forwardRef } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
 import { UsersResolver } from './users.resolver';
 import { UsersService } from './users.service';
-import { ApolloServerPluginInlineTrace } from '@apollo/server/plugin/inlineTrace';
+import { User } from './models/user.model';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
+  imports: [TypeOrmModule.forFeature([User]), forwardRef(() => AuthModule)],
   providers: [UsersResolver, UsersService],
-  imports: [
-    GraphQLModule.forRoot<ApolloFederationDriverConfig>({
-      driver: ApolloFederationDriver,
-      autoSchemaFile: { path: 'schema.gql', federation: 2 },
-      plugins: [ApolloServerPluginInlineTrace()],
-    }),
-  ],
+  exports: [UsersService],
 })
 export class UsersModule {}

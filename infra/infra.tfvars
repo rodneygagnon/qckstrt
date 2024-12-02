@@ -10,6 +10,10 @@ enable_dns_hostnames  = true
 
 domain_name           = "qckstrt.com"
 
+# SES
+mail_from_subdomain   = "mail"
+email_identity        = "rodneygagnon@mac.com"
+
 # Elastic IP
 domain_eip = "vpc"
 
@@ -107,3 +111,38 @@ eks_node_disk_size        = 20
 eks_node_min_size         = 2
 eks_node_max_size         = 4
 eks_node_desired_size     = 2
+
+# Cognito Service
+groups = [
+  {
+    name        = "admin"
+    description = "Adminstrators",
+    precedence  = 0
+  },
+  {
+    name        = "user"
+    description = "Users",
+    precedence  = 100
+  },
+]
+
+schema_attributes = [
+  {
+    name                     = "department"
+    type                     = "String"
+    developer_only_attribute = false,
+    mutable                  = true,
+    required                 = false,
+    min_length               = 0,
+    max_length               = 128
+  },
+    {
+    name                     = "clearance"
+    type                     = "String"
+    developer_only_attribute = false,
+    mutable                  = true,
+    required                 = false,
+    min_length               = 0,
+    max_length               = 128
+  }
+]

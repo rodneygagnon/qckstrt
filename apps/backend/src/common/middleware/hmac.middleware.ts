@@ -12,14 +12,14 @@ import crypto from 'crypto-js';
 
 @Injectable()
 export class HMACMiddleware implements NestMiddleware {
-  private readonly secrets: Map<string, string>;
+  private readonly apiKeys: Map<string, string>;
   private readonly logger = new Logger(HMACMiddleware.name, {
     timestamp: true,
   });
 
   constructor(private readonly configService: ConfigService) {
-    this.secrets =
-      this.configService.get<Map<string, string>>('secrets') ||
+    this.apiKeys =
+      this.configService.get<Map<string, string>>('apiKeys') ||
       new Map<string, string>();
   }
 
@@ -46,22 +46,22 @@ export class HMACMiddleware implements NestMiddleware {
 
       let signatureHash = '';
 
-      const hmacSecret = this.secrets.get(credentials.username) || '';
+      const apiKey = this.apiKeys.get(credentials.username) || '';
 
       switch (credentials.algorithm) {
         case 'hmac-sha1':
           signatureHash = crypto.enc.Base64.stringify(
-            crypto.HmacSHA1(signatureString, hmacSecret),
+            crypto.HmacSHA1(signatureString, apiKey),
           );
           break;
         case 'hmac-sha256':
           signatureHash = crypto.enc.Base64.stringify(
-            crypto.HmacSHA256(signatureString, hmacSecret),
+            crypto.HmacSHA256(signatureString, apiKey),
           );
           break;
         case 'hmac-sha512':
           signatureHash = crypto.enc.Base64.stringify(
-            crypto.HmacSHA512(signatureString, hmacSecret),
+            crypto.HmacSHA512(signatureString, apiKey),
           );
           break;
       }

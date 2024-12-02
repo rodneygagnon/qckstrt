@@ -4,8 +4,8 @@ import { PostsResolver } from './posts.resolver';
 import { PostsService } from './posts.service';
 
 const mockPosts: Post[] = [
-  { authorId: 1, id: 1, title: 'Mock Post' },
-  { authorId: 1, id: 2, title: 'Mock Post' },
+  { authorId: '1', id: 1, title: 'Mock Post' },
+  { authorId: '1', id: 2, title: 'Mock Post' },
 ];
 
 const postsServiceMock = {

@@ -11,7 +11,7 @@ export class Post {
   title: string;
 
   @Field(() => Int)
-  authorId: number;
+  authorId: string;
 
   @Field(() => User)
   user?: User;
