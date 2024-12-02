@@ -68,6 +68,7 @@ export class AuthResolver {
     return this.authService.forgotPassword(email);
   }
 
+  @Mutation(() => Boolean)
   async confirmForgotPassword(
     @Args('ConfirmForgotPasswordDto')
     confirmForgotPasswordDto: ConfirmForgotPasswordDto,
