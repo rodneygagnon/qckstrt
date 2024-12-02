@@ -7,7 +7,7 @@ import { Post } from './post.model';
 export class User {
   @Field(() => ID)
   @Directive('@external')
-  id: number;
+  id: string;
 
   @Field(() => [Post])
   posts?: Post[];

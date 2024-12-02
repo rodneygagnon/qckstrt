@@ -1,23 +1,219 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
+import { createMock } from '@golevelup/ts-jest';
+
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { QueryFailedError, Repository, TypeORMError } from 'typeorm';
+import { PostgresErrorCodes } from 'src/db/db.errors';
+
+import { ConfigService } from '@nestjs/config';
+import { AuthService } from '../auth/auth.service';
+
 import { UsersService } from './users.service';
+import { User } from 'src/apps/users/src/domains/user/models/user.model';
+
+import { users, createUserDto, updateUserDto } from '../data.spec';
 
 describe('UsersService', () => {
-  let service: UsersService;
+  let userRepo: Repository<User>;
+  let usersService: UsersService;
+  let authService: AuthService;
+  let configService: ConfigService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [UsersService],
+      providers: [
+        UsersService,
+        {
+          provide: getRepositoryToken(User),
+          useValue: createMock<Repository<User>>({}),
+        },
+        { provide: AuthService, useValue: createMock<AuthService>() },
+        { provide: ConfigService, useValue: createMock<ConfigService>() },
+      ],
     }).compile();
 
-    service = module.get<UsersService>(UsersService);
+    userRepo = module.get<Repository<User>>(getRepositoryToken(User));
+    usersService = module.get<UsersService>(UsersService);
+    authService = module.get<AuthService>(AuthService);
+    configService = module.get<ConfigService>(ConfigService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  it('services should be defined', () => {
+    expect(userRepo).toBeDefined();
+    expect(usersService).toBeDefined();
+    expect(authService).toBeDefined();
+    expect(configService).toBeDefined();
+  });
+
+  it('should create a user', async () => {
+    userRepo.save = jest.fn().mockImplementation((user: User) => {
+      return Promise.resolve(users[0]);
+    });
+    authService.registerUser = jest.fn().mockImplementation((user: User) => {
+      return Promise.resolve(true);
+    });
+
+    expect(await usersService.create(createUserDto)).toEqual(users[0]);
+    expect(userRepo.save).toHaveBeenCalledTimes(1);
+    expect(authService.registerUser).toHaveBeenCalledTimes(1);
+  });
+
+  it('should fail to create a user with generic DB error', async () => {
+    userRepo.save = jest.fn().mockImplementation((user: User) => {
+      return Promise.reject(
+        new QueryFailedError(
+          'Failed user creation!',
+          undefined,
+          new TypeORMError('ORM Error'),
+        ),
+      );
+    });
+
+    try {
+      await usersService.create(createUserDto);
+    } catch (error) {
+      expect(error.message).toEqual('TypeORMError: ORM Error');
+      expect(authService.registerUser).toHaveBeenCalledTimes(0);
+    }
+  });
+
+  it('should fail to create a user with postgres DB error', async () => {
+    userRepo.save = jest.fn().mockImplementation((user: User) => {
+      return Promise.reject(
+        new QueryFailedError('Failed user creation!', undefined, {
+          code: PostgresErrorCodes.UniqueViolation,
+          detail: 'Postgres Error',
+        } as any),
+      );
+    });
+
+    try {
+      await usersService.create(createUserDto);
+    } catch (error) {
+      expect(error.message).toEqual('Postgres Error');
+      expect(authService.registerUser).toHaveBeenCalledTimes(0);
+    }
+  });
+
+  it('should fail to create a user with unknown DB error', async () => {
+    userRepo.save = jest.fn().mockImplementation((user: User) => {
+      return Promise.reject(new Error('Failed user creation!'));
+    });
+
+    try {
+      await usersService.create(createUserDto);
+    } catch (error) {
+      expect(error.message).toEqual('Failed user creation!');
+      expect(authService.registerUser).toHaveBeenCalledTimes(0);
+    }
+  });
+
+  it('should update a user', async () => {
+    userRepo.update = jest
+      .fn()
+      .mockImplementation((criteria: any, user: User) => {
+        return Promise.resolve(true);
+      });
+
+    expect(await usersService.update(users[0].id, updateUserDto)).toBe(true);
+    expect(userRepo.update).toHaveBeenCalledTimes(1);
+  });
+
+  it('should fail to update a user with generic DB error', async () => {
+    userRepo.update = jest
+      .fn()
+      .mockImplementation((criteria: any, user: User) => {
+        return Promise.reject(
+          new QueryFailedError(
+            'Failed user update!',
+            undefined,
+            new TypeORMError('ORM Error'),
+          ),
+        );
+      });
+
+    try {
+      await usersService.update(users[0].id, updateUserDto);
+    } catch (error) {
+      expect(error.message).toEqual('TypeORMError: ORM Error');
+      expect(userRepo.update).toHaveBeenCalledTimes(1);
+    }
+  });
+
+  it('should fail to register a user after DB creation', async () => {
+    userRepo.save = jest.fn().mockImplementation((user: User) => {
+      return Promise.resolve(users[0]);
+    });
+    userRepo.createQueryBuilder().delete().from(User).where({}).execute = jest
+      .fn()
+      .mockImplementation(() => {
+        return Promise.resolve(true);
+      });
+    authService.registerUser = jest.fn().mockImplementation((user: User) => {
+      return Promise.reject(new Error('Failed user registration!'));
+    });
+
+    try {
+      await usersService.create(createUserDto);
+    } catch (error) {
+      expect(userRepo.create).toHaveBeenCalledTimes(1);
+      expect(authService.registerUser).toHaveBeenCalledTimes(1);
+      expect(error.message).toEqual('Failed user registration!');
+    }
+  });
+
+  it('should fail to register a user and DB rollback after DB creation', async () => {
+    userRepo.save = jest.fn().mockImplementation((user: User) => {
+      return Promise.resolve(users[0]);
+    });
+    userRepo.createQueryBuilder().delete().from(User).where({}).execute = jest
+      .fn()
+      .mockImplementation(() => {
+        return Promise.reject(new Error('Failed user db rollback!'));
+      });
+    authService.registerUser = jest.fn().mockImplementation((user: User) => {
+      return Promise.reject(new Error('Failed user registration!'));
+    });
+
+    try {
+      await usersService.create(createUserDto);
+    } catch (error) {
+      expect(userRepo.create).toHaveBeenCalledTimes(1);
+      expect(authService.registerUser).toHaveBeenCalledTimes(1);
+      expect(error.message).toEqual('Failed user registration!');
+    }
+  });
+
+  it('should fetch all users', () => {
+    userRepo.find = jest.fn().mockImplementation((options: any) => {
+      return users;
+    });
+
+    expect(usersService.findAll()).toEqual(users);
+    expect(userRepo.find).toHaveBeenCalledTimes(1);
   });
 
   it('should fetch a user by its id', () => {
-    const user = service.findById(1);
-    expect(user.id).toEqual(1);
+    userRepo.findOne = jest.fn().mockImplementation((options: any) => {
+      return users.find((user) => user.id === options.where.id);
+    });
+
+    expect(usersService.findById(users[0].id)).toEqual(users[0]);
+    expect(userRepo.findOne).toHaveBeenCalledWith({
+      where: { id: users[0].id },
+    });
+  });
+
+  it('should fetch a user by its email', () => {
+    userRepo.findOne = jest.fn().mockImplementation((options: any) => {
+      return users.find((user) => user.email === options.where.email);
+    });
+
+    expect(usersService.findByEmail(users[0].email)).toEqual(users[0]);
+    expect(userRepo.findOne).toHaveBeenCalledWith({
+      where: { email: users[0].email },
+    });
   });
 });

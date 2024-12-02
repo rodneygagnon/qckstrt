@@ -64,7 +64,6 @@ variable "temporary_password_validity_days" {
   description = "Temporary password validity days"
   default = 7
 }
-
 variable "email_identity" {
   type        = string
   description = "SES verified email"
@@ -93,41 +92,14 @@ variable "invite_sms_message" {
   default     = "Your username is {username} and your temporary password is '{####}'."
 }
 
-variable "schema_attributes" {
-  description = "(Optional) A list of schema attributes of a user pool. You can add a maximum of 25 custom attributes."
+variable "groups" {
+  description = "(Optional) A list of groups of a user pool."
   type        = any
+  default = []
+}
 
-  # Example:
-  #
-  # schema_attributes = [
-  #   {
-  #     name                     = "alternative_name"
-  #     type                     = "String"
-  #     developer_only_attribute = false,
-  #     mutable                  = true,
-  #     required                 = false,
-  #     min_length               = 0,
-  #     max_length               = 2048
-  #   },
-  #   {
-  #     name      = "friends_count"
-  #     type      = "Number"
-  #     min_value = 0,
-  #     max_value = 100
-  #
-  #    },
-  #    {
-  #
-  #      name = "is_active"
-  #      type = "Boolean"
-  #
-  #    },
-  #    {
-  #      name = "last_seen"
-  #      type = "DateTime"
-  #
-  #    }
-  #  ]
-
+variable "schema_attributes" {
+  description = "(Optional) A list of schema attributes of a user pool."
+  type        = any
   default = []
 }

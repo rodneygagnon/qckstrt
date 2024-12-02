@@ -81,6 +81,9 @@ module "cognito" {
 
   email_identity = var.email_identity
   email_identity_source_arn = module.ses.email_identity_source_arn
+
+  groups = var.groups
+  schema_attributes = var.schema_attributes
 }
 
 module "secrets" {
@@ -93,23 +96,23 @@ module "secrets" {
 }
 
 ## EKS
-module "eks" {
-  source = "./modules/eks"
+# module "eks" {
+#   source = "./modules/eks"
  
-  project = var.project
-  stage = var.stage
+#   project = var.project
+#   stage = var.stage
 
-  region = var.region
+#   region = var.region
 
-  domain = var.domain_name
+#   domain = var.domain_name
   
-  vpc_id = module.vpc.vpc_id
-  private_subnet_ids = module.vpc.vpc_private_subnets
-  public_subnet_ids = module.vpc.vpc_public_subnets
+#   vpc_id = module.vpc.vpc_id
+#   private_subnet_ids = module.vpc.vpc_private_subnets
+#   public_subnet_ids = module.vpc.vpc_public_subnets
 
-  eks_node_instance_types = var.eks_node_instance_types
-  eks_node_disk_size = var.eks_node_disk_size
-  eks_node_min_size = var.eks_node_min_size
-  eks_node_max_size = var.eks_node_max_size
-  eks_node_desired_size = var.eks_node_desired_size
-}
+#   eks_node_instance_types = var.eks_node_instance_types
+#   eks_node_disk_size = var.eks_node_disk_size
+#   eks_node_min_size = var.eks_node_min_size
+#   eks_node_max_size = var.eks_node_max_size
+#   eks_node_desired_size = var.eks_node_desired_size
+# }

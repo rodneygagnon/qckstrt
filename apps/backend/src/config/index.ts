@@ -3,15 +3,27 @@ import { getSecrets } from '../providers/secrets';
 
 export interface IAuthConfig {
   userPoolId: string;
+  clientId: string;
 }
+
+export interface IDBConfig {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  database: string;
+}
+
 export interface IAppConfig {
   project: string;
   application: string;
   version: string;
   description: string;
   port: number;
+  region: string;
   apiKeys: Map<string, string>;
   auth: IAuthConfig;
+  db: IDBConfig;
 }
 
 export default async (): Promise<IAppConfig> => {
@@ -22,10 +34,30 @@ export default async (): Promise<IAppConfig> => {
   const version = configService.get('VERSION');
   const description = configService.get('DESCRIPTION');
   const port = configService.get('PORT');
+  const region = configService.get('AWS_REGION');
 
-  if (!project || !application || !version || !description || !port) {
+  if (
+    !project ||
+    !application ||
+    !version ||
+    !description ||
+    !port ||
+    !region
+  ) {
     throw new Error(
-      `Missing required configuration values: project=${project} application=${application} version=${version} description=${description} port=${port}`,
+      `Missing service configuration: PROJECT=${project} APPLICATION=${application} VERSION=${version} DESCRIPTION=${description} PORT=${port} AWS_REGION=${region}`,
+    );
+  }
+
+  const dbHost = configService.get('DB_HOST');
+  const dbPort = configService.get('DB_PORT');
+  const dbUsername = configService.get('DB_USERNAME');
+  const dbPassword = configService.get('DB_PASSWORD');
+  const dbDatabase = configService.get('DB_DATABASE');
+
+  if (!dbHost || !dbPort || !dbUsername || !dbPassword || !dbDatabase) {
+    throw new Error(
+      `Missing required database configuration: DB_HOST=${dbHost} DB_PORT=${dbPort} DB_USERNAME=${dbUsername} DB_PASSWORD=${dbPassword} DB_DATABASE=${dbDatabase}`,
     );
   }
 
@@ -47,7 +79,15 @@ export default async (): Promise<IAppConfig> => {
     version,
     description,
     port,
+    region,
     apiKeys: new Map<string, string>(Object.entries(secrets.apiKeys)),
     auth: secrets.auth as IAuthConfig,
+    db: {
+      host: dbHost,
+      port: dbPort,
+      username: dbUsername,
+      password: dbPassword,
+      database: dbDatabase,
+    },
   });
 };

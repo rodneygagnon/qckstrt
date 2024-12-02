@@ -75,6 +75,21 @@ resource "aws_cognito_user_pool" "user_pool" {
   }
 }
 
+# resource "aws_cognito_user_group" "admin_group" {
+#   name          = "admins"
+#   description   = "Administrators"
+#   user_pool_id  = aws_cognito_user_pool.user_pool.id
+#   precedence    = 0
+# }
+
+resource "aws_cognito_user_group" "groups" {
+  for_each      = { for group in var.groups:  group.name => group }
+  name          = each.value.name
+  description   = each.value.description
+  user_pool_id  = aws_cognito_user_pool.user_pool.id
+  precedence    = each.value.precedence
+}
+
 resource "aws_cognito_user_pool_client" "user_pool_client" {
   name = "${var.project}-${var.stage}-client"
   user_pool_id = aws_cognito_user_pool.user_pool.id

@@ -10,6 +10,8 @@ COPY ./package.json ./
 COPY ./tsconfig.* ./
 COPY ./src/common ./src/common
 COPY ./src/config ./src/config
+COPY ./src/interfaces ./src/interfaces
+COPY ./src/permissions ./src/permissions
 COPY ./src/providers ./src/providers
 COPY ./src/api ./src/api
 

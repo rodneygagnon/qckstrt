@@ -147,3 +147,26 @@ variable "eks_node_max_size" {
 variable "eks_node_desired_size" {
   type        = number
 }
+
+# Cognito Variables
+variable "groups" {
+  type = list(object({
+    name                      = string
+    description               = string
+    precedence                = number
+  }))
+  default = []
+}
+
+variable "schema_attributes" {
+  type = list(object({
+    name                      = string
+    type                      = string
+    developer_only_attribute  = bool
+    mutable                   = bool
+    required                  = bool
+    min_length                = number
+    max_length                = number
+  }))
+  default = []
+}
