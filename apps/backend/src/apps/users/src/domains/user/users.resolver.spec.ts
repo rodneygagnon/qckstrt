@@ -86,6 +86,15 @@ describe('UsersResolver', () => {
     }
   });
 
+  it('should delete a user by its id', async () => {
+    usersService.delete = jest.fn().mockImplementation((id: string) => {
+      return Promise.resolve(true);
+    });
+
+    expect(await resolver.deleteUser(users[0].id)).toBe(true);
+    expect(usersService.delete).toHaveBeenCalledWith(users[0].id);
+  });
+
   it('should query all users', () => {
     usersService.findAll = jest.fn().mockImplementation(() => {
       return users;

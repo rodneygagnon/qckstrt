@@ -63,6 +63,10 @@ export class AuthService {
     return userId;
   }
 
+  async deleteUser(email: string): Promise<boolean> {
+    return this.awsCognito.deleteUser(email);
+  }
+
   async authenticateUser(loginUserDto: LoginUserDto): Promise<Auth> {
     const { email, password } = loginUserDto;
 

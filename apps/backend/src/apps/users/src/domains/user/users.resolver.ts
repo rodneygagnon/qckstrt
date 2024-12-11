@@ -60,6 +60,14 @@ export class UsersResolver {
     return userUpdated;
   }
 
+  @Mutation(() => Boolean)
+  @Roles(Role.Admin)
+  deleteUser(
+    @Args({ name: 'id', type: () => ID }) id: string,
+  ): Promise<boolean> {
+    return this.usersService.delete(id);
+  }
+
   @Query(() => [User])
   @Roles(Role.Admin)
   getUsers(): Promise<User[] | null> {

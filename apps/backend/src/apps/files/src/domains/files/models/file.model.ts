@@ -1,9 +1,10 @@
 import { Field, ID, ObjectType } from '@nestjs/graphql';
 
 import { User } from './user.model';
+import { IFile } from 'src/interfaces/file.interface';
 
 @ObjectType()
-export class File {
+export class File implements IFile {
   @Field(() => ID)
   userId!: string;
 
