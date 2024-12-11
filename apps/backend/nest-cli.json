@@ -47,13 +47,13 @@
         "tsConfigPath": "src/apps/users/tsconfig.app.json"
       }
     },
-    "posts": {
+    "files": {
       "type": "application",
-      "root": "src/apps/posts",
+      "root": "src/apps/files",
       "entryFile": "main",
-      "sourceRoot": "src/apps/posts/src",
+      "sourceRoot": "src/apps/files/src",
       "compilerOptions": {
-        "tsConfigPath": "src/apps/posts/tsconfig.app.json"
+        "tsConfigPath": "src/apps/files/tsconfig.app.json"
       }
     },
     "api": {

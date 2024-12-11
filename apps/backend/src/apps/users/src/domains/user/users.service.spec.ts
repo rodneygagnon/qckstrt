@@ -13,7 +13,7 @@ import { AuthService } from '../auth/auth.service';
 import { UsersService } from './users.service';
 import { User } from 'src/apps/users/src/domains/user/models/user.model';
 
-import { users, createUserDto, updateUserDto } from '../data.spec';
+import { users, createUserDto, updateUserDto } from '../../../../data.spec';
 
 describe('UsersService', () => {
   let userRepo: Repository<User>;
@@ -215,5 +215,56 @@ describe('UsersService', () => {
     expect(userRepo.findOne).toHaveBeenCalledWith({
       where: { email: users[0].email },
     });
+  });
+
+  it('should delete a user by its id', async () => {
+    userRepo.findOne = jest.fn().mockImplementation((options: any) => {
+      return users.find((user) => user.id === options.where.id);
+    });
+    userRepo.delete = jest.fn().mockImplementation((options: any) => {
+      return Promise.resolve(true);
+    });
+    authService.deleteUser = jest.fn().mockImplementation((email: string) => {
+      return Promise.resolve(true);
+    });
+
+    expect(await usersService.delete(users[0].id)).toBe(true);
+    expect(userRepo.findOne).toHaveBeenCalledWith({
+      where: { id: users[0].id },
+    });
+    expect(userRepo.delete).toHaveBeenCalledWith({ id: users[0].id });
+    expect(authService.deleteUser).toHaveBeenCalledTimes(1);
+  });
+
+  it('should fail to delete an unknown user', async () => {
+    userRepo.findOne = jest.fn().mockImplementation((options: any) => {
+      return null;
+    });
+
+    expect(await usersService.delete(users[0].id)).toBe(false);
+    expect(userRepo.findOne).toHaveBeenCalledWith({
+      where: { id: users[0].id },
+    });
+    expect(userRepo.delete).toHaveBeenCalledTimes(0);
+    expect(authService.deleteUser).toHaveBeenCalledTimes(0);
+  });
+
+  it('should fail to delete a user due to AWS Cognito error', async () => {
+    userRepo.findOne = jest.fn().mockImplementation((options: any) => {
+      return users.find((user) => user.id === options.where.id);
+    });
+    authService.deleteUser = jest.fn().mockImplementation((email: string) => {
+      return Promise.reject(false);
+    });
+
+    try {
+      await usersService.delete(users[0].id);
+    } catch (error) {
+      expect(userRepo.findOne).toHaveBeenCalledWith({
+        where: { id: users[0].id },
+      });
+      expect(userRepo.delete).toHaveBeenCalledTimes(0);
+      expect(authService.deleteUser).toHaveBeenCalledTimes(1);
+    }
   });
 });

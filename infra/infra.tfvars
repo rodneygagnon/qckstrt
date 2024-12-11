@@ -94,12 +94,12 @@ repositories = {
     platform = "linux/amd64",
     image_tag = "latest"
   },
-  "posts" = {
+  "files" = {
     image_tag_mutability = "MUTABLE",
     scan_on_push = true,
     expiration_after_days = 5,
     base_dir = "apps/backend",
-    dockerfile = "docker/Dockerfile.posts",
+    dockerfile = "docker/Dockerfile.files",
     platform = "linux/amd64",
     image_tag = "latest"
   }

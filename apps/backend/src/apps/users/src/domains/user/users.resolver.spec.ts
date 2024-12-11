@@ -5,7 +5,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { UsersResolver } from './users.resolver';
 import { UsersService } from './users.service';
 
-import { users, createUserDto, updateUserDto } from '../data.spec';
+import { users, createUserDto, updateUserDto } from '../../../../data.spec';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -84,6 +84,15 @@ describe('UsersResolver', () => {
       expect(error.message).toEqual('Failed user update!');
       expect(usersService.update).toHaveBeenCalledTimes(1);
     }
+  });
+
+  it('should delete a user by its id', async () => {
+    usersService.delete = jest.fn().mockImplementation((id: string) => {
+      return Promise.resolve(true);
+    });
+
+    expect(await resolver.deleteUser(users[0].id)).toBe(true);
+    expect(usersService.delete).toHaveBeenCalledWith(users[0].id);
   });
 
   it('should query all users', () => {

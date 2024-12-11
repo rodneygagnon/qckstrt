@@ -10,14 +10,15 @@ COPY ./package.json ./
 COPY ./tsconfig.* ./
 COPY ./src/common ./src/common
 COPY ./src/config ./src/config
+COPY ./src/db ./src/db
 COPY ./src/interfaces ./src/interfaces
 COPY ./src/permissions ./src/permissions
 COPY ./src/providers ./src/providers
-COPY ./src/apps/posts ./src/apps/posts
+COPY ./src/apps/files ./src/apps/files
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --lockfile=false --ignore-workspace
 
-RUN pnpm build:posts
+RUN pnpm build:files
 
 ### Run the project ###
 FROM base AS runner
@@ -32,4 +33,4 @@ COPY --from=builder /usr/src/app/package.json ./
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/dist ./
 
-CMD [ "node", "apps/posts/src/main" ]
+CMD [ "node", "apps/files/src/main" ]

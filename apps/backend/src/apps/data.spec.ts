@@ -1,9 +1,9 @@
-import { CreateUserDto } from './user/dto/create-user.dto';
-import { UpdateUserDto } from './user/dto/update-user.dto';
-import { RegisterUserDto } from './auth/dto/register-user.dto';
-import { LoginUserDto } from './auth/dto/login-user.dto';
-import { ChangePasswordDto } from './auth/dto/change-password.dto';
-import { ConfirmForgotPasswordDto } from './auth/dto/confirm-forgot-password.dto';
+import { CreateUserDto } from './users/src/domains/user/dto/create-user.dto';
+import { UpdateUserDto } from './users/src/domains/user/dto/update-user.dto';
+import { RegisterUserDto } from './users/src/domains/auth/dto/register-user.dto';
+import { LoginUserDto } from './users/src/domains/auth/dto/login-user.dto';
+import { ChangePasswordDto } from './users/src/domains/auth/dto/change-password.dto';
+import { ConfirmForgotPasswordDto } from './users/src/domains/auth/dto/confirm-forgot-password.dto';
 
 // User Module Test Data
 export const users = [
@@ -66,6 +66,21 @@ export const confirmForgotPasswordDto: ConfirmForgotPasswordDto = {
   confirmationCode: 'MyConfirmationCode',
   password: 'MyNewP2$$w0rd!',
 };
+
+export const files = [
+  {
+    userId: 'a',
+    filename: 'file1-a.pdf',
+    size: 12345,
+    lastModified: new Date(),
+  },
+  {
+    userId: 'a',
+    filename: 'file2-b.pdf',
+    size: 54321,
+    lastModified: new Date(),
+  },
+];
 
 describe('User Data', () => {
   it('should define all users', async () => {

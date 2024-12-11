@@ -1,31 +1,31 @@
 # NESTJS Posts Microservice
-resource "kubectl_manifest" "nestjs_posts_deployment" {
+resource "kubectl_manifest" "nestjs_files_deployment" {
   yaml_body = <<-YAML
     apiVersion: apps/v1
     kind: Deployment
     metadata:
-      name: nestjs-posts
+      name: nestjs-files
       namespace: ${var.namespace}
       labels:
-        app: nestjs-posts
+        app: nestjs-files
         node: fargate
         env: "${var.project}-${var.stage}"
-        project: "${var.project}-${var.stage}-posts"
+        project: "${var.project}-${var.stage}-files"
         version: v1
     spec:
       replicas: 2
       selector:
         matchLabels:
-          app: nestjs-posts
+          app: nestjs-files
       template:
         metadata:
           labels:
-            app: nestjs-posts
+            app: nestjs-files
             node: fargate
         spec:
           containers:
-          - name: nestjs-posts-container
-            image: "${local.ecr_reg}/${var.project}-${var.stage}-posts:latest"
+          - name: nestjs-files-container
+            image: "${local.ecr_reg}/${var.project}-${var.stage}-files:latest"
             env:
               - name: PORT
                 value: "8080"
@@ -38,17 +38,17 @@ resource "kubectl_manifest" "nestjs_posts_deployment" {
                 valueFrom:
                   configMapKeyRef:
                     name: ${var.namespace}
-                    key: POSTS_APPLICATION
+                    key: FILES_APPLICATION
               - name: VERSION
                 valueFrom:
                   configMapKeyRef:
                     name: ${var.namespace}
-                    key: POSTS_VERSION
+                    key: FILES_VERSION
               - name: DESCRIPTION
                 valueFrom:
                   configMapKeyRef:
                     name: ${var.namespace}
-                    key: POSTS_DESCRIPTION
+                    key: FILES_DESCRIPTION
             ports:
               - containerPort: 8080
                 protocol: TCP
@@ -56,23 +56,23 @@ resource "kubectl_manifest" "nestjs_posts_deployment" {
 YAML
 }
 
-resource "kubectl_manifest" "nestjs_posts_service" {
+resource "kubectl_manifest" "nestjs_files_service" {
   yaml_body = <<-YAML
     apiVersion: v1
     kind: Service
     metadata:
-      name: nestjs-posts
+      name: nestjs-files
       namespace: ${var.namespace}
       labels:
-        app: nestjs-posts
+        app: nestjs-files
         env: ${var.namespace}
         node: fargate
-        project: "${var.project}-${var.stage}-posts"
+        project: "${var.project}-${var.stage}-files"
         version: v1
     spec:
       type: NodePort
       selector:
-        app: nestjs-posts
+        app: nestjs-files
       ports:
         - name: "8080"
           port: 8080

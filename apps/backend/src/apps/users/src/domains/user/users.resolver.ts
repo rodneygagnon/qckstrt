@@ -17,7 +17,6 @@ import { AuthGuard } from 'src/common/guards/auth.guard';
 
 import { Role } from 'src/common/enums/role.enum';
 import { Roles } from 'src/common/decorators/roles.decorator';
-// import { AppAbility, CaslPermissions } from 'src/providers/auth/casl.permission';
 import { Action } from 'src/common/enums/action.enum';
 import { Permissions } from 'src/common/decorators/permissions.decorator';
 
@@ -30,7 +29,7 @@ export class UsersResolver {
 
   @Mutation(() => User)
   async createUser(
-    @Args('CreateUserDto') createUserDto: CreateUserDto,
+    @Args('createUserDto') createUserDto: CreateUserDto,
   ): Promise<User | null> {
     let createdUser: User | null;
     try {
@@ -50,7 +49,7 @@ export class UsersResolver {
   })
   async updateUser(
     @Args({ name: 'id', type: () => ID }) id: string,
-    @Args('UpdateUserDto') updateUserDto: UpdateUserDto,
+    @Args('updateUserDto') updateUserDto: UpdateUserDto,
   ): Promise<boolean> {
     let userUpdated: boolean;
     try {
@@ -59,6 +58,14 @@ export class UsersResolver {
       throw new UserInputError(error.message);
     }
     return userUpdated;
+  }
+
+  @Mutation(() => Boolean)
+  @Roles(Role.Admin)
+  deleteUser(
+    @Args({ name: 'id', type: () => ID }) id: string,
+  ): Promise<boolean> {
+    return this.usersService.delete(id);
   }
 
   @Query(() => [User])

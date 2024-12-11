@@ -10,7 +10,7 @@ import {
   confirmForgotPasswordDto,
   loginUserDto,
   registerUserDto,
-} from '../data.spec';
+} from '../../../../data.spec';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
