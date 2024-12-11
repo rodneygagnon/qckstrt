@@ -19,7 +19,7 @@ export class AuthResolver {
 
   @Mutation(() => Boolean)
   async registerUser(
-    @Args('RegisterUserDto') registerUserDto: RegisterUserDto,
+    @Args('registerUserDto') registerUserDto: RegisterUserDto,
   ): Promise<boolean> {
     let userRegistered: string;
     try {
@@ -32,7 +32,7 @@ export class AuthResolver {
 
   @Mutation(() => Auth)
   async loginUser(
-    @Args('LoginUserDto') loginUserDto: LoginUserDto,
+    @Args('loginUserDto') loginUserDto: LoginUserDto,
   ): Promise<Auth> {
     let auth: Auth;
     try {
@@ -51,7 +51,7 @@ export class AuthResolver {
     conditions: { id: '{{ id }}' },
   })
   async changePassword(
-    @Args('ChangePasswordDto') changePasswordDto: ChangePasswordDto,
+    @Args('changePasswordDto') changePasswordDto: ChangePasswordDto,
   ): Promise<boolean> {
     let passwordUpdated: boolean;
     try {
@@ -70,7 +70,7 @@ export class AuthResolver {
 
   @Mutation(() => Boolean)
   async confirmForgotPassword(
-    @Args('ConfirmForgotPasswordDto')
+    @Args('confirmForgotPasswordDto')
     confirmForgotPasswordDto: ConfirmForgotPasswordDto,
   ): Promise<boolean> {
     let passwordUpdated: boolean;

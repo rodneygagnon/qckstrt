@@ -9,7 +9,7 @@ frontend_nginx := $(project)-$(stage)-nginx
 
 backend_api := $(project)-$(stage)-api
 backend_users := $(project)-$(stage)-users
-backend_posts := $(project)-$(stage)-posts
+backend_files := $(project)-$(stage)-files
 
 image_tag = latest
 
@@ -57,6 +57,6 @@ push-backend:
 	docker tag $(backend_users):$(image_tag) $(aws_account).dkr.ecr.$(aws_region).amazonaws.com/$(backend_users):$(image_tag)
 	docker push $(aws_account).dkr.ecr.$(aws_region).amazonaws.com/$(backend_users):$(image_tag)
 
-	docker tag $(backend_posts):$(image_tag) $(aws_account).dkr.ecr.$(aws_region).amazonaws.com/$(backend_posts):$(image_tag)
-	docker push $(aws_account).dkr.ecr.$(aws_region).amazonaws.com/$(backend_posts):$(image_tag)
+	docker tag $(backend_files):$(image_tag) $(aws_account).dkr.ecr.$(aws_region).amazonaws.com/$(backend_files):$(image_tag)
+	docker push $(aws_account).dkr.ecr.$(aws_region).amazonaws.com/$(backend_files):$(image_tag)
 

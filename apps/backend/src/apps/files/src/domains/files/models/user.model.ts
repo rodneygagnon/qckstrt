@@ -1,5 +1,5 @@
 import { Directive, Field, ID, ObjectType } from '@nestjs/graphql';
-import { Post } from './post.model';
+import { File } from './file.model';
 
 @ObjectType()
 @Directive('@extends')
@@ -9,6 +9,6 @@ export class User {
   @Directive('@external')
   id: string;
 
-  @Field(() => [Post])
-  posts?: Post[];
+  @Field(() => [File])
+  files?: File[];
 }

@@ -5,7 +5,7 @@ import { createMock } from '@golevelup/ts-jest';
 import { UsersResolver } from './users.resolver';
 import { UsersService } from './users.service';
 
-import { users, createUserDto, updateUserDto } from '../data.spec';
+import { users, createUserDto, updateUserDto } from '../../../../data.spec';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
