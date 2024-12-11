@@ -26,11 +26,11 @@ x-users-config: &users-env
   DESCRIPTION: ${USERS_DESCRIPTION}
   PORT: 8080
 
-x-posts-config: &posts-env
+x-files-config: &files-env
   <<: *apps-env
-  APPLICATION: ${POSTS_APPLICATION}
-  VERSION: ${POSTS_VERSION}
-  DESCRIPTION: ${POSTS_DESCRIPTION}
+  APPLICATION: ${FILES_APPLICATION}
+  VERSION: ${FILES_VERSION}
+  DESCRIPTION: ${FILES_DESCRIPTION}
   PORT: 8080
 
 networks:
@@ -75,23 +75,23 @@ services:
     ports:
       - "${USERS_PORT}:8080"
     restart: always
-  posts:
+  files:
     build:
       context: ..
       platforms:
         - "linux/amd64"
-      dockerfile: docker/Dockerfile.${POSTS_APPLICATION}
-    image: ${PROJECT}-${NODE_ENV}-${POSTS_APPLICATION}:latest
-    container_name: nestjs-${POSTS_APPLICATION}
+      dockerfile: docker/Dockerfile.${FILES_APPLICATION}
+    image: ${PROJECT}-${NODE_ENV}-${FILES_APPLICATION}:latest
+    container_name: nestjs-${FILES_APPLICATION}
     platform: "linux/amd64"
     environment:
-      <<: *posts-env
+      <<: *files-env
     networks:
       - backend
     volumes:
       - ~/.aws/:/root/.aws:ro
     ports:
-      - "${POSTS_PORT}:8080"
+      - "${FILES_PORT}:8080"
     restart: always
 
   database:

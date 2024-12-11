@@ -14,6 +14,13 @@ export interface IDBConfig {
   database: string;
 }
 
+export interface IFileConfig {
+  maxFieldSize: number;
+  maxFileSize: number;
+  maxFiles: number;
+  bucket: string;
+}
+
 export interface IAppConfig {
   project: string;
   application: string;
@@ -24,6 +31,7 @@ export interface IAppConfig {
   apiKeys: Map<string, string>;
   auth: IAuthConfig;
   db: IDBConfig;
+  file: IFileConfig;
 }
 
 export default async (): Promise<IAppConfig> => {
@@ -61,6 +69,11 @@ export default async (): Promise<IAppConfig> => {
     );
   }
 
+  const maxFieldSize = configService.get('FILE_MAXFIELDSIZE') || 10000000; // 1MB
+  const maxFileSize = configService.get('FILE_MAXFILESIZE') || 100000000; // 10MB
+  const maxFiles = configService.get('FILE_MAXFILES') || 10; // 10 Files
+  const bucket = configService.get('FILE_BUCKET') || 'qckstrt-dev-bucket';
+
   // Get Secrets. They should only be found in the .env in local dev environments.
   const envSecrets = configService.get('SECRETS');
   const secrets = JSON.parse(
@@ -88,6 +101,12 @@ export default async (): Promise<IAppConfig> => {
       username: dbUsername,
       password: dbPassword,
       database: dbDatabase,
+    },
+    file: {
+      maxFieldSize,
+      maxFileSize,
+      maxFiles,
+      bucket,
     },
   });
 };

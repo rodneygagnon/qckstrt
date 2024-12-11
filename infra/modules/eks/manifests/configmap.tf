@@ -17,7 +17,7 @@ resource "kubectl_manifest" "configmap" {
       API_APPLICATION: 'api'
       API_VERSION: '0.0.1'
       API_DESCRIPTION: 'API Gateway'
-      API_MICROSERVICES: '[{ "name": "users", "url": "http://nestjs-users:8080/graphql" },{ "name": "posts", "url": "http://nestjs-posts:8080/graphql" }]'
+      API_MICROSERVICES: '[{ "name": "users", "url": "http://nestjs-users:8080/graphql" },{ "name": "files", "url": "http://nestjs-files:8080/graphql" }]'
 
       # GraphQL User Microservice
       USERS_PORT: '3002'
@@ -25,10 +25,10 @@ resource "kubectl_manifest" "configmap" {
       USERS_VERSION: '0.0.1'
       USERS_DESCRIPTION: 'Users Microservice'
 
-      # GraphQL Post Microservice
-      POSTS_PORT: '3003'
-      POSTS_APPLICATION: 'posts'
-      POSTS_VERSION: '0.0.1'
-      POSTS_DESCRIPTION: 'Posts Microservice'
+      # GraphQL Files Microservice
+      FILES_PORT: '3003'
+      FILES_APPLICATION: 'files'
+      FILES_VERSION: '0.0.1'
+      FILES_DESCRIPTION: 'Files Microservice'
 YAML
 }

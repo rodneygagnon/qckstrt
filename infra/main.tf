@@ -95,6 +95,13 @@ module "secrets" {
   userPoolId = module.cognito.userPoolId
 }
 
+module "s3" {
+  source = "./modules/s3"
+
+  project = var.project
+  stage = var.stage
+}
+
 ## EKS
 # module "eks" {
 #   source = "./modules/eks"

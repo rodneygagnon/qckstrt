@@ -60,10 +60,6 @@ const handleAuth = ({ req }: any) => {
             subgraphs: JSON.parse(
               configService.get('MICROSERVICES') as string | '',
             ),
-            // [
-            //   { name: 'users', url: 'http://users:3002/graphql' },
-            //   { name: 'posts', url: 'http://posts:3003/graphql' },
-            // ],
           }),
         },
       }),

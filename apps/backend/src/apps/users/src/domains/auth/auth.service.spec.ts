@@ -5,10 +5,6 @@ import { createMock } from '@golevelup/ts-jest';
 import { AuthService } from './auth.service';
 
 import { UsersService } from '../user/users.service';
-import { User } from '../user/models/user.model';
-
-import { LoginUserDto } from './dto/login-user.dto';
-import { RegisterUserDto } from './dto/register-user.dto';
 
 import {
   users,
@@ -16,7 +12,7 @@ import {
   registerUserDto,
   changePasswordDto,
   confirmForgotPasswordDto,
-} from '../data.spec';
+} from '../../../../data.spec';
 import { AWSCognito } from 'src/providers/auth/aws.cognito';
 
 describe('AuthService', () => {

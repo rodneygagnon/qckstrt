@@ -13,7 +13,7 @@ import { AuthService } from '../auth/auth.service';
 import { UsersService } from './users.service';
 import { User } from 'src/apps/users/src/domains/user/models/user.model';
 
-import { users, createUserDto, updateUserDto } from '../data.spec';
+import { users, createUserDto, updateUserDto } from '../../../../data.spec';
 
 describe('UsersService', () => {
   let userRepo: Repository<User>;

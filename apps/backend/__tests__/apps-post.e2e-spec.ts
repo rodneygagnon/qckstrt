@@ -3,21 +3,21 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { INestApplication } from '@nestjs/common';
 
-import { AppModule } from '../src/apps/posts/src/app.module';
+import { AppModule } from '../src/apps/files/src/app.module';
 
-import { Post } from '../src/apps/posts/src/domains/posts/models/post.model';
-import { PostsService } from 'src/apps/posts/src/domains/posts/posts.service';
+import { File } from '../src/apps/files/src/domains/files/models/file.model';
+import { FilesService } from 'src/apps/files/src/domains/files/files.service';
 
-const posts: Post[] = [
-  { authorId: '1', id: 1, title: 'Lorem Ipsum' },
-  { authorId: '1', id: 2, title: 'Foo' },
-  { authorId: '2', id: 3, title: 'Bar' },
-  { authorId: '2', id: 4, title: 'Hello World' },
+const files: File[] = [
+  { userId: '1', size: 1, filename: 'Lorem Ipsum', lastModified: new Date() },
+  { userId: '1', size: 2, filename: 'Foo', lastModified: new Date() },
+  { userId: '2', size: 3, filename: 'Bar', lastModified: new Date() },
+  { userId: '2', size: 4, filename: 'Hello World', lastModified: new Date() },
 ];
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
-  const postsService = { findAll: () => posts };
+  const filesService = { findAll: () => files };
 
   const setupEnv = () => {
     process.env.PROJECT = 'qckstrt-project';
@@ -43,8 +43,8 @@ describe('AppController (e2e)', () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(PostsService)
-      .useValue(postsService)
+      .overrideProvider(FilesService)
+      .useValue(filesService)
       .compile();
 
     app = moduleRef.createNestApplication();
