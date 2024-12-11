@@ -110,4 +110,26 @@ export class UsersService {
 
     return Promise.resolve(true);
   }
+
+  async delete(id: string): Promise<boolean> {
+    const user = await this.userRepo.findOne({ where: { id } });
+
+    if (user === null) {
+      return Promise.resolve(false);
+    }
+
+    try {
+      await this.authService.deleteUser(user.email);
+      await this.userRepo.delete({ id: user.id });
+    } catch (error) {
+      this.logger.warn(
+        `userRepo error deleting (${JSON.stringify(user)}): `,
+        error,
+      );
+
+      throw error;
+    }
+
+    return Promise.resolve(true);
+  }
 }

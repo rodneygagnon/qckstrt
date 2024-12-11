@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   AdminAddUserToGroupCommand,
   AdminConfirmSignUpCommand,
+  AdminDeleteUserCommand,
   AuthFlowType,
   ChangePasswordCommand,
   CognitoIdentityProviderClient,
@@ -71,6 +72,17 @@ export class AWSCognito {
       Username: username,
     });
     await this.client.send(confirmCommand);
+  }
+
+  async deleteUser(username: string): Promise<boolean> {
+    const deleteCommand = new AdminDeleteUserCommand({
+      UserPoolId: this.authConfig.userPoolId,
+      Username: username,
+    });
+
+    await this.client.send(deleteCommand);
+
+    return Promise.resolve(true);
   }
 
   async authenticateUser(email: string, password: string): Promise<Auth> {
