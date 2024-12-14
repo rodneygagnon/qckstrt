@@ -1,23 +1,34 @@
 import { ConfigService } from '@nestjs/config';
 import { getSecrets } from '../providers/secrets';
+import { DBConnection, DBType } from 'src/common/enums/db.enums';
 
 export interface IAuthConfig {
   userPoolId: string;
   clientId: string;
 }
 
-export interface IDBConfig {
+export interface IDBLocalConfig {
+  type: DBType;
+  database: string;
   host: string;
   port: number;
   username: string;
   password: string;
+}
+
+export interface IDBRemoteConfig {
+  type: DBType;
   database: string;
+  secretArn: string;
+  resourceArn: number;
+}
+
+export interface IDBConfig {
+  connection: DBConnection;
+  config: IDBLocalConfig | IDBRemoteConfig;
 }
 
 export interface IFileConfig {
-  maxFieldSize: number;
-  maxFileSize: number;
-  maxFiles: number;
   bucket: string;
 }
 
@@ -42,6 +53,7 @@ export default async (): Promise<IAppConfig> => {
   const version = configService.get('VERSION');
   const description = configService.get('DESCRIPTION');
   const port = configService.get('PORT');
+
   const region = configService.get('AWS_REGION');
 
   if (
@@ -57,34 +69,15 @@ export default async (): Promise<IAppConfig> => {
     );
   }
 
-  const dbHost = configService.get('DB_HOST');
-  const dbPort = configService.get('DB_PORT');
-  const dbUsername = configService.get('DB_USERNAME');
-  const dbPassword = configService.get('DB_PASSWORD');
-  const dbDatabase = configService.get('DB_DATABASE');
-
-  if (!dbHost || !dbPort || !dbUsername || !dbPassword || !dbDatabase) {
-    throw new Error(
-      `Missing required database configuration: DB_HOST=${dbHost} DB_PORT=${dbPort} DB_USERNAME=${dbUsername} DB_PASSWORD=${dbPassword} DB_DATABASE=${dbDatabase}`,
-    );
-  }
-
-  const maxFieldSize = configService.get('FILE_MAXFIELDSIZE') || 10000000; // 1MB
-  const maxFileSize = configService.get('FILE_MAXFILESIZE') || 100000000; // 10MB
-  const maxFiles = configService.get('FILE_MAXFILES') || 10; // 10 Files
-  const bucket = configService.get('FILE_BUCKET') || 'qckstrt-dev-bucket';
-
-  // Get Secrets. They should only be found in the .env in local dev environments.
-  const envSecrets = configService.get('SECRETS');
   const secrets = JSON.parse(
-    envSecrets && envSecrets !== ''
-      ? envSecrets
-      : await getSecrets(project, configService.get('NODE_ENV') || 'dev'),
+    await getSecrets(configService.get('AWS_SECRETS') || ''),
   );
 
   if (!secrets) {
     throw new Error('Failed to access secrets');
   }
+
+  console.log('SECRETS:', secrets);
 
   return Promise.resolve({
     project,
@@ -95,18 +88,7 @@ export default async (): Promise<IAppConfig> => {
     region,
     apiKeys: new Map<string, string>(Object.entries(secrets.apiKeys)),
     auth: secrets.auth as IAuthConfig,
-    db: {
-      host: dbHost,
-      port: dbPort,
-      username: dbUsername,
-      password: dbPassword,
-      database: dbDatabase,
-    },
-    file: {
-      maxFieldSize,
-      maxFileSize,
-      maxFiles,
-      bucket,
-    },
+    db: secrets.db as IDBConfig,
+    file: secrets.file as IFileConfig,
   });
 };

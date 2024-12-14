@@ -4,6 +4,7 @@ import {
   AdminAddUserToGroupCommand,
   AdminConfirmSignUpCommand,
   AdminDeleteUserCommand,
+  AdminRemoveUserFromGroupCommand,
   AuthFlowType,
   ChangePasswordCommand,
   CognitoIdentityProviderClient,
@@ -15,6 +16,7 @@ import {
 
 import { Auth } from './models/auth.model';
 import { IAuthConfig } from 'src/config';
+import { Role } from 'src/common/enums/role.enum';
 
 @Injectable()
 export class AWSCognito {
@@ -57,11 +59,20 @@ export class AWSCognito {
     return Promise.resolve(signUpResponse.UserSub || 'unknown');
   }
 
-  async adminUser(username: string): Promise<void> {
+  async addToGroup(username: string, group: Role): Promise<void> {
     const groupCommand = new AdminAddUserToGroupCommand({
       UserPoolId: this.authConfig.userPoolId,
       Username: username,
-      GroupName: 'admins',
+      GroupName: group,
+    });
+    await this.client.send(groupCommand);
+  }
+
+  async removeFromGroup(username: string, group: Role): Promise<void> {
+    const groupCommand = new AdminRemoveUserFromGroupCommand({
+      UserPoolId: this.authConfig.userPoolId,
+      Username: username,
+      GroupName: group,
     });
     await this.client.send(groupCommand);
   }

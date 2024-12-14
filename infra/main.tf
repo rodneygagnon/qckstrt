@@ -102,6 +102,16 @@ module "s3" {
   stage = var.stage
 }
 
+module "rds" {
+  source = "./modules/rds"
+
+  project = var.project
+  stage = var.stage
+
+  vpc_id = module.vpc.vpc_id
+  subnet_ids = module.vpc.vpc_private_subnets
+}
+
 ## EKS
 # module "eks" {
 #   source = "./modules/eks"
