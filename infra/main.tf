@@ -93,6 +93,11 @@ module "secrets" {
   stage = var.stage
 
   userPoolId = module.cognito.userPoolId
+  userPoolClientId = module.cognito.userPoolClientId
+  fileBucket = module.s3.s3Bucket
+  database = module.rds.database
+  database_arn = module.rds.database_arn
+  database_secret = module.rds.database_secret
 }
 
 module "s3" {

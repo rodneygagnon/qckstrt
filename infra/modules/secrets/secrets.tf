@@ -14,6 +14,19 @@ locals {
     },
     auth = {
       userPoolId = var.userPoolId
+      clientId = var.userPoolClientId
+    },
+    file = {
+      bucket = var.fileBucket
+    },
+    db = {
+      connection = "remote",
+      config = {
+          type ="aurora-postgres",
+          database = var.database,
+          secretArn = var.database_secret,
+          resourceArn = var.database_arn
+      }
     }
   }
 }
