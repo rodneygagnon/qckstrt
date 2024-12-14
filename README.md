@@ -24,6 +24,7 @@ A NextJs / NestJs Full Stack project complete with AWS infrastructure.
 - [AWS ECR](https://aws.amazon.com/ecr/) - Amazon Elastic Container Registry
 - [AWS EKS](https://aws.amazon.com/eks/) - Amazon Elastic Kubernetes Service
 - [AWS Lambda](https://aws.amazon.com/lambda/) - Amazon Serverless Functions
+- [AWS Fargate](https://aws.amazon.com/fargate/) - Amazon Serverless Compute
 - [AWS CloudWatch](https://aws.amazon.com/cloudwatch/) - Amazon Cloud Watch Observability
 - [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) - Amazon Secrets Managmenent
 

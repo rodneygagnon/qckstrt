@@ -1,4 +1,4 @@
-import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import { Args, ID, Mutation, Resolver } from '@nestjs/graphql';
 import { AuthService } from './auth.service';
 import { LoginUserDto } from './dto/login-user.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
@@ -10,6 +10,8 @@ import { AuthGuard } from 'src/common/guards/auth.guard';
 
 import { Auth } from 'src/providers/auth/models/auth.model';
 import { Permissions } from 'src/common/decorators/permissions.decorator';
+import { Role } from 'src/common/enums/role.enum';
+import { Roles } from 'src/common/decorators/roles.decorator';
 import { Action } from 'src/common/enums/action.enum';
 import { ConfirmForgotPasswordDto } from './dto/confirm-forgot-password.dto';
 
@@ -82,5 +84,38 @@ export class AuthResolver {
       throw new UserInputError(error.message);
     }
     return passwordUpdated;
+  }
+
+  /** Administration */
+  @Mutation(() => Boolean)
+  @Roles(Role.Admin)
+  async confirmUser(
+    @Args({ name: 'id', type: () => ID }) id: string,
+  ): Promise<boolean> {
+    const result = await this.authService.confirmUser(id);
+    if (!result) throw new UserInputError('User not confirmed!');
+    return Promise.resolve(result);
+  }
+
+  @Mutation(() => Boolean)
+  @Roles(Role.Admin)
+  async addAdminPermission(
+    @Args({ name: 'id', type: () => ID }) id: string,
+  ): Promise<boolean> {
+    const result = await this.authService.addPermission(id, Role.Admin);
+    if (!result)
+      throw new UserInputError('Admin Permissions were not granted!');
+    return Promise.resolve(result);
+  }
+
+  @Mutation(() => Boolean)
+  @Roles(Role.Admin)
+  async removeAdminPermission(
+    @Args({ name: 'id', type: () => ID }) id: string,
+  ): Promise<boolean> {
+    const result = await this.authService.removePermission(id, Role.Admin);
+    if (!result)
+      throw new UserInputError('Admin Permissions were not revoked!');
+    return Promise.resolve(result);
   }
 }

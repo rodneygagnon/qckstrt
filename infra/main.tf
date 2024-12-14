@@ -93,6 +93,11 @@ module "secrets" {
   stage = var.stage
 
   userPoolId = module.cognito.userPoolId
+  userPoolClientId = module.cognito.userPoolClientId
+  fileBucket = module.s3.s3Bucket
+  database = module.rds.database
+  database_arn = module.rds.database_arn
+  database_secret = module.rds.database_secret
 }
 
 module "s3" {
@@ -100,6 +105,16 @@ module "s3" {
 
   project = var.project
   stage = var.stage
+}
+
+module "rds" {
+  source = "./modules/rds"
+
+  project = var.project
+  stage = var.stage
+
+  vpc_id = module.vpc.vpc_id
+  subnet_ids = module.vpc.vpc_private_subnets
 }
 
 ## EKS
