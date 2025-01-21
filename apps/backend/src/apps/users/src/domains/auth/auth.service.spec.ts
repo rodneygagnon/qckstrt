@@ -14,6 +14,7 @@ import {
   confirmForgotPasswordDto,
 } from '../../../../data.spec';
 import { AWSCognito } from 'src/providers/auth/aws.cognito';
+import { Role } from 'src/common/enums/role.enum';
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -77,7 +78,7 @@ describe('AuthService', () => {
       expect(error.message).toEqual('User already exists!');
       expect(usersService.findByEmail).toHaveBeenCalledTimes(1);
       expect(awsCognito.registerUser).toHaveBeenCalledTimes(1);
-      expect(awsCognito.adminUser).toHaveBeenCalledTimes(0);
+      expect(awsCognito.addToGroup).toHaveBeenCalledTimes(0);
       expect(awsCognito.confirmUser).toHaveBeenCalledTimes(0);
       expect(usersService.update).toHaveBeenCalledTimes(0);
     }
@@ -100,7 +101,7 @@ describe('AuthService', () => {
     } catch (error) {
       expect(usersService.findByEmail).toHaveBeenCalledTimes(1);
       expect(awsCognito.registerUser).toHaveBeenCalledTimes(1);
-      expect(awsCognito.adminUser).toHaveBeenCalledTimes(0);
+      expect(awsCognito.addToGroup).toHaveBeenCalledTimes(0);
       expect(awsCognito.confirmUser).toHaveBeenCalledTimes(0);
       expect(usersService.update).toHaveBeenCalledTimes(0);
     }
@@ -117,7 +118,7 @@ describe('AuthService', () => {
       expect(error.message).toContain('User does not exist!');
       expect(usersService.findByEmail).toHaveBeenCalledTimes(1);
       expect(awsCognito.registerUser).toHaveBeenCalledTimes(0);
-      expect(awsCognito.adminUser).toHaveBeenCalledTimes(0);
+      expect(awsCognito.addToGroup).toHaveBeenCalledTimes(0);
       expect(awsCognito.confirmUser).toHaveBeenCalledTimes(0);
       expect(usersService.update).toHaveBeenCalledTimes(0);
     }
@@ -261,5 +262,97 @@ describe('AuthService', () => {
     ).toBe(true);
     expect(usersService.findByEmail).toHaveBeenCalledTimes(1);
     expect(awsCognito.confirmForgotPassword).toHaveBeenCalledTimes(0);
+  });
+
+  it('should confirm user', async () => {
+    usersService.findById = jest.fn().mockImplementation((id: string) => {
+      return users.find((user) => user.id === id);
+    });
+    awsCognito.confirmUser = jest
+      .fn()
+      .mockImplementation((username: string) => {
+        return Promise.resolve(true);
+      });
+
+    expect(await authService.confirmUser(users[0].id)).toBe(true);
+    expect(usersService.findById).toHaveBeenCalledTimes(1);
+    expect(awsCognito.confirmUser).toHaveBeenCalledTimes(1);
+  });
+
+  it('should fail confirm an unknown user', async () => {
+    usersService.findById = jest.fn().mockImplementation((id: string) => {
+      return null;
+    });
+
+    expect(await authService.confirmUser(users[0].id)).toBe(false);
+    expect(usersService.findById).toHaveBeenCalledTimes(1);
+    expect(awsCognito.confirmUser).toHaveBeenCalledTimes(0);
+  });
+
+  it('should add permissions', async () => {
+    usersService.findById = jest.fn().mockImplementation((id: string) => {
+      return users.find((user) => user.id === id);
+    });
+    awsCognito.addToGroup = jest
+      .fn()
+      .mockImplementation((username: string, group: Role) => {
+        return Promise.resolve(true);
+      });
+
+    expect(await authService.addPermission(users[0].id, Role.Admin)).toBe(true);
+    expect(usersService.findById).toHaveBeenCalledTimes(1);
+    expect(awsCognito.addToGroup).toHaveBeenCalledTimes(1);
+  });
+
+  it('should fail to add permissions for unknown user', async () => {
+    usersService.findById = jest.fn().mockImplementation((id: string) => {
+      return null;
+    });
+
+    expect(await authService.addPermission(users[0].id, Role.Admin)).toBe(
+      false,
+    );
+    expect(usersService.findById).toHaveBeenCalledTimes(1);
+    expect(awsCognito.addToGroup).toHaveBeenCalledTimes(0);
+  });
+
+  it('should remove permissions', async () => {
+    usersService.findById = jest.fn().mockImplementation((id: string) => {
+      return users.find((user) => user.id === id);
+    });
+    awsCognito.removeFromGroup = jest
+      .fn()
+      .mockImplementation((username: string, group: Role) => {
+        return Promise.resolve(true);
+      });
+
+    expect(await authService.removePermission(users[0].id, Role.Admin)).toBe(
+      true,
+    );
+    expect(usersService.findById).toHaveBeenCalledTimes(1);
+    expect(awsCognito.removeFromGroup).toHaveBeenCalledTimes(1);
+  });
+
+  it('should fail to remove permissions for unknown user', async () => {
+    usersService.findById = jest.fn().mockImplementation((id: string) => {
+      return null;
+    });
+
+    expect(await authService.removePermission(users[0].id, Role.Admin)).toBe(
+      false,
+    );
+    expect(usersService.findById).toHaveBeenCalledTimes(1);
+    expect(awsCognito.removeFromGroup).toHaveBeenCalledTimes(0);
+  });
+
+  it('should delete a user', async () => {
+    awsCognito.deleteUser = jest
+      .fn()
+      .mockImplementation((username: string, group: Role) => {
+        return Promise.resolve(true);
+      });
+
+    expect(await authService.deleteUser(users[0].email)).toBe(true);
+    expect(awsCognito.deleteUser).toHaveBeenCalledTimes(1);
   });
 });

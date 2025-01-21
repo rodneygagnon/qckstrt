@@ -7,3 +7,8 @@ variable "stage" {
   type        = string
   description = "infrastructure stage (ex. dev, stg, uat, prd, ...)"
 }
+
+variable "domain" {
+  type = string
+  description = "Domain name"
+}

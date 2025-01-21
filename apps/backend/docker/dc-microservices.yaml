@@ -3,13 +3,8 @@ x-apps-config: &apps-env
   PROJECT: ${PROJECT:-qckstrt}
   NODE_ENV: ${NODE_ENV:-dev}
   AWS_PROFILE: ${AWS_PROFILE:-default}
-  AWS_REGION: ${AWS_REGION:-us-west-1}
-  SECRETS: ${SECRETS}
-  DB_HOST: ${DB_HOST}
-  DB_PORT: ${DB_PORT}
-  DB_USERNAME: ${DB_USERNAME}
-  DB_PASSWORD: ${DB_PASSWORD}
-  DB_DATABASE: ${DB_DATABASE}
+  AWS_REGION: ${AWS_REGION:-us-west-2}
+  AWS_SECRETS: ${AWS_SECRETS}
 
 x-api-config: &api-env
   <<: *apps-env
@@ -95,14 +90,16 @@ services:
     restart: always
 
   database:
-    image: postgres:latest
+    # image: postgres:latest
+    image: ankane/pgvector
     container_name: qckstrt_db
     ports:
-      - ${DB_PORT}:${DB_PORT}
+      - 5432:5432
     environment:
-      POSTGRES_DB: ${DB_DATABASE:-qckstrt_db}
+      # <<: *api-env
+      POSTGRES_DB: qckstrt
       # POSTGRES_USER: ${DB_USER:-qckstrt_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-qckstrt_password}
+      POSTGRES_PASSWORD: my_password
     restart: on-failure
     stdin_open: true
     tty: true

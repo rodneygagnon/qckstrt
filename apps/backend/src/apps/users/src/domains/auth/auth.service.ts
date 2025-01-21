@@ -8,6 +8,7 @@ import { UsersService } from '../user/users.service';
 import { AWSCognito } from 'src/providers/auth/aws.cognito';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ConfirmForgotPasswordDto } from './dto/confirm-forgot-password.dto';
+import { Role } from 'src/common/enums/role.enum';
 
 @Injectable()
 export class AuthService {
@@ -50,7 +51,7 @@ export class AuthService {
     }
 
     if (admin) {
-      await this.awsCognito.adminUser(username);
+      await this.awsCognito.addToGroup(username, Role.Admin);
     }
 
     if (confirm) {
@@ -63,8 +64,44 @@ export class AuthService {
     return userId;
   }
 
-  async deleteUser(email: string): Promise<boolean> {
-    return this.awsCognito.deleteUser(email);
+  async confirmUser(id: string): Promise<boolean> {
+    const user = await this.usersService.findById(id);
+
+    if (user === null) {
+      return Promise.resolve(false);
+    }
+
+    await this.awsCognito.confirmUser(user.email);
+
+    return Promise.resolve(true);
+  }
+
+  async addPermission(id: string, role: Role): Promise<boolean> {
+    const user = await this.usersService.findById(id);
+
+    if (user === null) {
+      return Promise.resolve(false);
+    }
+
+    await this.awsCognito.addToGroup(user.email, role);
+
+    return Promise.resolve(true);
+  }
+
+  async removePermission(id: string, role: Role): Promise<boolean> {
+    const user = await this.usersService.findById(id);
+
+    if (user === null) {
+      return Promise.resolve(false);
+    }
+
+    await this.awsCognito.removeFromGroup(user.email, role);
+
+    return Promise.resolve(true);
+  }
+
+  async deleteUser(username: string): Promise<boolean> {
+    return this.awsCognito.deleteUser(username);
   }
 
   async authenticateUser(loginUserDto: LoginUserDto): Promise<Auth> {

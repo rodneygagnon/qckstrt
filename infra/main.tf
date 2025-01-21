@@ -44,14 +44,14 @@ module "ecr" {
   image_tag = each.value.image_tag
 }
 
-module "docker" {
-  source = "./modules/docker"
+# module "docker" {
+#   source = "./modules/docker"
 
-  project = var.project
-  stage = var.stage
+#   project = var.project
+#   stage = var.stage
 
-  repositories = var.repositories
-}
+#   repositories = var.repositories
+# }
 
 ## SES
 module "ses" {
@@ -68,7 +68,7 @@ module "ses" {
   email_identity = var.email_identity
 }
 
-## SES
+## Cognito
 module "cognito" {
   source = "./modules/cognito"
  
@@ -86,6 +86,26 @@ module "cognito" {
   schema_attributes = var.schema_attributes
 }
 
+module "s3" {
+  source = "./modules/s3"
+
+  project = var.project
+  stage = var.stage
+
+  domain = var.domain_name
+}
+
+# module "rds" {
+#   source = "./modules/rds"
+
+#   project = var.project
+#   stage = var.stage
+#   region = var.region
+
+#   vpc_id = module.vpc.vpc_id
+#   subnet_ids = module.vpc.vpc_private_subnets
+# }
+
 module "secrets" {
   source = "./modules/secrets"
 
@@ -93,13 +113,20 @@ module "secrets" {
   stage = var.stage
 
   userPoolId = module.cognito.userPoolId
-}
+  userPoolClientId = module.cognito.userPoolClientId
 
-module "s3" {
-  source = "./modules/s3"
+  fileBucket = module.s3.s3Bucket
+  fileSQSUrl = module.s3.sqsBucketUrl
+  fileSNSTopicArn = module.s3.snsTopicArn
+  fileSNSRoleArn = module.s3.snsRoleArn
 
-  project = var.project
-  stage = var.stage
+  # Remember this is temporary because we are working locally for a while and don't want to provision the database
+  database = "module.rds.database"
+  database_arn = "module.rds.database_arn"
+  database_secret = "module.rds.database_secret"
+
+  postgresql = var.postgresql
+  openai = var.openai
 }
 
 ## EKS
