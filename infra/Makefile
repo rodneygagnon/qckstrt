@@ -2,7 +2,7 @@ project := qckstrt
 stage := dev
 
 aws_account := $(shell aws sts get-caller-identity --query "Account" --output text)
-aws_region := us-west-1
+aws_region := us-west-2
 
 frontend_nextjs := $(project)-$(stage)-nextjs
 frontend_nginx := $(project)-$(stage)-nginx
@@ -27,14 +27,14 @@ images-backend:
 # 2. Setup AWS Cloud
 cloud-setup:
 	terraform init;
-	terraform plan -var-file=./infra.tfvars -var project=$(project) -var stage=$(stage) -out terraform.tfplan;
+	terraform plan -var-file=./$(project).tfvars -var project=$(project) -var stage=$(stage) -out terraform.tfplan;
 
 cloud: cloud-setup
-	terraform apply -auto-approve -var-file=./infra.tfvars -var project=$(project) -var stage=$(stage)
+	terraform apply -auto-approve -var-file=./$(project).tfvars -var project=$(project) -var stage=$(stage)
 
 # 2. Destroy AWS Cloud
 deform:
-	terraform destroy -auto-approve -var-file=./infra.tfvars -var project="$(project)" -var stage="$(stage)"
+	terraform destroy -auto-approve -var-file=./$(project).tfvars -var project="$(project)" -var stage="$(stage)"
 
 # EXTRA: If the AWS cloud has already been formed, use the following to push (and deploy) new (dev) images
 push-all: push-frontend push-backend

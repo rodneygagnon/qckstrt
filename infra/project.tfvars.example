@@ -1,6 +1,6 @@
 
-profile               = "rmg-west"
-region                = "us-west-1"
+profile               = "your-project-name"
+region                = "your-aws-region"
 
 # VPC Configuration
 vpc_cidr              = "10.0.0.0/16"
@@ -8,11 +8,11 @@ instance_tenancy      = "default"
 enable_dns_support    = true
 enable_dns_hostnames  = true
 
-domain_name           = "qckstrt.com"
+domain_name           = "your-domain.com"
 
 # SES
 mail_from_subdomain   = "mail"
-email_identity        = "rodneygagnon@mac.com"
+email_identity        = "your-email@your-domain.com"
 
 # Elastic IP
 domain_eip = "vpc"
@@ -70,7 +70,7 @@ repositories = {
   "nextjs" = {
     image_tag_mutability = "MUTABLE",
     scan_on_push = true,
-    expiration_after_days = 5,
+    expiration_after_days = 7,
     base_dir = "apps/frontend",
     dockerfile = "Dockerfile",
     platform = "linux/amd64",
@@ -79,7 +79,7 @@ repositories = {
   "api" = {
     image_tag_mutability = "MUTABLE",
     scan_on_push = true,
-    expiration_after_days = 5,
+    expiration_after_days = 7,
     base_dir = "apps/backend",
     dockerfile = "docker/Dockerfile.api",
     platform = "linux/amd64",
@@ -88,7 +88,7 @@ repositories = {
   "users" = {
     image_tag_mutability = "MUTABLE",
     scan_on_push = true,
-    expiration_after_days = 5,
+    expiration_after_days = 7,
     base_dir = "apps/backend",
     dockerfile = "docker/Dockerfile.users",
     platform = "linux/amd64",
@@ -97,7 +97,7 @@ repositories = {
   "files" = {
     image_tag_mutability = "MUTABLE",
     scan_on_push = true,
-    expiration_after_days = 5,
+    expiration_after_days = 7,
     base_dir = "apps/backend",
     dockerfile = "docker/Dockerfile.files",
     platform = "linux/amd64",
@@ -146,3 +146,23 @@ schema_attributes = [
     max_length               = 128
   }
 ]
+
+# Local ProstgreSQL DB Configuration
+postgresql = {
+  type          = "postgres"
+  host          = "your-db-host"
+  port          = 5432
+  database      = "your-db-name"
+  username      = "your-username"
+  password      = "your-password"
+}
+
+# AI Configuration
+openai = {
+  apikey          = "your-api-key"
+  gptModel        = "your-gpt-model"
+  embeddingModel  = "your-embedding-model"
+  batchsize       = 512
+  chunksize       = 500
+  chunkoverlap    = 0
+}
