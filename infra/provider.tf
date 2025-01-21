@@ -12,11 +12,11 @@ terraform {
   }
  
   backend "s3" {
-    bucket         = "rmg-tf-backends"
+    bucket         = "qckstrt-tf-state"
     key            = "qckstrt/envs/dev/terraform.tfstate"
-    region         = "us-west-1"
-    dynamodb_table = "rmg-tf-backends"
-    profile        = "rmg-west"
+    region         = "us-west-2"
+    dynamodb_table = "qckstrt-tf-state-lock"
+    profile        = "qckstrt"
   }
 }
 

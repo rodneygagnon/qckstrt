@@ -8,6 +8,11 @@ variable "stage" {
   description = "infrastructure stage (ex. dev, stg, uat, prd, ...)"
 }
 
+variable "region" {
+  type        = string
+  description = "region"
+}
+
 variable "vpc_id" {
   type        = string
   description = "vpc id"

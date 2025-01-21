@@ -3,7 +3,7 @@ x-apps-config: &apps-env
   PROJECT: ${PROJECT:-qckstrt}
   NODE_ENV: ${NODE_ENV:-dev}
   AWS_PROFILE: ${AWS_PROFILE:-default}
-  AWS_REGION: ${AWS_REGION:-us-west-1}
+  AWS_REGION: ${AWS_REGION:-us-west-2}
   AWS_SECRETS: ${AWS_SECRETS}
 
 x-api-config: &api-env
@@ -90,7 +90,8 @@ services:
     restart: always
 
   database:
-    image: postgres:latest
+    # image: postgres:latest
+    image: ankane/pgvector
     container_name: qckstrt_db
     ports:
       - 5432:5432

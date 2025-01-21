@@ -29,8 +29,8 @@ variable "email_identity" {
 }
 
 variable region {
-    type = string
-    description = "the region this infrastructure is in"
+  type = string
+  description = "the region this infrastructure is in"
 }
 
 # VPC Variables
@@ -169,4 +169,26 @@ variable "schema_attributes" {
     max_length                = number
   }))
   default = []
+}
+
+variable "postgresql" {
+  type = object({
+    type                      = string
+    host                      = string
+    port                      = number
+    database                  = string
+    username                  = string
+    password                  = string
+  })
+}
+
+variable "openai" {
+  type = object({
+    apiKey                    = string
+    gptModel                  = string
+    embeddingModel            = string
+    batchSize                 = number
+    chunkSize                 = number
+    chunkOverlap              = number
+  })
 }
