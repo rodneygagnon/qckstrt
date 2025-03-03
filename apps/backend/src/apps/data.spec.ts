@@ -1,9 +1,49 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { CreateUserDto } from './users/src/domains/user/dto/create-user.dto';
 import { UpdateUserDto } from './users/src/domains/user/dto/update-user.dto';
 import { RegisterUserDto } from './users/src/domains/auth/dto/register-user.dto';
 import { LoginUserDto } from './users/src/domains/auth/dto/login-user.dto';
 import { ChangePasswordDto } from './users/src/domains/auth/dto/change-password.dto';
 import { ConfirmForgotPasswordDto } from './users/src/domains/auth/dto/confirm-forgot-password.dto';
+
+import { DocumentStatus } from 'src/common/enums/document.status.enum';
+
+export const config = {
+  ai: {
+    apiKey: 'myAIApiKey',
+    batchSize: 512,
+    chunkOverlap: 0,
+    chunkSize: 500,
+    embeddingModel: 'text-embedding-3-small',
+    gptModel: 'gpt-4o-mini',
+  },
+  apiKeys: {
+    mobile: 'myMobileApiKey',
+    postman: 'myPostmanApiKey',
+    www: 'myWwwApiKey',
+  },
+  auth: {
+    clientId: 'myClientId',
+    userPoolId: 'myUserPoolId',
+  },
+  db: {
+    config: {
+      database: 'qckstrt',
+      host: 'qckstrt_db',
+      password: 'my_password',
+      port: 5432,
+      type: 'postgres',
+      username: 'postgres',
+    },
+    connection: 'local',
+  },
+  file: {
+    bucket: 'myBucket',
+    snsRoleArn: 'mySnsRoleArn',
+    snsTopicArn: 'mySnsTopicArn',
+    sqsUrl: 'mySqsUrl',
+  },
+};
 
 // User Module Test Data
 export const users = [
@@ -67,20 +107,52 @@ export const confirmForgotPasswordDto: ConfirmForgotPasswordDto = {
   password: 'MyNewP2$$w0rd!',
 };
 
-export const files = [
+export const documents = [
   {
     userId: 'a',
-    filename: 'file1-a.pdf',
+    key: 'file1-a.pdf',
     size: 12345,
-    lastModified: new Date(),
+    status: DocumentStatus.PROCESSINGNPENDING,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
   {
     userId: 'a',
-    filename: 'file2-b.pdf',
+    key: 'file2-b.pdf',
     size: 54321,
-    lastModified: new Date(),
+    status: DocumentStatus.PROCESSINGNCOMPLETE,
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
 ];
+
+export const embeddings = [
+  {
+    id: '1',
+    userId: 'a',
+    content: 'Content for file1-a.pdf',
+    embedding: '[0.1, 0.2, 0.3]',
+    metadata: { source: 'file1-a.pdf' },
+  },
+  {
+    id: '2',
+    userId: 'a',
+    content: 'Content for file2-a.pdf',
+    embedding: '[0.4, 0.5, 0.6]',
+    metadata: { source: 'file2-a.pdf' },
+  },
+];
+
+export const files = documents.map((document: any) => {
+  return {
+    userId: document.userId,
+    filename: document.key,
+    size: document.size,
+    status: document.status,
+    createdAt: document.createdAt,
+    updatedAt: document.updatedAt,
+  };
+});
 
 describe('User Data', () => {
   it('should define all users', async () => {

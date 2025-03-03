@@ -30,6 +30,18 @@ export interface IDBConfig {
 
 export interface IFileConfig {
   bucket: string;
+  sqsUrl: string;
+  snsTopicArn: string;
+  snsRoleArn: string;
+}
+
+export interface IAIConfig {
+  apiKey: string;
+  gptModel: string;
+  embeddingModel: string;
+  batchSize: number;
+  chunkSize: number;
+  chunkOverlap: number;
 }
 
 export interface IAppConfig {
@@ -43,6 +55,7 @@ export interface IAppConfig {
   auth: IAuthConfig;
   db: IDBConfig;
   file: IFileConfig;
+  ai: IAIConfig;
 }
 
 export default async (): Promise<IAppConfig> => {
@@ -77,8 +90,6 @@ export default async (): Promise<IAppConfig> => {
     throw new Error('Failed to access secrets');
   }
 
-  console.log('SECRETS:', secrets);
-
   return Promise.resolve({
     project,
     application,
@@ -90,5 +101,6 @@ export default async (): Promise<IAppConfig> => {
     auth: secrets.auth as IAuthConfig,
     db: secrets.db as IDBConfig,
     file: secrets.file as IFileConfig,
+    ai: secrets.ai as IAIConfig,
   });
 };

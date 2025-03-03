@@ -5,12 +5,14 @@ import { FilesResolver } from './files.resolver';
 import { FilesService } from './files.service';
 import { UsersResolver } from './users.resolver';
 
-import { File } from 'src/apps/files/src/domains/files/models/file.model';
-import { AWSS3 } from 'src/providers/files/aws.s3';
+import { Storage } from 'src/providers/files';
+import { AI } from 'src/providers/ai';
+import { DocumentEntity } from 'src/db/entities/document.entity';
+import { EmbeddingEntity } from 'src/db/entities/embedding.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([File])],
-  providers: [AWSS3, FilesService, FilesResolver, UsersResolver],
+  imports: [TypeOrmModule.forFeature([DocumentEntity, EmbeddingEntity])],
+  providers: [Storage, AI, FilesService, FilesResolver, UsersResolver],
   exports: [FilesService],
 })
 export class FilesModule {}
