@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
   DeleteObjectCommand,
@@ -10,34 +8,20 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 
-import { IFileConfig } from 'src/config';
-
-@Injectable()
 export class AWSS3 {
-  private client: S3Client;
-  private fileConfig: IFileConfig;
+  private s3Client: S3Client;
 
-  constructor(private configService: ConfigService) {
-    const fileConfig: IFileConfig | undefined =
-      configService.get<IFileConfig>('file');
-
-    if (!fileConfig) {
-      throw new Error('File storage config is missing');
-    }
-
-    this.fileConfig = fileConfig;
-    this.client = new S3Client({
-      region: configService.get<string>('region'),
-    });
+  constructor(region: string) {
+    this.s3Client = new S3Client({ region });
   }
 
-  async listFiles(userId: string): Promise<any> {
+  async listFiles(bucket: string, userId: string): Promise<any> {
     try {
       const command = new ListObjectsV2Command({
-        Bucket: this.fileConfig.bucket,
+        Bucket: bucket,
         Prefix: `${userId}/`,
       });
-      return this.client.send(command);
+      return this.s3Client.send(command);
     } catch (error) {
       console.log(`Error getting signed url: ${error.message}`);
       throw error;
@@ -45,6 +29,7 @@ export class AWSS3 {
   }
 
   async getSignedUrl(
+    bucket: string,
     userId: string,
     filename: string,
     upload: boolean,
@@ -53,24 +38,28 @@ export class AWSS3 {
       const Key = `${userId}/${filename}`;
 
       const command: GetObjectCommand | PutObjectCommand = upload
-        ? new PutObjectCommand({ Bucket: this.fileConfig.bucket, Key })
-        : new GetObjectCommand({ Bucket: this.fileConfig.bucket, Key });
+        ? new PutObjectCommand({ Bucket: bucket, Key })
+        : new GetObjectCommand({ Bucket: bucket, Key });
 
-      return getSignedUrl(this.client, command, { expiresIn: 3600 });
+      return getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
     } catch (error) {
       console.log(`Error getting signed url: ${error.message}`);
       throw error;
     }
   }
 
-  async deleteFile(userId: string, filename: string): Promise<boolean> {
+  async deleteFile(
+    bucket: string,
+    userId: string,
+    filename: string,
+  ): Promise<boolean> {
     try {
       const command = new DeleteObjectCommand({
-        Bucket: this.fileConfig.bucket,
+        Bucket: bucket,
         Key: `${userId}/${filename}`,
       });
 
-      await this.client.send(command);
+      await this.s3Client.send(command);
 
       return Promise.resolve(true);
     } catch (error) {

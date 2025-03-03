@@ -6,7 +6,7 @@ import { File } from './models/file.model';
 import { FilesService } from './files.service';
 import { UsersResolver } from './users.resolver';
 
-import { files } from '../../../../data.spec';
+import { documents } from '../../../../data.spec';
 
 describe('UsersResolver', () => {
   let resolver: UsersResolver;
@@ -30,7 +30,7 @@ describe('UsersResolver', () => {
 
   it('should resolve files of a user', () => {
     filesService.listFiles = jest.fn().mockImplementation((userId: string) => {
-      return files;
+      return documents;
     });
 
     const result = resolver.listFiles({ id: '1' });

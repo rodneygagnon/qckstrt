@@ -28,6 +28,13 @@ x-files-config: &files-env
   DESCRIPTION: ${FILES_DESCRIPTION}
   PORT: 8080
 
+x-vectors-config: &vectors-env
+  <<: *apps-env
+  APPLICATION: ${VECTORS_APPLICATION}
+  VERSION: ${VECTORS_VERSION}
+  DESCRIPTION: ${VECTORS_DESCRIPTION}
+  PORT: 8080
+
 networks:
   backend:
     name: ${PROJECT}-${NODE_ENV}-backend
@@ -87,6 +94,24 @@ services:
       - ~/.aws/:/root/.aws:ro
     ports:
       - "${FILES_PORT}:8080"
+    restart: always
+  vectors:
+    build:
+      context: ..
+      platforms:
+        - "linux/amd64"
+      dockerfile: docker/Dockerfile.${VECTORS_APPLICATION}
+    image: ${PROJECT}-${NODE_ENV}-${VECTORS_APPLICATION}:latest
+    container_name: nestjs-${VECTORS_APPLICATION}
+    platform: "linux/amd64"
+    environment:
+      <<: *vectors-env
+    networks:
+      - backend
+    volumes:
+      - ~/.aws/:/root/.aws:ro
+    ports:
+      - "${VECTORS_PORT}:8080"
     restart: always
 
   database:

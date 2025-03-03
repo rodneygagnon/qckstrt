@@ -19,7 +19,6 @@ import configuration from 'src/config';
 import { LoggerMiddleware } from 'src/common/middleware/logger.middleware';
 import { DbModule } from 'src/db/db.module';
 
-import { File } from 'src/apps/files/src/domains/files/models/file.model';
 import { User } from 'src/apps/files/src/domains/files/models/user.model';
 
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
@@ -27,11 +26,13 @@ import { GraphQLExceptionFilter } from 'src/common/exceptions/graphql-exception.
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { CaslModule } from 'src/permissions/casl.module';
 import { PoliciesGuard } from 'src/common/guards/policies.guard';
+import { DocumentEntity } from 'src/db/entities/document.entity';
+import { EmbeddingEntity } from 'src/db/entities/embedding.entity';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ load: [configuration], isGlobal: true }),
-    DbModule.forRoot({ entities: [File] }),
+    DbModule.forRoot({ entities: [DocumentEntity, EmbeddingEntity] }),
     GraphQLModule.forRoot<ApolloFederationDriverConfig>({
       driver: ApolloFederationDriver,
       autoSchemaFile: { path: 'files-schema.gql', federation: 2 },

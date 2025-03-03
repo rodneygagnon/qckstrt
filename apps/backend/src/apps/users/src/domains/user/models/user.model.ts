@@ -1,48 +1,25 @@
 import { Directive, Field, ID, ObjectType } from '@nestjs/graphql';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  BaseEntity,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
 
 import { IUser } from 'src/interfaces/user.interface';
 
 @ObjectType()
 @Directive('@key(fields: "id")')
-@Entity('users')
-export class User extends BaseEntity implements IUser {
+export class User implements IUser {
   @Field(() => ID)
-  @PrimaryGeneratedColumn('uuid')
   public id!: string;
 
   @Field()
-  @Column({ type: 'varchar', length: 255, select: true, unique: true })
   public email!: string;
 
   @Field({ nullable: true })
-  @Column({ type: 'varchar', length: 255, select: true, nullable: true })
   firstName?: string;
 
   @Field({ nullable: true })
-  @Column({ type: 'varchar', length: 255, select: true, nullable: true })
   lastName?: string;
 
-  @Field()
-  @CreateDateColumn({
-    type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP',
-    select: true,
-  })
+  @Field({ nullable: true })
   public created!: Date;
 
-  @Field()
-  @UpdateDateColumn({
-    type: 'timestamptz',
-    default: () => 'CURRENT_TIMESTAMP',
-    select: true,
-  })
+  @Field({ nullable: true })
   public updated!: Date;
 }
