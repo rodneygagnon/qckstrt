@@ -11,12 +11,13 @@ import { ConfigService } from '@nestjs/config';
 import { AuthService } from '../auth/auth.service';
 
 import { UsersService } from './users.service';
-import { User } from 'src/apps/users/src/domains/user/models/user.model';
+import { User } from './models/user.model';
+import { UserEntity } from 'src/db/entities/user.entity';
 
 import { users, createUserDto, updateUserDto } from '../../../../data.spec';
 
 describe('UsersService', () => {
-  let userRepo: Repository<User>;
+  let userRepo: Repository<UserEntity>;
   let usersService: UsersService;
   let authService: AuthService;
   let configService: ConfigService;
@@ -26,15 +27,17 @@ describe('UsersService', () => {
       providers: [
         UsersService,
         {
-          provide: getRepositoryToken(User),
-          useValue: createMock<Repository<User>>({}),
+          provide: getRepositoryToken(UserEntity),
+          useValue: createMock<Repository<UserEntity>>({}),
         },
         { provide: AuthService, useValue: createMock<AuthService>() },
         { provide: ConfigService, useValue: createMock<ConfigService>() },
       ],
     }).compile();
 
-    userRepo = module.get<Repository<User>>(getRepositoryToken(User));
+    userRepo = module.get<Repository<UserEntity>>(
+      getRepositoryToken(UserEntity),
+    );
     usersService = module.get<UsersService>(UsersService);
     authService = module.get<AuthService>(AuthService);
     configService = module.get<ConfigService>(ConfigService);

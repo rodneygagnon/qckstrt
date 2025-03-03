@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
+import { UserEntity } from 'src/db/entities/user.entity';
 import { User } from './models/user.model';
 import { CreateUserDto } from './dto/create-user.dto';
 import { ConfigService } from '@nestjs/config';
@@ -14,7 +15,7 @@ export class UsersService {
   private readonly logger = new Logger(UsersService.name, { timestamp: true });
 
   constructor(
-    @InjectRepository(User) private userRepo: Repository<User>,
+    @InjectRepository(UserEntity) private userRepo: Repository<UserEntity>,
     @Inject(forwardRef(() => AuthService)) private authService: AuthService,
     private configService: ConfigService,
   ) {}
@@ -64,7 +65,7 @@ export class UsersService {
         this.userRepo
           .createQueryBuilder()
           .delete()
-          .from(User)
+          .from(UserEntity)
           .where('id = :id', { id: user.id })
           .execute()
           .catch((error) => {

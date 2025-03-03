@@ -1,6 +1,7 @@
 import {
   Args,
   ID,
+  Int,
   Parent,
   Mutation,
   Query,
@@ -24,7 +25,7 @@ export class FilesResolver {
   @Permissions({
     action: Action.Read,
     subject: 'File',
-    conditions: { id: '{{ userId }}' },
+    conditions: { userId: '{{ userId }}' },
   })
   listFiles(
     @Args({ name: 'userId', type: () => ID }) userId: string,
@@ -35,9 +36,9 @@ export class FilesResolver {
   @Query(() => String)
   @UseGuards(AuthGuard)
   @Permissions({
-    action: Action.Read,
+    action: Action.Create,
     subject: 'File',
-    conditions: { id: '{{ userId }}' },
+    conditions: { userId: '{{ userId }}' },
   })
   getUploadUrl(
     @Args({ name: 'userId', type: () => ID }) userId: string,
@@ -49,9 +50,9 @@ export class FilesResolver {
   @Query(() => String)
   @UseGuards(AuthGuard)
   @Permissions({
-    action: Action.Create,
+    action: Action.Read,
     subject: 'File',
-    conditions: { id: '{{ userId }}' },
+    conditions: { userId: '{{ userId }}' },
   })
   getDownloadUrl(
     @Args({ name: 'userId', type: () => ID }) userId: string,
@@ -60,12 +61,41 @@ export class FilesResolver {
     return this.filesService.getDownloadUrl(userId, filename);
   }
 
+  @Mutation(() => String)
+  @UseGuards(AuthGuard)
+  @Permissions({
+    action: Action.Update,
+    subject: 'File',
+    conditions: { userId: '{{ userId }}' },
+  })
+  async answerQuery(
+    @Args({ name: 'userId', type: () => ID }) userId: string,
+    @Args('query') query: string,
+  ): Promise<string> {
+    return this.filesService.answerQuery(userId, query);
+  }
+
+  @Query(() => Boolean)
+  @UseGuards(AuthGuard)
+  @Permissions({
+    action: Action.Read,
+    subject: 'File',
+    conditions: { userId: '{{ userId }}' },
+  })
+  async searchText(
+    @Args({ name: 'userId', type: () => ID }) userId: string,
+    @Args('query') query: string,
+    @Args({ name: 'count', type: () => Int }) count: number,
+  ): Promise<string[]> {
+    return this.filesService.searchText(userId, query, count);
+  }
+
   @Mutation(() => Boolean)
   @UseGuards(AuthGuard)
   @Permissions({
     action: Action.Delete,
     subject: 'File',
-    conditions: { id: '{{ userId }}' },
+    conditions: { userId: '{{ userId }}' },
   })
   async deleteFile(
     @Args({ name: 'userId', type: () => ID }) userId: string,

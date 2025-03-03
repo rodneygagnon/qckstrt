@@ -7,7 +7,7 @@ import { File } from './models/file.model';
 import { FilesResolver } from './files.resolver';
 import { FilesService } from './files.service';
 
-import { files } from '../../../../data.spec';
+import { documents } from '../../../../data.spec';
 
 describe('FilesResolver', () => {
   let resolver: FilesResolver;
@@ -36,10 +36,10 @@ describe('FilesResolver', () => {
 
   it('should list all files for user', () => {
     filesService.listFiles = jest.fn().mockImplementation((userId: string) => {
-      return files;
+      return documents;
     });
 
-    expect(resolver.listFiles(files[0].userId)).toEqual(files);
+    expect(resolver.listFiles(documents[0].userId)).toEqual(documents);
     expect(filesService.listFiles).toHaveBeenCalledTimes(1);
   });
 
@@ -50,8 +50,8 @@ describe('FilesResolver', () => {
         return `http://aws.s3.com/${userId}/${filename}`;
       });
 
-    expect(resolver.getUploadUrl(files[0].userId, 'myfile.pdf')).toBe(
-      `http://aws.s3.com/${files[0].userId}/myfile.pdf`,
+    expect(resolver.getUploadUrl(documents[0].userId, 'myfile.pdf')).toBe(
+      `http://aws.s3.com/${documents[0].userId}/myfile.pdf`,
     );
     expect(filesService.getUploadUrl).toHaveBeenCalledTimes(1);
   });
@@ -63,10 +63,40 @@ describe('FilesResolver', () => {
         return `http://aws.s3.com/${userId}/${filename}`;
       });
 
-    expect(resolver.getDownloadUrl(files[0].userId, 'myfile.pdf')).toBe(
-      `http://aws.s3.com/${files[0].userId}/myfile.pdf`,
+    expect(resolver.getDownloadUrl(documents[0].userId, 'myfile.pdf')).toBe(
+      `http://aws.s3.com/${documents[0].userId}/myfile.pdf`,
     );
     expect(filesService.getDownloadUrl).toHaveBeenCalledTimes(1);
+  });
+
+  it('should get an answer to a query', async () => {
+    filesService.answerQuery = jest
+      .fn()
+      .mockImplementation((userId: string, query: string) => {
+        return Promise.resolve(`Answer to your query <${userId}/${query}>`);
+      });
+
+    expect(await resolver.answerQuery(documents[0].userId, 'My Query')).toBe(
+      `Answer to your query <${documents[0].userId}/My Query>`,
+    );
+    expect(filesService.answerQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it('should get text(s) for a query', async () => {
+    filesService.searchText = jest
+      .fn()
+      .mockImplementation((userId: string, query: string, count: number) => {
+        return Promise.resolve([
+          `Text(s) related to your query <${userId}/${query}/${count}>`,
+        ]);
+      });
+
+    expect(
+      await resolver.searchText(documents[0].userId, 'My Query', 1),
+    ).toStrictEqual([
+      `Text(s) related to your query <${documents[0].userId}/My Query/1>`,
+    ]);
+    expect(filesService.searchText).toHaveBeenCalledTimes(1);
   });
 
   it('should delete a file', async () => {
@@ -76,15 +106,17 @@ describe('FilesResolver', () => {
         return Promise.resolve(true);
       });
 
-    expect(await resolver.deleteFile(files[0].userId, 'myfile.pdf')).toBe(true);
+    expect(await resolver.deleteFile(documents[0].userId, 'myfile.pdf')).toBe(
+      true,
+    );
     expect(filesService.deleteFile).toHaveBeenCalledTimes(1);
   });
 
   it('should resolve the user of a file', () => {
-    const result = resolver.user(files[0] as any);
+    const result = resolver.user(documents[0] as any);
     expect(result).toEqual(
       expect.objectContaining({
-        id: files[0].userId,
+        id: documents[0].userId,
       }),
     );
   });

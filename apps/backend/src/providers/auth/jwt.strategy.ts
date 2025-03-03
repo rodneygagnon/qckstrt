@@ -48,7 +48,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     return Promise.resolve({
       id: payload['sub'],
       email: payload['email'],
-      roles: payload['cognito:groups'],
+      roles: payload['cognito:groups'] || [],
       department: payload['custom:department'],
       clearance: payload['custom:clearance'],
     });

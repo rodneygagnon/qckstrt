@@ -25,6 +25,7 @@ import { Action } from '../enums/action.enum';
 
 import { IPolicy } from 'src/interfaces/policy.interface';
 import { IUserPolicies } from 'src/interfaces/user.interface';
+import { IFilePolicies } from 'src/interfaces/file.interface';
 
 interface IPermissions {
   subject: string;
@@ -33,6 +34,7 @@ interface IPermissions {
 
 export const permissions: IPermissions[] = [
   { subject: 'User', policies: IUserPolicies },
+  { subject: 'File', policies: IFilePolicies },
 ];
 
 @Injectable()
@@ -115,6 +117,7 @@ export class PoliciesGuard<
   ): boolean {
     return policies.every((policy) => {
       const subject: string = policy.subject as string;
+
       return abilities.can(
         policy.action,
         conditionContext[subject]

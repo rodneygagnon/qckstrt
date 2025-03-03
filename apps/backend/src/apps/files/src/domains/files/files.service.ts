@@ -3,28 +3,51 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 import { File } from './models/file.model';
-import { AWSS3 } from 'src/providers/files/aws.s3';
 
+import { Storage } from 'src/providers/files';
+import { AI } from 'src/providers/ai';
+
+import { IFileConfig } from 'src/config';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { DocumentEntity } from 'src/db/entities/document.entity';
+import { EmbeddingEntity } from 'src/db/entities/embedding.entity';
 @Injectable()
 export class FilesService {
   private readonly logger = new Logger(FilesService.name, { timestamp: true });
+  private fileConfig: IFileConfig;
 
   constructor(
-    @Inject() private awsS3: AWSS3,
+    @InjectRepository(DocumentEntity)
+    private documentRepo: Repository<DocumentEntity>,
+    @InjectRepository(EmbeddingEntity)
+    private embeddingRepo: Repository<EmbeddingEntity>,
+    @Inject() private storage: Storage,
+    @Inject() private ai: AI,
     private configService: ConfigService,
-  ) {}
+  ) {
+    const fileConfig: IFileConfig | undefined =
+      configService.get<IFileConfig>('file');
+
+    if (!fileConfig) {
+      throw new Error('File storage config is missing');
+    }
+
+    this.fileConfig = fileConfig;
+  }
 
   async listFiles(userId: string): Promise<File[]> {
-    const results = await this.awsS3.listFiles(userId);
-    const awsFiles = results.Contents;
+    const documents = await this.documentRepo.find({ where: { userId } });
 
-    const files: File[] = awsFiles
-      ? awsFiles.map((file: any) => {
+    const files: File[] = documents
+      ? documents.map((document: any) => {
           return {
             userId,
-            filename: file.Key?.split('/')[1],
-            size: file.Size,
-            lastModified: file.LastModified,
+            filename: document.key,
+            size: document.size,
+            status: document.status,
+            createdAt: document.createdAt,
+            updatedAt: document.updatedAt,
           } as File;
         })
       : [];
@@ -45,10 +68,56 @@ export class FilesService {
     filename: string,
     upload: boolean,
   ): Promise<string> {
-    return this.awsS3.getSignedUrl(userId, filename, upload);
+    return this.storage.getSignedUrl(
+      this.fileConfig.bucket,
+      userId,
+      filename,
+      upload,
+    );
+  }
+
+  async answerQuery(userId: string, query: string): Promise<string> {
+    const texts = await this.semanticSearch(userId, query);
+
+    console.log('answerQuery(texts): ', texts);
+
+    return Promise.resolve(`answerQuery: ${userId}/${query}`);
+  }
+
+  async searchText(
+    userId: string,
+    query: string,
+    count: number,
+  ): Promise<string[]> {
+    const texts = await this.semanticSearch(userId, query, count);
+
+    console.log('searchText(texts): ', texts);
+
+    return Promise.resolve([`searchText: ${userId}/${query}/${count}`]);
+  }
+
+  private async semanticSearch(
+    userId: string,
+    query: string,
+    count: number = 3,
+  ): Promise<string[]> {
+    const queryEmbeddingString: string = `[${(await this.ai.getEmbeddingsForQuery(query)).join(',')}]`;
+
+    const texts = await this.embeddingRepo.query(
+      `SELECT *, embedding <-> $1 AS distance
+       FROM embeddings
+       WHERE userId = $2
+       ORDER BY distance
+       LIMIT $3;`,
+      [queryEmbeddingString, userId, count],
+    );
+
+    console.log('semanticSearch(texts): ', texts);
+
+    return Promise.resolve(texts.map((text: any) => text.content));
   }
 
   deleteFile(userId: string, filename: string): Promise<boolean> {
-    return this.awsS3.deleteFile(userId, filename);
+    return this.storage.deleteFile(this.fileConfig.bucket, userId, filename);
   }
 }

@@ -4,38 +4,20 @@
   "sourceRoot": "apps/organizations/src",
   "entryFile": "main",
   "monorepo": true,
-  "root": "apps/organizations",
+  "root": "apps/api",
   "compilerOptions": {
     "webpack": true,
-    "tsConfigPath": "apps/organizations/tsconfig.app.json",
+    "tsConfigPath": "apps/api/tsconfig.app.json",
     "deleteOutDir": true
   },
   "projects": {
-    "organizations": {
+    "vectors": {
       "type": "application",
-      "root": "src/apps/organizations",
+      "root": "src/apps/vectors",
       "entryFile": "main",
-      "sourceRoot": "src/apps/organizations/src",
+      "sourceRoot": "src/apps/vectors/src",
       "compilerOptions": {
-        "tsConfigPath": "src/apps/organizations/tsconfig.app.json"
-      }
-    },
-    "persons": {
-      "type": "application",
-      "root": "src/apps/persons",
-      "entryFile": "main",
-      "sourceRoot": "src/apps/persons/src",
-      "compilerOptions": {
-        "tsConfigPath": "src/apps/persons/tsconfig.app.json"
-      }
-    },
-    "roles": {
-      "type": "application",
-      "root": "src/apps/roles",
-      "entryFile": "main",
-      "sourceRoot": "src/apps/roles/src",
-      "compilerOptions": {
-        "tsConfigPath": "src/apps/roles/tsconfig.app.json"
+        "tsConfigPath": "src/apps/vectors/tsconfig.app.json"
       }
     },
     "users": {
