@@ -9,7 +9,7 @@
     "module": "esnext",
     "moduleResolution": "node",
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "plugins": [
       {
         "name": "next"
@@ -33,7 +33,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "jest.config.mjs",
-    "jest.setup.mjs"
+    "jest.setup.mjs",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

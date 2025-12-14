@@ -1,0 +1,72 @@
+version: '3.8'
+
+networks:
+  qckstrt-network:
+    name: qckstrt-network
+    external: false
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: qckstrt-postgres
+    platform: "linux/amd64"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: qckstrt
+      POSTGRES_USER: qckstrt_user
+      POSTGRES_PASSWORD: qckstrt_password
+    networks:
+      - qckstrt-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qckstrt_user -d qckstrt"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: qckstrt-chromadb
+    platform: "linux/amd64"
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma-data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
+    networks:
+      - qckstrt-network
+    restart: unless-stopped
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: qckstrt-ollama
+    platform: "linux/amd64"
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - qckstrt-network
+    restart: unless-stopped
+    # Uncomment for GPU support (requires NVIDIA GPU + nvidia-docker)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  postgres-data:
+    name: qckstrt-postgres-data
+  chroma-data:
+    name: qckstrt-chroma-data
+  ollama-data:
+    name: qckstrt-ollama-data

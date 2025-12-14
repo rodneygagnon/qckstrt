@@ -1,0 +1,89 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type User {
+  id: ID!
+  email: String!
+  firstName: String
+  lastName: String
+  created: DateTime!
+  updated: DateTime!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Auth {
+  accessToken: String!
+  idToken: String!
+  refreshToken: String!
+}
+
+type Query {
+  getUsers: [User!]!
+  getUser(id: ID!): User!
+  findUser(email: String!): User!
+}
+
+type Mutation {
+  createUser(createUserDto: CreateUserDto!): User!
+  updateUser(id: ID!, updateUserDto: UpdateUserDto!): Boolean!
+  deleteUser(id: ID!): Boolean!
+  registerUser(registerUserDto: RegisterUserDto!): Boolean!
+  loginUser(loginUserDto: LoginUserDto!): Auth!
+  changePassword(changePasswordDto: ChangePasswordDto!): Boolean!
+  forgotPassword(email: String!): Boolean!
+  confirmForgotPassword(confirmForgotPasswordDto: ConfirmForgotPasswordDto!): Boolean!
+  confirmUser(id: ID!): Boolean!
+  addAdminPermission(id: ID!): Boolean!
+  removeAdminPermission(id: ID!): Boolean!
+}
+
+input CreateUserDto {
+  email: String!
+  username: String!
+  password: String!
+  firstName: String
+  lastName: String
+  department: String
+  clearance: String
+}
+
+input UpdateUserDto {
+  email: String
+  username: String
+  firstName: String
+  lastName: String
+  department: String
+  clearance: String
+}
+
+input RegisterUserDto {
+  email: String!
+  username: String!
+  password: String!
+  department: String
+  clearance: String
+  admin: Boolean = false
+  confirm: Boolean = false
+}
+
+input LoginUserDto {
+  email: String!
+  password: String!
+}
+
+input ChangePasswordDto {
+  accessToken: String!
+  newPassword: String!
+  currentPassword: String!
+}
+
+input ConfirmForgotPasswordDto {
+  email: String!
+  confirmationCode: String!
+  password: String!
+}

@@ -16,11 +16,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
 
     const exceptionResponse = exception.getResponse();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const message =
       typeof exceptionResponse === 'string'
         ? exceptionResponse
-        : (exceptionResponse as any).message || exception.message;
+        : (exceptionResponse as Record<string, unknown>).message ||
+          exception.message;
 
     response.status(status).json({
       code: status,
