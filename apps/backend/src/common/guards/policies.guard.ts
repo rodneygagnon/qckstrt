@@ -41,8 +41,7 @@ export const permissions: IPermissions[] = [
 export class PoliciesGuard<
   A extends string = Action,
   S extends CaslSubject = Subject,
-> implements CanActivate
-{
+> implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     @Inject(CaslAbilityFactory)
