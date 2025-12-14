@@ -93,12 +93,21 @@ All documentation is located in the [`docs/`](docs/) directory:
 
 ```
 qckstrt/
+├── packages/                 # 📦 Reusable platform packages (@qckstrt/*)
+│   ├── common/               # Shared types and interfaces
+│   ├── llm-provider/         # LLM integration (Ollama)
+│   ├── embeddings-provider/  # Embeddings (Xenova, Ollama)
+│   ├── vectordb-provider/    # Vector DB (ChromaDB)
+│   ├── relationaldb-provider/# Relational DB (PostgreSQL, SQLite, Aurora)
+│   ├── extraction-provider/  # Text extraction
+│   ├── storage-provider/     # File storage (AWS S3)
+│   ├── auth-provider/        # Authentication (AWS Cognito)
+│   └── secrets-provider/     # Secrets management (AWS Secrets Manager)
 ├── apps/
 │   ├── backend/              # NestJS microservices
 │   │   └── src/
-│   │       ├── apps/         # Services (API Gateway, Users, Documents, Knowledge, Files)
-│   │       └── providers/    # Pluggable providers (embeddings, LLM, databases)
-│   └── frontend/             # React + Vite application
+│   │       └── apps/         # Services (API Gateway, Users, Documents, Knowledge, Files)
+│   └── frontend/             # React + Next.js application
 ├── docs/                     # 📚 All documentation
 │   ├── architecture/         # As-built architecture documentation
 │   └── guides/               # How-to guides
@@ -106,6 +115,22 @@ qckstrt/
 ├── scripts/                  # Utility scripts
 └── docker-compose.yml        # Local development services
 ```
+
+### Platform Packages
+
+The `packages/` directory contains reusable, publishable npm packages that provide pluggable provider implementations:
+
+| Package | Purpose | Tests |
+|---------|---------|-------|
+| `@qckstrt/common` | Shared types and interfaces | - |
+| `@qckstrt/llm-provider` | Ollama LLM integration | 16 |
+| `@qckstrt/embeddings-provider` | Xenova/Ollama embeddings | 24 |
+| `@qckstrt/vectordb-provider` | ChromaDB vector storage | 18 |
+| `@qckstrt/relationaldb-provider` | PostgreSQL, SQLite, Aurora | 19 |
+| `@qckstrt/extraction-provider` | Text extraction from URLs | 16 |
+| `@qckstrt/storage-provider` | AWS S3 file storage | 17 |
+| `@qckstrt/auth-provider` | AWS Cognito authentication | 23 |
+| `@qckstrt/secrets-provider` | AWS Secrets Manager | 10 |
 
 ## Development
 

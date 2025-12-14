@@ -6,7 +6,7 @@ import { Role } from '../enums/role.enum';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 
 import { ILogin } from 'src/interfaces/login.interface';
-import { isLoggedIn } from 'src/providers/auth/jwt.strategy';
+import { isLoggedIn } from 'src/common/auth/jwt.strategy';
 
 @Injectable()
 export class RolesGuard implements CanActivate {

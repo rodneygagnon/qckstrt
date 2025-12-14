@@ -8,7 +8,7 @@ import { UserInputError } from '@nestjs/apollo';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 
-import { Auth } from 'src/providers/auth/models/auth.model';
+import { Auth } from './models/auth.model';
 import { Permissions } from 'src/common/decorators/permissions.decorator';
 import { Role } from 'src/common/enums/role.enum';
 import { Roles } from 'src/common/decorators/roles.decorator';

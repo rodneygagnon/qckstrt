@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { EmbeddingsService } from 'src/providers/embeddings';
-import { IVectorDBProvider } from 'src/providers/vectordb';
-import { ILLMProvider } from 'src/providers/llm';
+import { EmbeddingsService } from '@qckstrt/embeddings-provider';
+import { IVectorDBProvider } from '@qckstrt/vectordb-provider';
+import { ILLMProvider } from '@qckstrt/llm-provider';
 
 /**
  * Knowledge Service

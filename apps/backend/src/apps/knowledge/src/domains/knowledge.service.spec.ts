@@ -4,9 +4,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { createMock } from '@golevelup/ts-jest';
 
 import { KnowledgeService } from './knowledge.service';
-import { EmbeddingsService } from 'src/providers/embeddings';
-import { IVectorDBProvider, IVectorDocument } from 'src/providers/vectordb';
-import { ILLMProvider, GenerateResult } from 'src/providers/llm';
+import { EmbeddingsService } from '@qckstrt/embeddings-provider';
+import { IVectorDBProvider, IVectorDocument } from '@qckstrt/vectordb-provider';
+import { ILLMProvider, GenerateResult } from '@qckstrt/llm-provider';
 
 describe('KnowledgeService', () => {
   let knowledgeService: KnowledgeService;

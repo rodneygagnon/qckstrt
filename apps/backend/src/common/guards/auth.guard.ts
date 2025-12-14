@@ -1,6 +1,6 @@
 import { Injectable, ExecutionContext, CanActivate } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
-import { isLoggedIn } from 'src/providers/auth/jwt.strategy';
+import { isLoggedIn } from 'src/common/auth/jwt.strategy';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
