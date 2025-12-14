@@ -1,37 +1,69 @@
 /// <reference types="cypress" />
-// ***********************************************
-// This example commands.ts shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-//
-//
-// -- This is a parent command --
-// Cypress.Commands.add('login', (email, password) => { ... })
-//
-//
-// -- This is a child command --
-// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
-// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
-//
-// declare global {
-//   namespace Cypress {
-//     interface Chainable {
-//       login(email: string, password: string): Chainable<void>
-//       drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       dismiss(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       visit(originalFn: CommandOriginalFn, url: string, options: Partial<VisitOptions>): Chainable<Element>
-//     }
-//   }
-// }
+
+export {};
+
+declare global {
+  namespace Cypress {
+    interface Chainable {
+      demoLogin(email?: string): Chainable<void>;
+      demoLogout(): Chainable<void>;
+      mockGraphQL(operationName: string, response: object): Chainable<null>;
+      mockGraphQLError(
+        operationName: string,
+        errorMessage: string,
+      ): Chainable<null>;
+    }
+  }
+}
+
+// Custom command for demo login
+Cypress.Commands.add("demoLogin", (email: string = "demo@example.com") => {
+  const demoUser = {
+    id: crypto.randomUUID(),
+    email,
+    roles: ["user"],
+    department: "demo",
+    clearance: "public",
+  };
+
+  cy.window().then((win) => {
+    win.localStorage.setItem("user", JSON.stringify(demoUser));
+  });
+});
+
+// Custom command to clear demo session
+Cypress.Commands.add("demoLogout", () => {
+  cy.window().then((win) => {
+    win.localStorage.removeItem("user");
+  });
+});
+
+// Custom command to mock GraphQL responses
+Cypress.Commands.add(
+  "mockGraphQL",
+  (operationName: string, response: object) => {
+    cy.intercept("POST", "**/graphql", (req) => {
+      if (
+        req.body.operationName === operationName ||
+        req.body.query?.includes(operationName)
+      ) {
+        req.reply({ data: response });
+      }
+    }).as(operationName);
+  },
+);
+
+// Custom command to mock GraphQL error
+Cypress.Commands.add(
+  "mockGraphQLError",
+  (operationName: string, errorMessage: string) => {
+    cy.intercept("POST", "**/graphql", (req) => {
+      if (
+        req.body.operationName === operationName ||
+        req.body.query?.includes(operationName)
+      ) {
+        req.reply({ errors: [{ message: errorMessage }] });
+      }
+    }).as(`${operationName}Error`);
+  },
+);

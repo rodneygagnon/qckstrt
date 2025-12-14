@@ -3,10 +3,18 @@ import "@testing-library/jest-dom";
 
 import Home from "../app/page";
 
-it("shouldHaveDocsText", () => {
-  render(<Home />); // ARRANGE
+it("should display Qckstrt title", () => {
+  render(<Home />);
 
-  const myElem = screen.getByText(/Get started by editing/i); // ACT
+  const title = screen.getByText(/Qckstrt/i);
 
-  expect(myElem).toBeInTheDocument(); // ASSERT
+  expect(title).toBeInTheDocument();
+});
+
+it("should have RAG Demo link", () => {
+  render(<Home />);
+
+  const ragDemoLink = screen.getByText(/RAG Demo/i);
+
+  expect(ragDemoLink).toBeInTheDocument();
 });
