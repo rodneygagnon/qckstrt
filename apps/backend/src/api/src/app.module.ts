@@ -16,7 +16,7 @@ import configuration from 'src/config';
 
 import { HMACMiddleware } from 'src/common/middleware/hmac.middleware';
 import { PassportModule } from '@nestjs/passport';
-import { JwtStrategy } from 'src/providers/auth/jwt.strategy';
+import { JwtStrategy } from 'src/common/auth/jwt.strategy';
 import { AuthMiddleware } from 'src/common/middleware/auth.middleware';
 import { APP_FILTER } from '@nestjs/core';
 import { HttpExceptionFilter } from 'src/common/exceptions/http-exception.filter';

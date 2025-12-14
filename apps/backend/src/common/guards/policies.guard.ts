@@ -19,7 +19,7 @@ import { GqlExecutionContext } from '@nestjs/graphql';
 import { cloneDeep, isEmpty } from 'lodash';
 
 import { ILogin } from 'src/interfaces/login.interface';
-import { isLoggedIn } from 'src/providers/auth/jwt.strategy';
+import { isLoggedIn } from 'src/common/auth/jwt.strategy';
 
 import { Action } from '../enums/action.enum';
 

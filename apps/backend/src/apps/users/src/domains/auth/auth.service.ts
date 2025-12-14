@@ -2,10 +2,10 @@ import { Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 
 import { LoginUserDto } from './dto/login-user.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
-import { Auth } from 'src/providers/auth/models/auth.model';
+import { Auth } from './models/auth.model';
 
 import { UsersService } from '../user/users.service';
-import { AWSCognito } from 'src/providers/auth/aws.cognito';
+import { IAuthProvider } from '@qckstrt/auth-provider';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ConfirmForgotPasswordDto } from './dto/confirm-forgot-password.dto';
 import { Role } from 'src/common/enums/role.enum';
@@ -16,7 +16,7 @@ export class AuthService {
 
   constructor(
     @Inject(forwardRef(() => UsersService)) private usersService: UsersService,
-    @Inject() private awsCognito: AWSCognito,
+    @Inject('AUTH_PROVIDER') private authProvider: IAuthProvider,
   ) {}
 
   async registerUser(registerUserDto: RegisterUserDto): Promise<string> {
@@ -34,13 +34,15 @@ export class AuthService {
       throw new Error(msg);
     }
 
-    const userId = await this.awsCognito.registerUser(
+    const userId = await this.authProvider.registerUser({
       email,
       username,
       password,
-      department,
-      clearance,
-    );
+      attributes: {
+        department: department || 'N/A',
+        clearance: clearance || 'N/A',
+      },
+    });
 
     const validUUID = /^[a-z,0-9,-]{36,36}$/;
 
@@ -51,11 +53,11 @@ export class AuthService {
     }
 
     if (admin) {
-      await this.awsCognito.addToGroup(username, Role.Admin);
+      await this.authProvider.addToGroup(username, Role.Admin);
     }
 
     if (confirm) {
-      await this.awsCognito.confirmUser(username);
+      await this.authProvider.confirmUser(username);
     }
 
     // Use AWS Cognito User ID as our ID
@@ -71,7 +73,7 @@ export class AuthService {
       return Promise.resolve(false);
     }
 
-    await this.awsCognito.confirmUser(user.email);
+    await this.authProvider.confirmUser(user.email);
 
     return Promise.resolve(true);
   }
@@ -83,7 +85,7 @@ export class AuthService {
       return Promise.resolve(false);
     }
 
-    await this.awsCognito.addToGroup(user.email, role);
+    await this.authProvider.addToGroup(user.email, role);
 
     return Promise.resolve(true);
   }
@@ -95,13 +97,13 @@ export class AuthService {
       return Promise.resolve(false);
     }
 
-    await this.awsCognito.removeFromGroup(user.email, role);
+    await this.authProvider.removeFromGroup(user.email, role);
 
     return Promise.resolve(true);
   }
 
   async deleteUser(username: string): Promise<boolean> {
-    return this.awsCognito.deleteUser(username);
+    return this.authProvider.deleteUser(username);
   }
 
   async authenticateUser(loginUserDto: LoginUserDto): Promise<Auth> {
@@ -118,13 +120,13 @@ export class AuthService {
       throw new Error(msg);
     }
 
-    return this.awsCognito.authenticateUser(email, password);
+    return this.authProvider.authenticateUser(email, password);
   }
 
   async changePassword(
     changeUserPassword: ChangePasswordDto,
   ): Promise<boolean> {
-    return this.awsCognito.changePassword(
+    return this.authProvider.changePassword(
       changeUserPassword.accessToken,
       changeUserPassword.newPassword,
       changeUserPassword.currentPassword,
@@ -139,7 +141,7 @@ export class AuthService {
       return Promise.resolve(true);
     }
 
-    return this.awsCognito.forgotPassword(email);
+    return this.authProvider.forgotPassword(email);
   }
 
   async confirmForgotPassword(
@@ -154,7 +156,7 @@ export class AuthService {
       return Promise.resolve(true);
     }
 
-    return this.awsCognito.confirmForgotPassword(
+    return this.authProvider.confirmForgotPassword(
       confirmforgotPassword.email,
       confirmforgotPassword.password,
       confirmforgotPassword.confirmationCode,

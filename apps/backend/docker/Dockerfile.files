@@ -13,7 +13,6 @@ COPY ./src/config ./src/config
 COPY ./src/db ./src/db
 COPY ./src/interfaces ./src/interfaces
 COPY ./src/permissions ./src/permissions
-COPY ./src/providers ./src/providers
 COPY ./src/apps/files ./src/apps/files
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --lockfile=false --ignore-workspace

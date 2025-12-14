@@ -31,6 +31,15 @@
     "preinstall": "npx only-allow pnpm"
   },
   "dependencies": {
+    "@qckstrt/common": "workspace:*",
+    "@qckstrt/llm-provider": "workspace:*",
+    "@qckstrt/embeddings-provider": "workspace:*",
+    "@qckstrt/vectordb-provider": "workspace:*",
+    "@qckstrt/relationaldb-provider": "workspace:*",
+    "@qckstrt/extraction-provider": "workspace:*",
+    "@qckstrt/storage-provider": "workspace:*",
+    "@qckstrt/auth-provider": "workspace:*",
+    "@qckstrt/secrets-provider": "workspace:*",
     "@apollo/gateway": "^2.12.2",
     "@apollo/server": "^5.2.0",
     "@apollo/subgraph": "^2.12.2",

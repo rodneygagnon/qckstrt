@@ -8,7 +8,7 @@ import { DbConfigError } from './db.errors';
 import {
   RelationalDBModule,
   IRelationalDBProvider,
-} from 'src/providers/relationaldb';
+} from '@qckstrt/relationaldb-provider';
 
 interface DbEntityConfig {
   entities: DataSourceOptions['entities'];
