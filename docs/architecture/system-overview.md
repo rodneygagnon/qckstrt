@@ -76,10 +76,23 @@ QCKSTRT is built on a modular, provider-based architecture with three core princ
 
 ## Provider Architecture
 
-All external dependencies use the **Strategy Pattern + Dependency Injection** for maximum flexibility.
+All external dependencies use the **Strategy Pattern + Dependency Injection** for maximum flexibility. Providers are implemented as reusable npm packages in the `packages/` directory.
+
+### Platform Packages
+
+| Package | Purpose | Provider Token |
+|---------|---------|----------------|
+| `@qckstrt/relationaldb-provider` | Database connections | `RELATIONAL_DB_PROVIDER` |
+| `@qckstrt/vectordb-provider` | Vector storage & search | `VECTOR_DB_PROVIDER` |
+| `@qckstrt/embeddings-provider` | Text embeddings | `EMBEDDINGS_PROVIDER` |
+| `@qckstrt/llm-provider` | LLM inference | `LLM_PROVIDER` |
+| `@qckstrt/storage-provider` | File storage (S3) | `STORAGE_PROVIDER` |
+| `@qckstrt/auth-provider` | Authentication (Cognito) | `AUTH_PROVIDER` |
+| `@qckstrt/secrets-provider` | Secrets management | `SECRETS_PROVIDER` |
+| `@qckstrt/extraction-provider` | Text extraction | `EXTRACTION_PROVIDER` |
 
 ### Relational Database Provider
-**Location**: `apps/backend/src/providers/relationaldb`
+**Package**: `@qckstrt/relationaldb-provider`
 
 ```typescript
 interface IRelationalDBProvider {
@@ -98,7 +111,7 @@ interface IRelationalDBProvider {
 **See**: [Data Layer Architecture](data-layer.md)
 
 ### Vector Database Provider
-**Location**: `apps/backend/src/providers/vectordb`
+**Package**: `@qckstrt/vectordb-provider`
 
 ```typescript
 interface IVectorDBProvider {
@@ -113,12 +126,11 @@ interface IVectorDBProvider {
 
 **Implementations**:
 - `ChromaDBProvider` - Dedicated vector DB (default)
-- `PgVectorProvider` - PostgreSQL extension (production)
 
 **See**: [Data Layer Architecture](data-layer.md)
 
 ### Embeddings Provider
-**Location**: `apps/backend/src/providers/embeddings`
+**Package**: `@qckstrt/embeddings-provider`
 
 ```typescript
 interface IEmbeddingProvider {
@@ -136,7 +148,7 @@ interface IEmbeddingProvider {
 **See**: [AI/ML Pipeline](ai-ml-pipeline.md)
 
 ### LLM Provider
-**Location**: `apps/backend/src/providers/llm`
+**Package**: `@qckstrt/llm-provider`
 
 ```typescript
 interface ILLMProvider {

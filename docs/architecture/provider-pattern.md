@@ -67,7 +67,7 @@ export class MyService {
 
 ### 1. Relational Database Provider
 
-**Location**: `apps/backend/src/providers/relationaldb/`
+**Package**: `@qckstrt/relationaldb-provider`
 
 **Purpose**: Abstract relational database connections (SQLite, PostgreSQL, Aurora)
 
@@ -85,9 +85,9 @@ export interface IRelationalDBProvider {
 
 | Provider | File | Use Case | Setup Time |
 |----------|------|----------|------------|
-| SQLite | `providers/sqlite.provider.ts` | Development, Testing | 0 seconds |
-| PostgreSQL | `providers/postgres.provider.ts` | Production | 5-10 minutes |
-| Aurora | `providers/aurora.provider.ts` | AWS Serverless | 10-15 minutes |
+| SQLite | `packages/relationaldb-provider/src/providers/sqlite.provider.ts` | Development, Testing | 0 seconds |
+| PostgreSQL | `packages/relationaldb-provider/src/providers/postgres.provider.ts` | Production | 5-10 minutes |
+| Aurora | `packages/relationaldb-provider/src/providers/aurora.provider.ts` | AWS Serverless | 10-15 minutes |
 
 **Configuration**:
 ```bash
@@ -112,7 +112,7 @@ RELATIONAL_DB_PASSWORD=password
 
 ### 2. Vector Database Provider
 
-**Location**: `apps/backend/src/providers/vectordb/`
+**Package**: `@qckstrt/vectordb-provider`
 
 **Purpose**: Abstract vector storage and similarity search (ChromaDB, pgvector)
 
@@ -146,8 +146,8 @@ export interface IVectorDBProvider {
 
 | Provider | File | Use Case | Performance |
 |----------|------|----------|-------------|
-| ChromaDB | `providers/chroma.provider.ts` | Development | Fast (dedicated) |
-| pgvector | `providers/pgvector.provider.ts` | Production | Fast (consolidated) |
+| ChromaDB | `packages/vectordb-provider/src/providers/chroma.provider.ts` | Development | Fast (dedicated) |
+| pgvector | `packages/vectordb-provider/src/providers/pgvector.provider.ts` | Production | Fast (consolidated) |
 
 **Configuration**:
 ```bash
@@ -169,7 +169,7 @@ VECTOR_DB_PROVIDER=pgvector
 
 ### 3. Embeddings Provider
 
-**Location**: `apps/backend/src/providers/embeddings/`
+**Package**: `@qckstrt/embeddings-provider`
 
 **Purpose**: Generate vector embeddings from text (Xenova, Ollama)
 
@@ -187,8 +187,8 @@ export interface IEmbeddingProvider {
 
 | Provider | File | Use Case | Dimensions | Setup |
 |----------|------|----------|------------|-------|
-| Xenova | `providers/xenova.provider.ts` | Development (default) | 384 | None (auto-downloads) |
-| Ollama | `providers/ollama.provider.ts` | GPU acceleration | 768 | Requires Ollama server |
+| Xenova | `packages/embeddings-provider/src/providers/xenova.provider.ts` | Development (default) | 384 | None (auto-downloads) |
+| Ollama | `packages/embeddings-provider/src/providers/ollama.provider.ts` | GPU acceleration | 768 | Requires Ollama server |
 
 **Configuration**:
 ```bash
@@ -229,7 +229,7 @@ export class EmbeddingsService {
 
 ### 4. LLM Provider
 
-**Location**: `apps/backend/src/providers/llm/`
+**Package**: `@qckstrt/llm-provider`
 
 **Purpose**: Generate text using language models (Ollama with Falcon/Llama/Mistral)
 
@@ -262,7 +262,7 @@ export interface ILLMProvider {
 
 | Provider | File | Models | Use Case |
 |----------|------|--------|----------|
-| Ollama | `providers/ollama.provider.ts` | Falcon 7B (default), Llama 3.2, Mistral, etc. | Self-hosted LLM |
+| Ollama | `packages/llm-provider/src/providers/ollama.provider.ts` | Falcon 7B (default), Llama 3.2, Mistral, etc. | Self-hosted LLM |
 
 **Configuration**:
 ```bash
@@ -406,7 +406,7 @@ const model = process.env.LLM_MODEL || 'falcon';
 
 ### Step 1: Implement Interface
 ```typescript
-// src/providers/[type]/providers/my-provider.provider.ts
+// packages/[type]-provider/src/providers/my-provider.provider.ts
 export class MyProvider implements IProviderInterface {
   constructor(private config: MyProviderConfig) {}
 
@@ -418,7 +418,7 @@ export class MyProvider implements IProviderInterface {
 
 ### Step 2: Add to Module
 ```typescript
-// src/providers/[type]/[type].module.ts
+// packages/[type]-provider/src/[type].module.ts
 useFactory: (config: ConfigService) => {
   const provider = config.get('provider.type');
 
@@ -432,7 +432,7 @@ useFactory: (config: ConfigService) => {
 
 ### Step 3: Export from Index
 ```typescript
-// src/providers/[type]/index.ts
+// packages/[type]-provider/src/index.ts
 export * from './providers/my-provider.provider';
 ```
 

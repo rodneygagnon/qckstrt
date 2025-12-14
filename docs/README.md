@@ -63,6 +63,24 @@ This platform is built on three core principles:
 | **Relational DB** | SQLite (dev), PostgreSQL (prod) | Aurora PostgreSQL |
 | **LLM** | Ollama (Falcon 7B) | Any Ollama model |
 
+## Platform Packages
+
+The `packages/` directory contains reusable, publishable npm packages (`@qckstrt/*`) that implement the pluggable provider architecture:
+
+| Package | Purpose | Tests |
+|---------|---------|-------|
+| `@qckstrt/common` | Shared types and interfaces | - |
+| `@qckstrt/llm-provider` | Ollama LLM integration | 16 |
+| `@qckstrt/embeddings-provider` | Xenova/Ollama embeddings | 24 |
+| `@qckstrt/vectordb-provider` | ChromaDB vector storage | 18 |
+| `@qckstrt/relationaldb-provider` | PostgreSQL, SQLite, Aurora | 19 |
+| `@qckstrt/extraction-provider` | Text extraction from URLs | 16 |
+| `@qckstrt/storage-provider` | AWS S3 file storage | 17 |
+| `@qckstrt/auth-provider` | AWS Cognito authentication | 23 |
+| `@qckstrt/secrets-provider` | AWS Secrets Manager | 10 |
+
+See [Provider Pattern](architecture/provider-pattern.md) for implementation details.
+
 ## Support
 
 For issues or questions:
