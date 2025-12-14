@@ -13,6 +13,22 @@ const config = {
   collectCoverage: true,
   coverageDirectory: "coverage",
   coverageProvider: "v8",
+  collectCoverageFrom: [
+    "app/**/*.{ts,tsx}",
+    "lib/**/*.{ts,tsx}",
+    "!app/**/layout.tsx",
+    "!app/rag-demo/**", // Complex Apollo hooks - tested via E2E
+    "!**/*.d.ts",
+    "!**/node_modules/**",
+  ],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  },
   verbose: true,
   setupFilesAfterEnv: ["<rootDir>/jest.setup.js"],
   modulePathIgnorePatterns: ["<rootDir>/.next"],
