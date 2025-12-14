@@ -3,7 +3,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Storage } from 'src/providers/files';
+import { IStorageProvider } from '@qckstrt/storage-provider';
 import { IFileConfig } from 'src/config';
 import { DocumentEntity } from 'src/db/entities/document.entity';
 import { File } from './models/file.model';
@@ -24,7 +24,7 @@ export class DocumentsService {
   constructor(
     @InjectRepository(DocumentEntity)
     private documentRepo: Repository<DocumentEntity>,
-    @Inject() private storage: Storage,
+    @Inject('STORAGE_PROVIDER') private storage: IStorageProvider,
     private configService: ConfigService,
   ) {
     const fileConfig: IFileConfig | undefined =
@@ -81,12 +81,8 @@ export class DocumentsService {
     filename: string,
     upload: boolean,
   ): Promise<string> {
-    return this.storage.getSignedUrl(
-      this.fileConfig.bucket,
-      userId,
-      filename,
-      upload,
-    );
+    const key = `${userId}/${filename}`;
+    return this.storage.getSignedUrl(this.fileConfig.bucket, key, upload);
   }
 
   /**
@@ -97,10 +93,10 @@ export class DocumentsService {
 
     try {
       // Delete from S3
+      const key = `${userId}/${filename}`;
       const deleted = await this.storage.deleteFile(
         this.fileConfig.bucket,
-        userId,
-        filename,
+        key,
       );
 
       if (deleted) {

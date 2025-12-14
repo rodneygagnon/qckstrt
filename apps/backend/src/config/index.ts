@@ -1,5 +1,5 @@
 import { ConfigService } from '@nestjs/config';
-import { getSecrets } from '../providers/secrets';
+import { getSecrets } from '@qckstrt/secrets-provider';
 import { DBConnection, DBType } from 'src/common/enums/db.enums';
 
 export interface IAuthConfig {

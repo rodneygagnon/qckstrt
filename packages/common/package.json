@@ -1,0 +1,74 @@
+{
+  "name": "@qckstrt/common",
+  "version": "0.1.0",
+  "description": "Shared types, interfaces, and utilities for QCKSTRT platform",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    },
+    "./providers/llm": {
+      "types": "./dist/providers/llm/index.d.ts",
+      "import": "./dist/providers/llm/index.js",
+      "require": "./dist/providers/llm/index.js"
+    },
+    "./providers/embeddings": {
+      "types": "./dist/providers/embeddings/index.d.ts",
+      "import": "./dist/providers/embeddings/index.js",
+      "require": "./dist/providers/embeddings/index.js"
+    },
+    "./providers/vectordb": {
+      "types": "./dist/providers/vectordb/index.d.ts",
+      "import": "./dist/providers/vectordb/index.js",
+      "require": "./dist/providers/vectordb/index.js"
+    },
+    "./providers/relationaldb": {
+      "types": "./dist/providers/relationaldb/index.d.ts",
+      "import": "./dist/providers/relationaldb/index.js",
+      "require": "./dist/providers/relationaldb/index.js"
+    },
+    "./providers/extraction": {
+      "types": "./dist/providers/extraction/index.d.ts",
+      "import": "./dist/providers/extraction/index.js",
+      "require": "./dist/providers/extraction/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "pnpm run build"
+  },
+  "keywords": [
+    "qckstrt",
+    "types",
+    "interfaces",
+    "llm",
+    "embeddings",
+    "vectordb",
+    "relationaldb",
+    "extraction"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "typeorm": "^0.3.0"
+  },
+  "peerDependenciesMeta": {
+    "typeorm": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typeorm": "^0.3.20",
+    "typescript": "^5.7.2"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}

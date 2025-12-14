@@ -8,13 +8,13 @@ import { ConfigService } from '@nestjs/config';
 
 import { DocumentsService } from './documents.service';
 import { DocumentEntity } from 'src/db/entities/document.entity';
-import { Storage } from 'src/providers/files';
+import { IStorageProvider } from '@qckstrt/storage-provider';
 import { DocumentStatus } from 'src/common/enums/document.status.enum';
 
 describe('DocumentsService', () => {
   let documentsService: DocumentsService;
   let documentRepo: Repository<DocumentEntity>;
-  let storage: Storage;
+  let storage: IStorageProvider;
   let configService: ConfigService;
 
   const mockFileConfig = {
@@ -52,8 +52,8 @@ describe('DocumentsService', () => {
           useValue: createMock<Repository<DocumentEntity>>(),
         },
         {
-          provide: Storage,
-          useValue: createMock<Storage>(),
+          provide: 'STORAGE_PROVIDER',
+          useValue: createMock<IStorageProvider>(),
         },
         {
           provide: ConfigService,
@@ -68,7 +68,7 @@ describe('DocumentsService', () => {
     documentRepo = module.get<Repository<DocumentEntity>>(
       getRepositoryToken(DocumentEntity),
     );
-    storage = module.get<Storage>(Storage);
+    storage = module.get<IStorageProvider>('STORAGE_PROVIDER');
     configService = module.get<ConfigService>(ConfigService);
   });
 
@@ -111,8 +111,7 @@ describe('DocumentsService', () => {
       expect(url).toBe(mockUrl);
       expect(storage.getSignedUrl).toHaveBeenCalledWith(
         'test-bucket',
-        'user-1',
-        'test.pdf',
+        'user-1/test.pdf',
         true,
       );
     });
@@ -128,8 +127,7 @@ describe('DocumentsService', () => {
       expect(url).toBe(mockUrl);
       expect(storage.getSignedUrl).toHaveBeenCalledWith(
         'test-bucket',
-        'user-1',
-        'test.pdf',
+        'user-1/test.pdf',
         false,
       );
     });
@@ -145,8 +143,7 @@ describe('DocumentsService', () => {
       expect(result).toBe(true);
       expect(storage.deleteFile).toHaveBeenCalledWith(
         'test-bucket',
-        'user-1',
-        'test.pdf',
+        'user-1/test.pdf',
       );
       expect(documentRepo.delete).toHaveBeenCalledWith({
         userId: 'user-1',
@@ -256,8 +253,8 @@ describe('DocumentsService - config validation', () => {
             useValue: createMock<Repository<DocumentEntity>>(),
           },
           {
-            provide: Storage,
-            useValue: createMock<Storage>(),
+            provide: 'STORAGE_PROVIDER',
+            useValue: createMock<IStorageProvider>(),
           },
           {
             provide: ConfigService,

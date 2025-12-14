@@ -8,7 +8,7 @@ const config: Config = {
   collectCoverage: true,
   coverageDirectory: 'coverage',
   coverageProvider: 'v8',
-  coveragePathIgnorePatterns: ['/node_modules/', '/dist/', '/src/providers'],
+  coveragePathIgnorePatterns: ['/node_modules/', '/dist/'],
   verbose: true,
   rootDir: '.',
   modulePathIgnorePatterns: ['<rootDir>/dist'],

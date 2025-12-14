@@ -13,39 +13,39 @@ import {
   changePasswordDto,
   confirmForgotPasswordDto,
 } from '../../../../data.spec';
-import { AWSCognito } from 'src/providers/auth/aws.cognito';
+import { IAuthProvider } from '@qckstrt/auth-provider';
 import { Role } from 'src/common/enums/role.enum';
 
 describe('AuthService', () => {
   let authService: AuthService;
   let usersService: UsersService;
-  let awsCognito: AWSCognito;
+  let authProvider: IAuthProvider;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: UsersService, useValue: createMock<UsersService>() },
-        { provide: AWSCognito, useValue: createMock<AWSCognito>() },
+        { provide: 'AUTH_PROVIDER', useValue: createMock<IAuthProvider>() },
       ],
     }).compile();
 
     authService = module.get<AuthService>(AuthService);
     usersService = module.get<UsersService>(UsersService);
-    awsCognito = module.get<AWSCognito>(AWSCognito);
+    authProvider = module.get<IAuthProvider>('AUTH_PROVIDER');
   });
 
   it('services should be defined', () => {
     expect(authService).toBeDefined();
     expect(usersService).toBeDefined();
-    expect(awsCognito).toBeDefined();
+    expect(authProvider).toBeDefined();
   });
 
   it('should register a user', async () => {
     usersService.findByEmail = jest.fn().mockImplementation((email: string) => {
       return users.find((user) => user.email === email);
     });
-    awsCognito.registerUser = jest
+    authProvider.registerUser = jest
       .fn()
       .mockImplementation(
         (email: string, username: string, password: string) => {
@@ -57,14 +57,14 @@ describe('AuthService', () => {
       '0919390e-9061-70c5-6a92-2a0b70b204e7',
     );
     expect(usersService.findByEmail).toHaveBeenCalledTimes(1);
-    expect(awsCognito.registerUser).toHaveBeenCalledTimes(1);
+    expect(authProvider.registerUser).toHaveBeenCalledTimes(1);
   });
 
   it('should fail to register a user', async () => {
     usersService.findByEmail = jest.fn().mockImplementation((email: string) => {
       return users.find((user) => user.email === email);
     });
-    awsCognito.registerUser = jest
+    authProvider.registerUser = jest
       .fn()
       .mockImplementation(
         (email: string, username: string, password: string) => {
@@ -77,9 +77,9 @@ describe('AuthService', () => {
     } catch (error) {
       expect(error.message).toEqual('User already exists!');
       expect(usersService.findByEmail).toHaveBeenCalledTimes(1);
-      expect(awsCognito.registerUser).toHaveBeenCalledTimes(1);
-      expect(awsCognito.addToGroup).toHaveBeenCalledTimes(0);
-      expect(awsCognito.confirmUser).toHaveBeenCalledTimes(0);
+      expect(authProvider.registerUser).toHaveBeenCalledTimes(1);
+      expect(authProvider.addToGroup).toHaveBeenCalledTimes(0);
+      expect(authProvider.confirmUser).toHaveBeenCalledTimes(0);
       expect(usersService.update).toHaveBeenCalledTimes(0);
     }
   });
@@ -88,7 +88,7 @@ describe('AuthService', () => {
     usersService.findByEmail = jest.fn().mockImplementation((email: string) => {
       return users.find((user) => user.email === email);
     });
-    awsCognito.registerUser = jest
+    authProvider.registerUser = jest
       .fn()
       .mockImplementation(
         (email: string, username: string, password: string) => {
@@ -100,9 +100,9 @@ describe('AuthService', () => {
       await authService.registerUser(registerUserDto);
     } catch (error) {
       expect(usersService.findByEmail).toHaveBeenCalledTimes(1);
-      expect(awsCognito.registerUser).toHaveBeenCalledTimes(1);
-      expect(awsCognito.addToGroup).toHaveBeenCalledTimes(0);
-      expect(awsCognito.confirmUser).toHaveBeenCalledTimes(0);
+      expect(authProvider.registerUser).toHaveBeenCalledTimes(1);
+      expect(authProvider.addToGroup).toHaveBeenCalledTimes(0);
+      expect(authProvider.confirmUser).toHaveBeenCalledTimes(0);
       expect(usersService.update).toHaveBeenCalledTimes(0);
     }
   });
@@ -117,9 +117,9 @@ describe('AuthService', () => {
     } catch (error) {
       expect(error.message).toContain('User does not exist!');
       expect(usersService.findByEmail).toHaveBeenCalledTimes(1);
-      expect(awsCognito.registerUser).toHaveBeenCalledTimes(0);
-      expect(awsCognito.addToGroup).toHaveBeenCalledTimes(0);
-      expect(awsCognito.confirmUser).toHaveBeenCalledTimes(0);
+      expect(authProvider.registerUser).toHaveBeenCalledTimes(0);
+      expect(authProvider.addToGroup).toHaveBeenCalledTimes(0);
+      expect(authProvider.confirmUser).toHaveBeenCalledTimes(0);
       expect(usersService.update).toHaveBeenCalledTimes(0);
     }
   });
@@ -128,7 +128,7 @@ describe('AuthService', () => {
     usersService.findByEmail = jest.fn().mockImplementation((email: string) => {
       return users.find((user) => user.email === email);
     });
-    awsCognito.authenticateUser = jest
+    authProvider.authenticateUser = jest
       .fn()
       .mockImplementation((email: string, password: string) => {
         return Promise.resolve({
@@ -142,14 +142,14 @@ describe('AuthService', () => {
       refreshToken: '123456',
     });
     expect(usersService.findByEmail).toHaveBeenCalledTimes(1);
-    expect(awsCognito.authenticateUser).toHaveBeenCalledTimes(1);
+    expect(authProvider.authenticateUser).toHaveBeenCalledTimes(1);
   });
 
   it('should fail to log in a user', async () => {
     usersService.findByEmail = jest.fn().mockImplementation((email: string) => {
       return users.find((user) => user.email === email);
     });
-    awsCognito.authenticateUser = jest
+    authProvider.authenticateUser = jest
       .fn()
       .mockImplementation((email: string, password: string) => {
         return Promise.reject(new Error('Failed user login!'));
@@ -160,7 +160,7 @@ describe('AuthService', () => {
     } catch (error) {
       expect(error.message).toEqual('Failed user login!');
       expect(usersService.findByEmail).toHaveBeenCalledTimes(1);
-      expect(awsCognito.authenticateUser).toHaveBeenCalledTimes(1);
+      expect(authProvider.authenticateUser).toHaveBeenCalledTimes(1);
     }
   });
 
@@ -174,12 +174,12 @@ describe('AuthService', () => {
     } catch (error) {
       expect(error.message).toContain('User does not exist!');
       expect(usersService.findByEmail).toHaveBeenCalledTimes(1);
-      expect(awsCognito.authenticateUser).toHaveBeenCalledTimes(0);
+      expect(authProvider.authenticateUser).toHaveBeenCalledTimes(0);
     }
   });
 
   it('should fail to log in a user', async () => {
-    awsCognito.changePassword = jest
+    authProvider.changePassword = jest
       .fn()
       .mockImplementation(
         (id: string, currentPassword: string, newPassword: string) => {
@@ -191,12 +191,12 @@ describe('AuthService', () => {
       await authService.changePassword(changePasswordDto);
     } catch (error) {
       expect(error.message).toEqual('Failed user password change!');
-      expect(awsCognito.changePassword).toHaveBeenCalledTimes(1);
+      expect(authProvider.changePassword).toHaveBeenCalledTimes(1);
     }
   });
 
   it('should change a user password', async () => {
-    awsCognito.changePassword = jest
+    authProvider.changePassword = jest
       .fn()
       .mockImplementation(
         (id: string, currentPassword: string, newPassword: string) => {
@@ -205,14 +205,14 @@ describe('AuthService', () => {
       );
 
     expect(await authService.changePassword(changePasswordDto)).toBe(true);
-    expect(awsCognito.changePassword).toHaveBeenCalledTimes(1);
+    expect(authProvider.changePassword).toHaveBeenCalledTimes(1);
   });
 
   it('should send forgot user password', async () => {
     usersService.findByEmail = jest.fn().mockImplementation((email: string) => {
       return users.find((user) => user.email === email);
     });
-    awsCognito.forgotPassword = jest
+    authProvider.forgotPassword = jest
       .fn()
       .mockImplementation((email: string) => {
         return Promise.resolve(true);
@@ -220,7 +220,7 @@ describe('AuthService', () => {
 
     expect(await authService.forgotPassword(users[0].email)).toBe(true);
     expect(usersService.findByEmail).toHaveBeenCalledTimes(1);
-    expect(awsCognito.forgotPassword).toHaveBeenCalledTimes(1);
+    expect(authProvider.forgotPassword).toHaveBeenCalledTimes(1);
   });
 
   it('should send forgot user password if user not found', async () => {
@@ -230,14 +230,14 @@ describe('AuthService', () => {
 
     expect(await authService.forgotPassword(users[0].email)).toBe(true);
     expect(usersService.findByEmail).toHaveBeenCalledTimes(1);
-    expect(awsCognito.forgotPassword).toHaveBeenCalledTimes(0);
+    expect(authProvider.forgotPassword).toHaveBeenCalledTimes(0);
   });
 
   it('should confirm forgot user password', async () => {
     usersService.findByEmail = jest.fn().mockImplementation((email: string) => {
       return users.find((user) => user.email === email);
     });
-    awsCognito.confirmForgotPassword = jest
+    authProvider.confirmForgotPassword = jest
       .fn()
       .mockImplementation(
         (email: string, password: string, confirmationCode: string) => {
@@ -249,7 +249,7 @@ describe('AuthService', () => {
       await authService.confirmForgotPassword(confirmForgotPasswordDto),
     ).toBe(true);
     expect(usersService.findByEmail).toHaveBeenCalledTimes(1);
-    expect(awsCognito.confirmForgotPassword).toHaveBeenCalledTimes(1);
+    expect(authProvider.confirmForgotPassword).toHaveBeenCalledTimes(1);
   });
 
   it('should fail confirm forgot user password for unknown user', async () => {
@@ -261,14 +261,14 @@ describe('AuthService', () => {
       await authService.confirmForgotPassword(confirmForgotPasswordDto),
     ).toBe(true);
     expect(usersService.findByEmail).toHaveBeenCalledTimes(1);
-    expect(awsCognito.confirmForgotPassword).toHaveBeenCalledTimes(0);
+    expect(authProvider.confirmForgotPassword).toHaveBeenCalledTimes(0);
   });
 
   it('should confirm user', async () => {
     usersService.findById = jest.fn().mockImplementation((id: string) => {
       return users.find((user) => user.id === id);
     });
-    awsCognito.confirmUser = jest
+    authProvider.confirmUser = jest
       .fn()
       .mockImplementation((username: string) => {
         return Promise.resolve(true);
@@ -276,7 +276,7 @@ describe('AuthService', () => {
 
     expect(await authService.confirmUser(users[0].id)).toBe(true);
     expect(usersService.findById).toHaveBeenCalledTimes(1);
-    expect(awsCognito.confirmUser).toHaveBeenCalledTimes(1);
+    expect(authProvider.confirmUser).toHaveBeenCalledTimes(1);
   });
 
   it('should fail confirm an unknown user', async () => {
@@ -286,14 +286,14 @@ describe('AuthService', () => {
 
     expect(await authService.confirmUser(users[0].id)).toBe(false);
     expect(usersService.findById).toHaveBeenCalledTimes(1);
-    expect(awsCognito.confirmUser).toHaveBeenCalledTimes(0);
+    expect(authProvider.confirmUser).toHaveBeenCalledTimes(0);
   });
 
   it('should add permissions', async () => {
     usersService.findById = jest.fn().mockImplementation((id: string) => {
       return users.find((user) => user.id === id);
     });
-    awsCognito.addToGroup = jest
+    authProvider.addToGroup = jest
       .fn()
       .mockImplementation((username: string, group: Role) => {
         return Promise.resolve(true);
@@ -301,7 +301,7 @@ describe('AuthService', () => {
 
     expect(await authService.addPermission(users[0].id, Role.Admin)).toBe(true);
     expect(usersService.findById).toHaveBeenCalledTimes(1);
-    expect(awsCognito.addToGroup).toHaveBeenCalledTimes(1);
+    expect(authProvider.addToGroup).toHaveBeenCalledTimes(1);
   });
 
   it('should fail to add permissions for unknown user', async () => {
@@ -313,14 +313,14 @@ describe('AuthService', () => {
       false,
     );
     expect(usersService.findById).toHaveBeenCalledTimes(1);
-    expect(awsCognito.addToGroup).toHaveBeenCalledTimes(0);
+    expect(authProvider.addToGroup).toHaveBeenCalledTimes(0);
   });
 
   it('should remove permissions', async () => {
     usersService.findById = jest.fn().mockImplementation((id: string) => {
       return users.find((user) => user.id === id);
     });
-    awsCognito.removeFromGroup = jest
+    authProvider.removeFromGroup = jest
       .fn()
       .mockImplementation((username: string, group: Role) => {
         return Promise.resolve(true);
@@ -330,7 +330,7 @@ describe('AuthService', () => {
       true,
     );
     expect(usersService.findById).toHaveBeenCalledTimes(1);
-    expect(awsCognito.removeFromGroup).toHaveBeenCalledTimes(1);
+    expect(authProvider.removeFromGroup).toHaveBeenCalledTimes(1);
   });
 
   it('should fail to remove permissions for unknown user', async () => {
@@ -342,17 +342,17 @@ describe('AuthService', () => {
       false,
     );
     expect(usersService.findById).toHaveBeenCalledTimes(1);
-    expect(awsCognito.removeFromGroup).toHaveBeenCalledTimes(0);
+    expect(authProvider.removeFromGroup).toHaveBeenCalledTimes(0);
   });
 
   it('should delete a user', async () => {
-    awsCognito.deleteUser = jest
+    authProvider.deleteUser = jest
       .fn()
       .mockImplementation((username: string, group: Role) => {
         return Promise.resolve(true);
       });
 
     expect(await authService.deleteUser(users[0].email)).toBe(true);
-    expect(awsCognito.deleteUser).toHaveBeenCalledTimes(1);
+    expect(authProvider.deleteUser).toHaveBeenCalledTimes(1);
   });
 });
