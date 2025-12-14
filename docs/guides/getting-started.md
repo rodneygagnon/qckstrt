@@ -83,16 +83,40 @@ npm run dev
 ### 6. Verify It's Working
 
 Open your browser to:
+- **API Gateway (GraphQL Playground)**: http://localhost:3000/graphql
 - **Frontend**: http://localhost:5173
-- **API Gateway**: http://localhost:3000/graphql
 - **ChromaDB**: http://localhost:8000/api/v1/heartbeat
 - **Ollama**: http://localhost:11434
 
-**Test RAG**:
-1. Upload a document via the frontend
-2. Wait for indexing to complete (~1-5 seconds)
-3. Ask a question about the document
-4. Get an AI-generated answer!
+**Test the RAG Pipeline**:
+
+1. Open http://localhost:3000/graphql in your browser
+
+2. Index a test document:
+```graphql
+mutation {
+  indexDocument(
+    userId: "test-user"
+    documentId: "test-doc"
+    text: "QCKSTRT is a full-stack platform with RAG capabilities."
+  ) {
+    success
+    message
+  }
+}
+```
+
+3. Ask a question:
+```graphql
+query {
+  answerQuery(
+    userId: "test-user"
+    query: "What is QCKSTRT?"
+  )
+}
+```
+
+4. You should get an AI-generated answer based on the indexed document!
 
 ---
 
@@ -186,21 +210,29 @@ QCKSTRT comes with sensible defaults for local development:
 
 ## Common Tasks
 
-### Upload and Index a Document
+### Index a Document
 
-**Via Frontend**:
-1. Go to http://localhost:5173
-2. Click "Upload Document"
-3. Select a text file or PDF
-4. Wait for "Indexed successfully" message
+Index text for semantic search and RAG using the GraphQL API:
 
-**Via GraphQL**:
 ```graphql
 mutation IndexDocument {
   indexDocument(
-    userId: "user-1"
-    documentId: "doc-1"
-    text: "Your document text here..."
+    userId: "user-123"
+    documentId: "quarterly-report-q4"
+    text: """
+    Q4 2024 Financial Report
+
+    Revenue: $1.2M (up 25% from Q3)
+    Key achievements:
+    - Launched new product line
+    - Expanded to 3 new markets
+    - Team grew to 25 people
+
+    Goals for Q1 2025:
+    - Reach $1.5M revenue
+    - Launch mobile app
+    - Hire 5 more engineers
+    """
   ) {
     success
     message
@@ -208,32 +240,63 @@ mutation IndexDocument {
 }
 ```
 
-### Ask a Question (RAG)
+**Response**:
+```json
+{
+  "data": {
+    "indexDocument": {
+      "success": true,
+      "message": "Document indexed successfully with 3 chunks"
+    }
+  }
+}
+```
 
-**Via Frontend**:
-1. Go to the "Knowledge" tab
-2. Type your question
-3. Click "Ask"
-4. Wait for AI-generated answer (~2-5 seconds)
+### Ask Questions Using RAG
 
-**Via GraphQL**:
+Query your indexed documents using natural language:
+
 ```graphql
 query AskQuestion {
   answerQuery(
-    userId: "user-1"
-    query: "What is the project status?"
+    userId: "user-123"
+    query: "What was the Q4 revenue and what are the Q1 goals?"
   )
 }
 ```
 
-### View Indexed Documents
+**Response**:
+```json
+{
+  "data": {
+    "answerQuery": "Q4 2024 revenue was $1.2M, which represents a 25% increase from Q3. The goals for Q1 2025 include reaching $1.5M in revenue, launching a mobile app, and hiring 5 more engineers."
+  }
+}
+```
+
+### Semantic Search (Without LLM)
+
+Search for relevant text chunks without generating an answer:
 
 ```graphql
-query ListDocuments {
-  documents(userId: "user-1") {
-    id
-    filename
-    uploadedAt
+query SearchDocuments {
+  searchText(
+    userId: "user-123"
+    query: "revenue growth"
+    count: 3
+  )
+}
+```
+
+**Response**:
+```json
+{
+  "data": {
+    "searchText": [
+      "Revenue: $1.2M (up 25% from Q3)",
+      "Goals for Q1 2025: Reach $1.5M revenue",
+      "Q4 2024 Financial Report"
+    ]
   }
 }
 ```
