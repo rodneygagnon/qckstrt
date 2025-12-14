@@ -34,6 +34,7 @@ x-vectors-config: &vectors-env
   VERSION: ${VECTORS_VERSION}
   DESCRIPTION: ${VECTORS_DESCRIPTION}
   PORT: 8080
+  CHROMA_URL: http://chromadb:8000
 
 networks:
   backend:
@@ -59,6 +60,9 @@ services:
     ports:
       - "${API_PORT}:8080"
     restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
   users:
     build:
       context: ..
@@ -77,6 +81,9 @@ services:
     ports:
       - "${USERS_PORT}:8080"
     restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
   files:
     build:
       context: ..
@@ -95,6 +102,9 @@ services:
     ports:
       - "${FILES_PORT}:8080"
     restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
   vectors:
     build:
       context: ..
@@ -113,20 +123,48 @@ services:
     ports:
       - "${VECTORS_PORT}:8080"
     restart: always
+    depends_on:
+      - chromadb
 
-  database:
-    # image: postgres:latest
-    image: ankane/pgvector
-    container_name: qckstrt_db
+  postgres:
+    image: postgres:16-alpine
+    container_name: qckstrt-postgres
+    platform: "linux/amd64"
     ports:
-      - 5432:5432
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
     environment:
-      # <<: *api-env
-      POSTGRES_DB: qckstrt
-      # POSTGRES_USER: ${DB_USER:-qckstrt_user}
-      POSTGRES_PASSWORD: my_password
-    restart: on-failure
-    stdin_open: true
-    tty: true
+      POSTGRES_DB: ${POSTGRES_DB:-qckstrt}
+      POSTGRES_USER: ${POSTGRES_USER:-qckstrt_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qckstrt_password}
     networks:
       - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-qckstrt_user} -d ${POSTGRES_DB:-qckstrt}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: qckstrt-chromadb
+    platform: "linux/amd64"
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma-data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
+    networks:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+    name: qckstrt-postgres-data
+  chroma-data:
+    name: qckstrt-chroma-data

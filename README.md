@@ -1,53 +1,154 @@
 # QCKSTRT
-A NextJs / NestJs Full Stack project complete with AWS infrastructure.
 
-## Prerequisites
-- pnpm 
-- AWS Account
+A full-stack platform with 100% open-source AI/ML capabilities for semantic search and RAG (Retrieval-Augmented Generation).
 
-## Frontend ([README.md](/apps/frontend/README.md))
-- [Next.js](https://nextjs.org) - React Web Framework
-- [React](https://react.dev) - Web UI Framework
-- [TailwindCSS](https://tailwindcss.com) - CSS Framework
-- [Cypress](https://www.cypress.io) - E2E / Component Testing
-- [Jest](https://jestjs.io) - Unit Testing
+## 🚀 Quick Start
 
-## Backend ([README.md](/apps/backend/README.md))
-- [Nest.js](https://nestjs.com) - Scalable Server-Side Node.js Framework
-- [GraphQL](https://graphql.org) - Graph API
-- [Jest](https://jestjs.io) - Unit Testing
-
-## Infrastructure ([README.md](/infra/README.md))
-- [Terraform](https://www.terraform.io) - AWS Cloud Formation
-- [AWS IAM](https://aws.amazon.com/iam/) - (Internal) Identity and Access Management
-- [AWS VPC](https://aws.amazon.com/vpc/) - Amazon Virtual Private Cloud
-- [AWS ECR](https://aws.amazon.com/ecr/) - Amazon Elastic Container Registry
-- [AWS EKS](https://aws.amazon.com/eks/) - Amazon Elastic Kubernetes Service
-- [AWS Lambda](https://aws.amazon.com/lambda/) - Amazon Serverless Functions
-- [AWS Fargate](https://aws.amazon.com/fargate/) - Amazon Serverless Compute
-- [AWS CloudWatch](https://aws.amazon.com/cloudwatch/) - Amazon Cloud Watch Observability
-- [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) - Amazon Secrets Managmenent
-
-## Containerization
-- [Docker](https://www.docker.com) - Images & Containers
-- [Kubernetes](https://kubernetes.io) - Container Orchestration
-
-### AWS Services
-- [AWS Cognito](https://aws.amazon.com/cognito/) - (End User) IAM, Attribute- & Role-Based Access Control
-- [AWS S3](https://aws.amazon.com/s3/) - Amazon Cloud Storage
-- [AWS SES](https://aws.amazon.com/ses/) - Amazon Simple Email Service
-- [AWS RDS](https://aws.amazon.com/rds/) ([Aurora](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/CHAP_AuroraOverview.html))  - Relational Database Service
-
-## Build Workspaces
 ```bash
-pnpm --filter frontend build
-pnpm --filter backend build
+# Clone and install
+git clone https://github.com/your-org/qckstrt.git
+cd qckstrt
+npm install
+
+# Start infrastructure
+docker-compose up -d
+
+# Pull LLM model
+./scripts/setup-ollama.sh
+
+# Start application
+cd apps/backend && npm run start:dev
+cd apps/frontend && npm run dev
 ```
 
-## *** Next Steps ***
+**See [Getting Started Guide](docs/guides/getting-started.md) for detailed setup instructions.**
 
-### CI / CD
-- [GitHub Actions](https://github.com/features/actions) - Automate AWS Cloud formation, build/push docker images, deploy containers
+## 📚 Documentation
 
-### Mobile Application
-- [ReactNative](https://reactnative.dev) - Mobile UI iOS & Android
+All documentation is located in the [`docs/`](docs/) directory:
+
+### For Developers
+- **[Getting Started](docs/guides/getting-started.md)** - Set up your development environment (5 minutes)
+- **[System Overview](docs/architecture/system-overview.md)** - High-level architecture
+- **[RAG Implementation](docs/guides/rag-implementation.md)** - Using the AI/ML pipeline
+
+### For DevOps
+- **[Docker Setup](docs/guides/docker-setup.md)** - Infrastructure services
+- **[Database Migration](docs/guides/database-migration.md)** - Migrating between providers
+- **[Provider Pattern](docs/architecture/provider-pattern.md)** - Pluggable architecture
+
+### For AI/ML Engineers
+- **[AI/ML Pipeline](docs/architecture/ai-ml-pipeline.md)** - Embeddings, RAG, and LLM
+- **[LLM Configuration](docs/guides/llm-configuration.md)** - Configuring and switching models
+- **[Data Layer](docs/architecture/data-layer.md)** - Vector and relational databases
+
+## Core Principles
+
+1. **100% Open Source** - All components use OSS licenses (Apache 2.0, MIT, etc.)
+2. **Self-Hosted First** - Complete control over data and infrastructure
+3. **Pluggable Architecture** - Swap implementations without code changes
+
+## Prerequisites
+
+- **Node.js** 18+ and npm/pnpm
+- **Docker** and Docker Compose
+- **Git**
+- **AWS Account** (for production deployment)
+
+## Technology Stack
+
+### Frontend
+- [React](https://react.dev) + [Vite](https://vitejs.dev) - Modern web UI
+- [TailwindCSS](https://tailwindcss.com) - Utility-first CSS
+- [GraphQL Client](https://www.apollographql.com) - API integration
+
+### Backend (Microservices)
+- [NestJS](https://nestjs.com) - Node.js framework
+- [GraphQL Federation](https://www.apollographql.com/docs/federation/) - Unified API gateway
+- [TypeORM](https://typeorm.io) - Database ORM
+
+### AI/ML Stack (100% OSS)
+
+| Component | Default Provider | Alternative Options |
+|-----------|-----------------|---------------------|
+| **Embeddings** | Xenova (in-process) | Ollama |
+| **Vector DB** | ChromaDB | pgvector, Qdrant, Weaviate |
+| **Relational DB** | SQLite (dev), PostgreSQL (prod) | Aurora PostgreSQL |
+| **LLM** | Ollama (Falcon 7B) | Any Ollama model |
+
+### Infrastructure
+- [Docker](https://www.docker.com) - Containerization
+- [Docker Compose](https://docs.docker.com/compose/) - Local orchestration
+- [Terraform](https://www.terraform.io) - AWS infrastructure as code
+- [Kubernetes](https://kubernetes.io) - Production orchestration
+
+### AWS Services (Production)
+- [AWS Cognito](https://aws.amazon.com/cognito/) - User authentication
+- [AWS RDS](https://aws.amazon.com/rds/) - Managed PostgreSQL
+- [AWS S3](https://aws.amazon.com/s3/) - Object storage
+- [AWS ECS](https://aws.amazon.com/ecs/) - Container orchestration
+- [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) - Secrets management
+
+## Project Structure
+
+```
+qckstrt/
+├── apps/
+│   ├── backend/              # NestJS microservices
+│   │   └── src/
+│   │       ├── apps/         # Services (API Gateway, Users, Documents, Knowledge, Files)
+│   │       └── providers/    # Pluggable providers (embeddings, LLM, databases)
+│   └── frontend/             # React + Vite application
+├── docs/                     # 📚 All documentation
+│   ├── architecture/         # As-built architecture documentation
+│   └── guides/               # How-to guides
+├── infra/                    # Terraform AWS infrastructure
+├── scripts/                  # Utility scripts
+└── docker-compose.yml        # Local development services
+```
+
+## Development
+
+### Backend
+```bash
+cd apps/backend
+npm run start:dev        # All microservices with hot-reload
+npm run start:dev -- api # API Gateway only
+npm run build           # Production build
+npm run test            # Run tests
+```
+
+### Frontend
+```bash
+cd apps/frontend
+npm run dev             # Dev server with HMR
+npm run build           # Production build
+npm run preview         # Preview production build
+```
+
+### Infrastructure Services
+```bash
+docker-compose up -d     # Start all services
+docker-compose down      # Stop all services
+docker-compose logs -f   # View logs
+```
+
+## Features
+
+- ✅ **RAG (Retrieval-Augmented Generation)** - Ask questions about your documents
+- ✅ **Semantic Search** - Find relevant information using vector similarity
+- ✅ **Document Indexing** - Automatic chunking and embedding generation
+- ✅ **Multi-Model Support** - Switch between Falcon, Llama, Mistral, etc.
+- ✅ **Pluggable Providers** - Swap databases and AI models via configuration
+- ✅ **GraphQL Federation** - Unified API across microservices
+- ✅ **100% Self-Hosted** - Complete data control and privacy
+
+## License
+
+Apache 2.0 - See LICENSE file for details
+
+## Support
+
+- 📖 Documentation: [docs/README.md](docs/README.md)
+- 🐛 Issues: [GitHub Issues](https://github.com/your-org/qckstrt/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/your-org/qckstrt/discussions)
