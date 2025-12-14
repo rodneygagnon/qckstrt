@@ -11,6 +11,7 @@ As-built documentation describing how the system is designed and implemented.
 - [**Provider Pattern**](architecture/provider-pattern.md) - Pluggable provider architecture
 - [**Data Layer**](architecture/data-layer.md) - Database and vector storage architecture
 - [**AI/ML Pipeline**](architecture/ai-ml-pipeline.md) - Embeddings, RAG, and LLM architecture
+- [**Frontend Architecture**](architecture/frontend-architecture.md) - React/Next.js frontend design
 
 ### 📚 How-To Guides (`guides/`)
 Practical guides for common tasks and workflows.
@@ -18,7 +19,9 @@ Practical guides for common tasks and workflows.
 - [**Getting Started**](guides/getting-started.md) - Quick start guide for development
 - [**Docker Setup**](guides/docker-setup.md) - Running services with Docker
 - [**LLM Configuration**](guides/llm-configuration.md) - Configuring and switching LLM models
-- [**RAG Implementation**](guides/rag-implementation.md) - Using the RAG system
+- [**RAG Implementation**](guides/rag-implementation.md) - Using the RAG system (backend)
+- [**RAG Demo Guide**](guides/frontend-rag-demo.md) - Using the RAG demo (frontend)
+- [**Frontend Testing**](guides/frontend-testing.md) - Testing the frontend application
 - [**Database Migration**](guides/database-migration.md) - Migrating between database providers
 
 ## Quick Links
@@ -27,6 +30,11 @@ Practical guides for common tasks and workflows.
 - [Getting Started Guide](guides/getting-started.md)
 - [System Overview](architecture/system-overview.md)
 - [Docker Setup](guides/docker-setup.md)
+
+### For Frontend Developers
+- [Frontend Architecture](architecture/frontend-architecture.md)
+- [RAG Demo Guide](guides/frontend-rag-demo.md)
+- [Frontend Testing](guides/frontend-testing.md)
 
 ### For DevOps/Infrastructure
 - [Provider Pattern](architecture/provider-pattern.md)
