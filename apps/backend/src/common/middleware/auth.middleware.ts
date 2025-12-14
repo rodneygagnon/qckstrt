@@ -24,11 +24,10 @@ export class AuthMiddleware implements NestMiddleware {
     next: NextFunction,
   ) {
     if (req.headers.authorization) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
       passport.authenticate(
         'jwt',
         { session: false },
-        (err: any, user: any, info: any) => {
+        (err: Error | null, user: Express.User | false) => {
           if (err) {
             return next(err);
           }

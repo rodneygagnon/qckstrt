@@ -11,15 +11,6 @@
     "deleteOutDir": true
   },
   "projects": {
-    "vectors": {
-      "type": "application",
-      "root": "src/apps/vectors",
-      "entryFile": "main",
-      "sourceRoot": "src/apps/vectors/src",
-      "compilerOptions": {
-        "tsConfigPath": "src/apps/vectors/tsconfig.app.json"
-      }
-    },
     "users": {
       "type": "application",
       "root": "src/apps/users",
@@ -29,13 +20,22 @@
         "tsConfigPath": "src/apps/users/tsconfig.app.json"
       }
     },
-    "files": {
+    "documents": {
       "type": "application",
-      "root": "src/apps/files",
+      "root": "src/apps/documents",
       "entryFile": "main",
-      "sourceRoot": "src/apps/files/src",
+      "sourceRoot": "src/apps/documents/src",
       "compilerOptions": {
-        "tsConfigPath": "src/apps/files/tsconfig.app.json"
+        "tsConfigPath": "src/apps/documents/tsconfig.app.json"
+      }
+    },
+    "knowledge": {
+      "type": "application",
+      "root": "src/apps/knowledge",
+      "entryFile": "main",
+      "sourceRoot": "src/apps/knowledge/src",
+      "compilerOptions": {
+        "tsConfigPath": "src/apps/knowledge/tsconfig.app.json"
       }
     },
     "api": {

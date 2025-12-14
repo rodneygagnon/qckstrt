@@ -1,63 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# QCKSTRT Frontend
 
-## Getting Started
+React + Vite frontend with GraphQL integration.
 
-First, run the development server:
+## Documentation
 
-```bash
-pnpm dev
-```
+See the main documentation:
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **[Getting Started](../../docs/guides/getting-started.md)** - Setup and development
+- **[System Overview](../../docs/architecture/system-overview.md)** - Architecture details
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [Cypress](https://www.cypress.io) - E2E and Component Testing
-- [Jest](https://jestjs.io) - Unit Testing
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Make Commands
-
-To **build** images
+## Quick Start
 
 ```bash
-make build
+# Install dependencies
+npm install
+
+# Start dev server
+npm run dev
+
+# Build
+npm run build
+
+# Preview production build
+npm run preview
 ```
 
-To **push** images
+## Development
 
-```bash
-make push
-```
+The app runs on http://localhost:5173 with hot module replacement (HMR).
 
-## Docker Commands
+## GraphQL API
 
-To create and run a Docker image, run
+The frontend connects to the backend GraphQL API at http://localhost:3000/graphql.
 
-```bash
-docker compose --env-file .env.docker.dev build
-docker compose --env-file .env.docker.dev up
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-Once you have created and loaded a certificate to the Nginx image/container, you can also access via SSL
-
-Open [http://localhost](http://localhost) with your browser to see the result.
-
-or
-
-Open [https://localhost](https://localhost) with your browser to see the result.
-
-### Packages
-
-- [Husky](https://typicode.github.io/husky/)
+See [Getting Started Guide](../../docs/guides/getting-started.md) for full setup instructions.

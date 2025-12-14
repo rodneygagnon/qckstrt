@@ -1,45 +1,48 @@
 import { DynamicModule, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
-import { ConfigModule, ConfigService } from '@nestjs/config';
-
+import { ConfigModule } from '@nestjs/config';
 import { DataSourceOptions } from 'typeorm';
+
+import configuration from 'src/config';
+import { DbConfigError } from './db.errors';
+import {
+  RelationalDBModule,
+  IRelationalDBProvider,
+} from 'src/providers/relationaldb';
 
 interface DbEntityConfig {
   entities: DataSourceOptions['entities'];
 }
 
-import configuration from 'src/config';
-
-import { DbConfigError } from './db.errors';
-import { IDBConfig } from 'src/config';
-import { getConnectionOptions } from 'src/providers/db';
-
+/**
+ * Database Module
+ *
+ * Provides TypeORM configuration using pluggable database providers.
+ * Supports SQLite (dev), PostgreSQL (prod), and Aurora (AWS).
+ */
 @Module({})
 export class DbModule {
   public static forRoot(dbEntityConfig: DbEntityConfig): DynamicModule {
     return {
       module: DbModule,
       imports: [
+        ConfigModule.forRoot({ load: [configuration], isGlobal: true }),
+        RelationalDBModule,
         TypeOrmModule.forRootAsync({
-          imports: [
-            ConfigModule.forRoot({ load: [configuration], isGlobal: true }),
-          ],
-          useFactory: (configService: ConfigService) => {
-            const dbConfig: IDBConfig | undefined =
-              configService.get<IDBConfig>('db');
-
-            if (!dbConfig) {
-              throw new DbConfigError('Database config is missing');
+          imports: [RelationalDBModule],
+          useFactory: (dbProvider: IRelationalDBProvider) => {
+            if (!dbProvider) {
+              throw new DbConfigError('Database provider not initialized');
             }
 
-            return getConnectionOptions(
-              configService.get('region') || '',
-              dbConfig,
-              dbEntityConfig,
+            // Get connection options from the injected provider
+            const connectionOptions = dbProvider.getConnectionOptions(
+              dbEntityConfig.entities,
             );
+
+            return connectionOptions;
           },
-          inject: [ConfigService],
+          inject: ['RELATIONAL_DB_PROVIDER'],
         }),
       ],
       controllers: [],
