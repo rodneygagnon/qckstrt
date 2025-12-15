@@ -1,5 +1,5 @@
 import serverlessExpress from '@codegenie/serverless-express';
-import { INestApplication, Type } from '@nestjs/common';
+import { INestApplication, Logger, Type } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Handler } from 'aws-lambda';
@@ -9,6 +9,8 @@ import helmet from 'helmet';
 import { env } from 'process';
 
 import { ConfigService } from '@nestjs/config';
+
+const logger = new Logger('Bootstrap');
 
 function setupSwagger(
   app: INestApplication,
@@ -28,7 +30,7 @@ function setupSwagger(
 export default async function bootstrap(
   AppModule: Type<unknown>,
 ): Promise<Handler> {
-  console.time('#perf bootup time');
+  const startTime = Date.now();
 
   const app = await NestFactory.create(AppModule);
   const port = app.get<ConfigService>(ConfigService).get('port');
@@ -45,8 +47,8 @@ export default async function bootstrap(
   }
 
   await app.listen(port);
-  console.log(`Now listening on port ${port}`);
-  console.timeEnd('#perf bootup time');
+  const bootupTime = Date.now() - startTime;
+  logger.log(`Now listening on port ${port} (bootup time: ${bootupTime}ms)`);
 
   const expressApp = app.getHttpAdapter().getInstance();
   return serverlessExpress({ app: expressApp });
