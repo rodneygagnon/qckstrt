@@ -32,9 +32,13 @@ variable "ssh_key_name" {
 }
 
 variable "allowed_ssh_cidr" {
-  description = "CIDR block allowed for SSH access (restrict to your IP)"
+  description = "CIDR block allowed for SSH/admin access (e.g., '203.0.113.50/32' for your IP)"
   type        = string
-  default     = "0.0.0.0/0"  # Change to your IP/32 in production
+
+  validation {
+    condition     = var.allowed_ssh_cidr != "0.0.0.0/0"
+    error_message = "allowed_ssh_cidr cannot be 0.0.0.0/0. Please restrict to your IP address (e.g., '203.0.113.50/32'). Find your IP at https://ifconfig.me"
+  }
 }
 
 variable "app_server_instance_type" {

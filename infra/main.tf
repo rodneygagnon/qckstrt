@@ -11,12 +11,13 @@
 #
 # File Structure:
 # - main.tf             : Terraform & provider configuration (this file)
-# - variables.tf        : Input variables
+# - variables.tf        : Input variables (with security validation)
 # - data.tf             : Data sources (AMIs, availability zones)
 # - vpc.tf              : VPC, subnets, internet gateway, routes
 # - security-groups.tf  : Security groups and rules
 # - iam.tf              : IAM roles, policies, instance profile
 # - secrets.tf          : Secrets Manager and random passwords
+# - monitoring.tf       : CloudWatch alarms and SNS alerts
 # - app-server.tf       : Application server EC2 instance
 # - gpu-server.tf       : GPU spot instance for AI inference
 # - outputs.tf          : Output values
