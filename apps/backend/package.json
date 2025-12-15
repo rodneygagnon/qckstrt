@@ -40,6 +40,7 @@
     "@qckstrt/storage-provider": "workspace:*",
     "@qckstrt/auth-provider": "workspace:*",
     "@qckstrt/secrets-provider": "workspace:*",
+    "@qckstrt/logging-provider": "workspace:*",
     "@apollo/gateway": "^2.12.2",
     "@apollo/server": "^5.2.0",
     "@apollo/subgraph": "^2.12.2",

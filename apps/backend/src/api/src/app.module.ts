@@ -14,6 +14,7 @@ import {
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { Request } from 'express';
+import { LoggingModule, LogLevel } from '@qckstrt/logging-provider';
 
 import configuration from 'src/config';
 
@@ -41,6 +42,19 @@ const handleAuth = ({ req }: { req: Request }) => {
     ConfigModule.forRoot({
       load: [configuration],
       isGlobal: true,
+    }),
+    LoggingModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        serviceName: 'api-gateway',
+        level:
+          configService.get('NODE_ENV') === 'production'
+            ? LogLevel.INFO
+            : LogLevel.DEBUG,
+        format:
+          configService.get('NODE_ENV') === 'production' ? 'json' : 'pretty',
+      }),
+      inject: [ConfigService],
     }),
     GraphQLModule.forRootAsync<ApolloGatewayDriverConfig>({
       driver: ApolloGatewayDriver,
