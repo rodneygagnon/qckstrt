@@ -1,7 +1,7 @@
 {
   "name": "@qckstrt/storage-provider",
   "version": "0.1.0",
-  "description": "Storage provider implementations for QCKSTRT platform (S3, etc.)",
+  "description": "Storage provider implementations for QCKSTRT platform (Supabase Storage)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -24,15 +24,13 @@
   "keywords": [
     "qckstrt",
     "storage",
-    "s3",
-    "aws",
+    "supabase",
     "provider"
   ],
   "license": "MIT",
   "dependencies": {
     "@qckstrt/common": "workspace:*",
-    "@aws-sdk/client-s3": "^3.709.0",
-    "@aws-sdk/s3-request-presigner": "^3.709.0"
+    "@supabase/supabase-js": "^2.49.1"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0",

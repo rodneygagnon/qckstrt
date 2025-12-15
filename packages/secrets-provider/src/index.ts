@@ -2,7 +2,7 @@
  * @qckstrt/secrets-provider
  *
  * Secrets provider implementations for the QCKSTRT platform.
- * Provides pluggable secrets management with AWS Secrets Manager support.
+ * Provides pluggable secrets management with Supabase Vault.
  */
 
 // Re-export types from common
@@ -13,10 +13,7 @@ export {
 } from "@qckstrt/common";
 
 // Providers
-export {
-  AWSSecretsProvider,
-  getSecrets,
-} from "./providers/aws-secrets.provider.js";
+export { SupabaseVaultProvider } from "./providers/supabase-vault.provider.js";
 
 // Module
 export { SecretsModule } from "./secrets.module.js";

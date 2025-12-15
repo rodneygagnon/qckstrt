@@ -1,23 +1,35 @@
 import { Module, Global } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
-import { CognitoAuthProvider } from "./providers/cognito.provider.js";
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import { IAuthProvider } from "@qckstrt/common";
+import { SupabaseAuthProvider } from "./providers/supabase.provider.js";
 
 /**
  * Auth Module
  *
  * Provides authentication capabilities using pluggable providers.
- * Currently supports AWS Cognito.
+ *
+ * Configure via AUTH_PROVIDER environment variable:
+ * - 'supabase' (default): Supabase Auth (GoTrue)
  */
 @Global()
 @Module({
   imports: [ConfigModule],
   providers: [
-    CognitoAuthProvider,
     {
       provide: "AUTH_PROVIDER",
-      useExisting: CognitoAuthProvider,
+      useFactory: (configService: ConfigService): IAuthProvider => {
+        const provider =
+          configService.get<string>("auth.provider") || "supabase";
+
+        switch (provider.toLowerCase()) {
+          case "supabase":
+          default:
+            return new SupabaseAuthProvider(configService);
+        }
+      },
+      inject: [ConfigService],
     },
   ],
-  exports: [CognitoAuthProvider, "AUTH_PROVIDER"],
+  exports: ["AUTH_PROVIDER"],
 })
 export class AuthModule {}

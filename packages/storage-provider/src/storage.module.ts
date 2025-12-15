@@ -1,23 +1,35 @@
 import { Module, Global } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
-import { S3StorageProvider } from "./providers/s3.provider.js";
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import { IStorageProvider } from "@qckstrt/common";
+import { SupabaseStorageProvider } from "./providers/supabase.provider.js";
 
 /**
  * Storage Module
  *
  * Provides file storage capabilities using pluggable providers.
- * Currently supports AWS S3.
+ *
+ * Configure via STORAGE_PROVIDER environment variable:
+ * - 'supabase' (default): Supabase Storage
  */
 @Global()
 @Module({
   imports: [ConfigModule],
   providers: [
-    S3StorageProvider,
     {
       provide: "STORAGE_PROVIDER",
-      useExisting: S3StorageProvider,
+      useFactory: (configService: ConfigService): IStorageProvider => {
+        const provider =
+          configService.get<string>("storage.provider") || "supabase";
+
+        switch (provider.toLowerCase()) {
+          case "supabase":
+          default:
+            return new SupabaseStorageProvider(configService);
+        }
+      },
+      inject: [ConfigService],
     },
   ],
-  exports: [S3StorageProvider, "STORAGE_PROVIDER"],
+  exports: ["STORAGE_PROVIDER"],
 })
 export class StorageModule {}

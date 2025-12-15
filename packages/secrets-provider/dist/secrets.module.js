@@ -22,12 +22,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SecretsModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
-const aws_secrets_provider_js_1 = require("./providers/aws-secrets.provider.js");
+const supabase_vault_provider_js_1 = require("./providers/supabase-vault.provider.js");
 /**
  * Secrets Module
  *
  * Provides secrets management capabilities using pluggable providers.
- * Currently supports AWS Secrets Manager.
+ *
+ * Configure via SECRETS_PROVIDER environment variable:
+ * - 'supabase' (default): Supabase Vault
  */
 let SecretsModule = class SecretsModule {};
 exports.SecretsModule = SecretsModule;
@@ -37,16 +39,23 @@ exports.SecretsModule = SecretsModule = __decorate(
     (0, common_1.Module)({
       imports: [config_1.ConfigModule],
       providers: [
-        aws_secrets_provider_js_1.AWSSecretsProvider,
         {
           provide: "SECRETS_PROVIDER",
-          useExisting: aws_secrets_provider_js_1.AWSSecretsProvider,
+          useFactory: (configService) => {
+            const provider =
+              configService.get("secrets.provider") || "supabase";
+            switch (provider.toLowerCase()) {
+              case "supabase":
+              default:
+                return new supabase_vault_provider_js_1.SupabaseVaultProvider(
+                  configService,
+                );
+            }
+          },
+          inject: [config_1.ConfigService],
         },
       ],
-      exports: [
-        aws_secrets_provider_js_1.AWSSecretsProvider,
-        "SECRETS_PROVIDER",
-      ],
+      exports: ["SECRETS_PROVIDER"],
     }),
   ],
   SecretsModule,

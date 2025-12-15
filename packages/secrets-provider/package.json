@@ -1,7 +1,7 @@
 {
   "name": "@qckstrt/secrets-provider",
   "version": "0.1.0",
-  "description": "Secrets provider implementations for QCKSTRT platform (AWS Secrets Manager, etc.)",
+  "description": "Secrets provider implementations for QCKSTRT platform (Supabase Vault)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -24,14 +24,14 @@
   "keywords": [
     "qckstrt",
     "secrets",
-    "aws",
-    "secrets-manager",
+    "supabase",
+    "vault",
     "provider"
   ],
   "license": "MIT",
   "dependencies": {
     "@qckstrt/common": "workspace:*",
-    "@aws-sdk/client-secrets-manager": "^3.709.0"
+    "@supabase/supabase-js": "^2.49.1"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0",

@@ -1,4 +1,21 @@
-version: '3.8'
+# QCKSTRT Development Stack
+#
+# This docker-compose provides all services needed for local development:
+# - Supabase (Auth, Storage, Vault, PostgreSQL) - OSS platform
+# - ChromaDB - Vector database
+# - Ollama - LLM inference
+#
+# Usage:
+#   docker-compose up -d
+#
+# Access Points:
+#   - Supabase API: http://localhost:8000
+#   - Supabase Studio: http://localhost:3100
+#   - PostgreSQL: localhost:5432
+#   - ChromaDB: http://localhost:8001
+#   - Ollama: http://localhost:11434
+
+version: "3.8"
 
 networks:
   qckstrt-network:
@@ -6,33 +23,211 @@ networks:
     external: false
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: qckstrt-postgres
-    platform: "linux/amd64"
+  # ===========================================
+  # Supabase Services (Auth, Storage, Vault)
+  # ===========================================
+
+  # PostgreSQL with Supabase extensions (pgsodium for Vault, etc.)
+  supabase-db:
+    image: supabase/postgres:15.6.1.139
+    container_name: qckstrt-supabase-db
     ports:
       - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: qckstrt
-      POSTGRES_USER: qckstrt_user
-      POSTGRES_PASSWORD: qckstrt_password
+      POSTGRES_HOST: /var/run/postgresql
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-your-super-secret-password}
+      POSTGRES_DB: postgres
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-token-with-at-least-32-characters}
+      JWT_EXP: ${JWT_EXP:-3600}
+    volumes:
+      - supabase-db-data:/var/lib/postgresql/data
+      - ./supabase/migrations:/docker-entrypoint-initdb.d
     networks:
       - qckstrt-network
-    restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U qckstrt_user -d qckstrt"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
+  # GoTrue - Authentication Service
+  supabase-auth:
+    image: supabase/gotrue:v2.164.0
+    container_name: qckstrt-supabase-auth
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: ${API_EXTERNAL_URL:-http://localhost:8000}
+
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${POSTGRES_PASSWORD:-your-super-secret-password}@supabase-db:5432/postgres
+
+      GOTRUE_SITE_URL: ${SITE_URL:-http://localhost:3000}
+      GOTRUE_URI_ALLOW_LIST: ${ADDITIONAL_REDIRECT_URLS:-}
+      GOTRUE_DISABLE_SIGNUP: ${DISABLE_SIGNUP:-false}
+
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: ${JWT_EXP:-3600}
+      GOTRUE_JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-token-with-at-least-32-characters}
+
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: ${ENABLE_EMAIL_SIGNUP:-true}
+      GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: ${ENABLE_ANONYMOUS_USERS:-false}
+      GOTRUE_MAILER_AUTOCONFIRM: ${ENABLE_EMAIL_AUTOCONFIRM:-true}
+    networks:
+      - qckstrt-network
+    restart: unless-stopped
+
+  # PostgREST - RESTful API for PostgreSQL
+  supabase-rest:
+    image: postgrest/postgrest:v12.2.3
+    container_name: qckstrt-supabase-rest
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD:-your-super-secret-password}@supabase-db:5432/postgres
+      PGRST_DB_SCHEMAS: ${PGRST_DB_SCHEMAS:-public,storage,graphql_public}
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-token-with-at-least-32-characters}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_APP_SETTINGS_JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-token-with-at-least-32-characters}
+      PGRST_APP_SETTINGS_JWT_EXP: ${JWT_EXP:-3600}
+    networks:
+      - qckstrt-network
+    restart: unless-stopped
+
+  # Storage API
+  supabase-storage:
+    image: supabase/storage-api:v1.11.8
+    container_name: qckstrt-supabase-storage
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+      supabase-rest:
+        condition: service_started
+    environment:
+      ANON_KEY: ${ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0}
+      SERVICE_KEY: ${SERVICE_ROLE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU}
+      POSTGREST_URL: http://supabase-rest:3000
+      PGRST_JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-token-with-at-least-32-characters}
+      DATABASE_URL: postgres://supabase_storage_admin:${POSTGRES_PASSWORD:-your-super-secret-password}@supabase-db:5432/postgres
+      FILE_SIZE_LIMIT: 52428800
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: stub
+      REGION: local
+      GLOBAL_S3_BUCKET: stub
+      ENABLE_IMAGE_TRANSFORMATION: "true"
+      IMGPROXY_URL: http://supabase-imgproxy:8080
+    volumes:
+      - supabase-storage-data:/var/lib/storage
+    networks:
+      - qckstrt-network
+    restart: unless-stopped
+
+  # Image Transformation
+  supabase-imgproxy:
+    image: darthsim/imgproxy:v3.8.0
+    container_name: qckstrt-supabase-imgproxy
+    environment:
+      IMGPROXY_BIND: ":8080"
+      IMGPROXY_LOCAL_FILESYSTEM_ROOT: /
+      IMGPROXY_USE_ETAG: "true"
+      IMGPROXY_ENABLE_WEBP_DETECTION: ${IMGPROXY_ENABLE_WEBP_DETECTION:-true}
+    volumes:
+      - supabase-storage-data:/var/lib/storage:ro
+    networks:
+      - qckstrt-network
+    restart: unless-stopped
+
+  # Kong API Gateway
+  supabase-kong:
+    image: kong:2.8.1
+    container_name: qckstrt-supabase-kong
+    depends_on:
+      - supabase-auth
+      - supabase-rest
+      - supabase-storage
+    ports:
+      - "8000:8000"
+      - "8443:8443"
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
+      KONG_DNS_ORDER: LAST,A,CNAME
+      KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
+      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
+      KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+      SUPABASE_ANON_KEY: ${ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0}
+      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU}
+      DASHBOARD_USERNAME: ${DASHBOARD_USERNAME:-supabase}
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:-this_password_is_insecure_and_should_be_updated}
+    volumes:
+      - ./supabase/volumes/kong/kong.yml:/var/lib/kong/kong.yml:ro
+    networks:
+      - qckstrt-network
+    restart: unless-stopped
+
+  # Supabase Studio (Admin UI)
+  supabase-studio:
+    image: supabase/studio:20241202-71e5240
+    container_name: qckstrt-supabase-studio
+    depends_on:
+      - supabase-kong
+    ports:
+      - "3100:3000"
+    environment:
+      STUDIO_PG_META_URL: http://supabase-meta:8080
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-your-super-secret-password}
+      DEFAULT_ORGANIZATION_NAME: ${STUDIO_DEFAULT_ORGANIZATION:-QCKSTRT}
+      DEFAULT_PROJECT_NAME: ${STUDIO_DEFAULT_PROJECT:-qckstrt}
+      SUPABASE_URL: http://supabase-kong:8000
+      SUPABASE_PUBLIC_URL: ${SUPABASE_PUBLIC_URL:-http://localhost:8000}
+      SUPABASE_ANON_KEY: ${ANON_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0}
+      SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU}
+      LOGFLARE_API_KEY: ${LOGFLARE_API_KEY:-your-logflare-api-key}
+      LOGFLARE_URL: http://supabase-analytics:4000
+      NEXT_PUBLIC_ENABLE_LOGS: "true"
+      NEXT_ANALYTICS_BACKEND_PROVIDER: postgres
+    networks:
+      - qckstrt-network
+    restart: unless-stopped
+
+  # Postgres Meta (for Studio)
+  supabase-meta:
+    image: supabase/postgres-meta:v0.83.2
+    container_name: qckstrt-supabase-meta
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: supabase-db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: postgres
+      PG_META_DB_USER: supabase_admin
+      PG_META_DB_PASSWORD: ${POSTGRES_PASSWORD:-your-super-secret-password}
+    networks:
+      - qckstrt-network
+    restart: unless-stopped
+
+  # ===========================================
+  # AI/ML Services
+  # ===========================================
+
+  # ChromaDB - Vector Database
   chromadb:
     image: chromadb/chroma:latest
     container_name: qckstrt-chromadb
     platform: "linux/amd64"
     ports:
-      - "8000:8000"
+      - "8001:8000"
     volumes:
       - chroma-data:/chroma/chroma
     environment:
@@ -43,6 +238,7 @@ services:
       - qckstrt-network
     restart: unless-stopped
 
+  # Ollama - LLM Inference
   ollama:
     image: ollama/ollama:latest
     container_name: qckstrt-ollama
@@ -64,8 +260,10 @@ services:
     #           capabilities: [gpu]
 
 volumes:
-  postgres-data:
-    name: qckstrt-postgres-data
+  supabase-db-data:
+    name: qckstrt-supabase-db-data
+  supabase-storage-data:
+    name: qckstrt-supabase-storage-data
   chroma-data:
     name: qckstrt-chroma-data
   ollama-data:
