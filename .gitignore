@@ -8,5 +8,5 @@ node_modules
 
 *.tfvars
 
-# Secret files
-infra/modules/secrets/DONOTCOMMIT/
+# Infrastructure backup (old modules)
+infra-backup/
