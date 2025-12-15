@@ -1,194 +1,68 @@
-variable "profile" {
+# =============================================================================
+# Variables
+# =============================================================================
+
+variable "aws_region" {
+  description = "AWS region"
   type        = string
-  description = "aws profile"
+  default     = "us-east-1"
+}
+
+variable "aws_profile" {
+  description = "AWS CLI profile to use"
+  type        = string
+  default     = "default"
 }
 
 variable "project" {
+  description = "Project name"
   type        = string
-  description = "infrastructure project name"
+  default     = "qckstrt"
 }
 
 variable "stage" {
+  description = "Deployment stage (dev, staging, prod)"
   type        = string
-  description = "infrastructure stage (ex. dev, stg, uat, prd, ...)"
+  default     = "dev"
 }
 
-variable "domain_name" {
+variable "ssh_key_name" {
+  description = "Name of the SSH key pair in AWS"
   type        = string
-  description = "root domain name"
 }
 
-variable "mail_from_subdomain" {
+variable "allowed_ssh_cidr" {
+  description = "CIDR block allowed for SSH access (restrict to your IP)"
   type        = string
-  description = "mail from subdomain for SES"
+  default     = "0.0.0.0/0"  # Change to your IP/32 in production
 }
 
-variable "email_identity" {
+variable "app_server_instance_type" {
+  description = "Instance type for application server"
   type        = string
-  description = "email identity for SES"
+  default     = "t3.xlarge"  # 4 vCPU, 16GB RAM
 }
 
-variable region {
-  type = string
-  description = "the region this infrastructure is in"
-}
-
-# VPC Variables
-variable "vpc_cidr" {
+variable "gpu_server_instance_type" {
+  description = "Instance type for GPU server"
   type        = string
-  description = "CIDR block for the VPC"
+  default     = "g5.xlarge"  # 1 GPU, 4 vCPU, 16GB RAM
 }
 
-variable "instance_tenancy" {
+variable "gpu_spot_max_price" {
+  description = "Maximum spot price for GPU instance (on-demand is ~$1.00)"
   type        = string
-  description = "Set instance-tenancy"
+  default     = "0.60"
 }
 
-variable "enable_dns_support" {
-  type        = bool
-  description = "whether to enable DNS support or not"
-}
-
-variable "enable_dns_hostnames" {
-  type        = bool
-  description = "whether to enable DNS hostnames or not"
-}
-
-variable "domain_eip" {
-  type        = string
-  description = "Set the domain of eip"
-}
-
-variable "create_nat_gateway" {
-  type        = bool
-  description = "whether to create a NAT gateway or not"
-}
-
-variable "map_public_ip_on_launch" {
-  type        = bool
-  description = "whether to map public ip on launch or not"
-}
-
-variable "destination_cidr_block" {
-  type        = string
-  description = "Set the destination cidr block"
-}
-
-variable "public_subnet_ingress_nacls" {
-  type = map(object({
-    protocol   = string
-    from_port  = number
-    to_port    = number
-    action     = string
-    cidr_block = string
-  }))
-}
-
-variable "public_subnet_egress_nacls" {
-  type = map(object({
-    protocol   = string
-    from_port  = number
-    to_port    = number
-    action     = string
-    cidr_block = string
-  }))
-}
-
-variable "private_subnet_ingress_nacls" {
-  type = map(object({
-    protocol   = string
-    from_port  = number
-    to_port    = number
-    action     = string
-    cidr_block = string
-  }))
-}
-
-variable "private_subnet_egress_nacls" {
-  type = map(object({
-    protocol   = string
-    from_port  = number
-    to_port    = number
-    action     = string
-    cidr_block = string
-  }))
-}
-
-variable "repositories" {
-  type = map(object({
-    image_tag_mutability    = string
-    scan_on_push            = bool
-    expiration_after_days   = number
-    base_dir                = string
-    dockerfile              = string
-    platform                = string
-    image_tag               = string
-  }))
-}
-
-variable "eks_node_instance_types" {
-  type = list(string)
-  description = "Cluster node types"
-  # default = [ "t3-medium" ]
-}
-
-variable "eks_node_disk_size" {
+variable "app_server_volume_size" {
+  description = "Root volume size for app server (GB)"
   type        = number
+  default     = 200
 }
 
-variable "eks_node_min_size" {
+variable "gpu_server_volume_size" {
+  description = "Root volume size for GPU server (GB)"
   type        = number
-}
-
-variable "eks_node_max_size" {
-  type        = number
-}
-
-variable "eks_node_desired_size" {
-  type        = number
-}
-
-# Cognito Variables
-variable "groups" {
-  type = list(object({
-    name                      = string
-    description               = string
-    precedence                = number
-  }))
-  default = []
-}
-
-variable "schema_attributes" {
-  type = list(object({
-    name                      = string
-    type                      = string
-    developer_only_attribute  = bool
-    mutable                   = bool
-    required                  = bool
-    min_length                = number
-    max_length                = number
-  }))
-  default = []
-}
-
-variable "postgresql" {
-  type = object({
-    type                      = string
-    host                      = string
-    port                      = number
-    database                  = string
-    username                  = string
-    password                  = string
-  })
-}
-
-variable "openai" {
-  type = object({
-    apiKey                    = string
-    gptModel                  = string
-    embeddingModel            = string
-    batchSize                 = number
-    chunkSize                 = number
-    chunkOverlap              = number
-  })
+  default     = 200
 }

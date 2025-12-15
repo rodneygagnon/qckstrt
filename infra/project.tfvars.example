@@ -1,168 +1,61 @@
+# =============================================================================
+# QCKSTRT Infrastructure Variables
+# =============================================================================
+# Copy this file to terraform.tfvars and fill in your values
+#
+# Target specs: 10-50k users, 100-500 concurrent requests, 1M AI queries/month
+# Estimated cost: ~$500-800/month
+# =============================================================================
 
-profile               = "your-project-name"
-region                = "your-aws-region"
+# AWS Configuration
+aws_profile = "default"
+aws_region  = "us-east-1"
 
-# VPC Configuration
-vpc_cidr              = "10.0.0.0/16"
-instance_tenancy      = "default"
-enable_dns_support    = true
-enable_dns_hostnames  = true
+# Project Configuration
+project = "qckstrt"
+stage   = "dev"  # dev, staging, prod
 
-domain_name           = "your-domain.com"
+# SSH Key (must exist in AWS EC2 Key Pairs)
+# Create one with: aws ec2 create-key-pair --key-name qckstrt-key --query 'KeyMaterial' --output text > qckstrt-key.pem
+ssh_key_name = "qckstrt-key"
 
-# SES
-mail_from_subdomain   = "mail"
-email_identity        = "your-email@your-domain.com"
+# Security - IMPORTANT: Restrict SSH access in production!
+# Use your IP with /32 suffix (e.g., "203.0.113.50/32")
+allowed_ssh_cidr = "0.0.0.0/0"  # Change to "YOUR_IP/32" in production
 
-# Elastic IP
-domain_eip = "vpc"
+# =============================================================================
+# Instance Configuration
+# =============================================================================
 
-# NAT Gateway
-create_nat_gateway = true
+# Application Server (runs Supabase, your apps, Redis, ChromaDB)
+# t3.xlarge: 4 vCPU, 16GB RAM - good for 100-500 concurrent users
+app_server_instance_type = "t3.xlarge"
+app_server_volume_size   = 200  # GB - for PostgreSQL, storage, logs
 
-# Subnets
-map_public_ip_on_launch = true
+# GPU Server (runs vLLM, Embeddings)
+# g5.xlarge: 1 GPU (A10G 24GB), 4 vCPU, 16GB RAM
+gpu_server_instance_type = "g5.xlarge"
+gpu_server_volume_size   = 200  # GB - for model weights
 
-# Route Table
-destination_cidr_block = "0.0.0.0/0"
+# Spot Instance Pricing
+# On-demand g5.xlarge is ~$1.00/hr, spot is ~$0.30-0.60/hr
+gpu_spot_max_price = "0.60"
 
-# Public Subnet NACLs
-public_subnet_ingress_nacls = {
-  "100" = {
-    protocol    = "-1"
-    from_port   = 0
-    to_port     = 0
-    action      = "allow"
-    cidr_block  = "0.0.0.0/0"
-  }
-}
-public_subnet_egress_nacls = {
-  "200" = {
-    protocol    = "-1"
-    from_port   = 0
-    to_port     = 0
-    action      = "allow"
-    cidr_block  = "0.0.0.0/0"
-  }
-}
-
-# Private Subnet NACLs
-private_subnet_ingress_nacls = {
-  "100" = {
-    protocol    = "-1"
-    from_port   = 0
-    to_port     = 0
-    action      = "allow"
-    cidr_block  = "0.0.0.0/0"
-  }
-}
-private_subnet_egress_nacls = {
-  "200" = {
-    protocol    = "-1"
-    from_port   = 0
-    to_port     = 0
-    action      = "allow"
-    cidr_block  = "0.0.0.0/0"
-  }
-}
-
-repositories = {
-  "nextjs" = {
-    image_tag_mutability = "MUTABLE",
-    scan_on_push = true,
-    expiration_after_days = 7,
-    base_dir = "apps/frontend",
-    dockerfile = "Dockerfile",
-    platform = "linux/amd64",
-    image_tag = "latest"
-  },
-  "api" = {
-    image_tag_mutability = "MUTABLE",
-    scan_on_push = true,
-    expiration_after_days = 7,
-    base_dir = "apps/backend",
-    dockerfile = "docker/Dockerfile.api",
-    platform = "linux/amd64",
-    image_tag = "latest"
-  },
-  "users" = {
-    image_tag_mutability = "MUTABLE",
-    scan_on_push = true,
-    expiration_after_days = 7,
-    base_dir = "apps/backend",
-    dockerfile = "docker/Dockerfile.users",
-    platform = "linux/amd64",
-    image_tag = "latest"
-  },
-  "files" = {
-    image_tag_mutability = "MUTABLE",
-    scan_on_push = true,
-    expiration_after_days = 7,
-    base_dir = "apps/backend",
-    dockerfile = "docker/Dockerfile.files",
-    platform = "linux/amd64",
-    image_tag = "latest"
-  }
-}
-
-# Elastic Kubernetes Service
-eks_node_instance_types   = [ "t3.medium" ]
-eks_node_disk_size        = 20
-eks_node_min_size         = 2
-eks_node_max_size         = 4
-eks_node_desired_size     = 2
-
-# Cognito Service
-groups = [
-  {
-    name        = "admin"
-    description = "Adminstrators",
-    precedence  = 0
-  },
-  {
-    name        = "user"
-    description = "Users",
-    precedence  = 100
-  },
-]
-
-schema_attributes = [
-  {
-    name                     = "department"
-    type                     = "String"
-    developer_only_attribute = false,
-    mutable                  = true,
-    required                 = false,
-    min_length               = 0,
-    max_length               = 128
-  },
-    {
-    name                     = "clearance"
-    type                     = "String"
-    developer_only_attribute = false,
-    mutable                  = true,
-    required                 = false,
-    min_length               = 0,
-    max_length               = 128
-  }
-]
-
-# Local ProstgreSQL DB Configuration
-postgresql = {
-  type          = "postgres"
-  host          = "your-db-host"
-  port          = 5432
-  database      = "your-db-name"
-  username      = "your-username"
-  password      = "your-password"
-}
-
-# AI Configuration
-openai = {
-  apikey          = "your-api-key"
-  gptModel        = "your-gpt-model"
-  embeddingModel  = "your-embedding-model"
-  batchsize       = 512
-  chunksize       = 500
-  chunkoverlap    = 0
-}
+# =============================================================================
+# Scaling Options
+# =============================================================================
+#
+# For higher load, consider:
+#
+# App Server:
+# - t3.xlarge  (4 vCPU, 16GB)  - 100-500 concurrent users
+# - t3.2xlarge (8 vCPU, 32GB)  - 500-1000 concurrent users
+# - m6i.2xlarge (8 vCPU, 32GB) - Production workloads
+#
+# GPU Server:
+# - g5.xlarge  (1 GPU, 24GB VRAM) - 7B-13B models
+# - g5.2xlarge (1 GPU, 24GB VRAM) - More CPU/RAM for batching
+# - g5.4xlarge (1 GPU, 24GB VRAM) - Heavy embeddings workloads
+# - g5.12xlarge (4 GPUs, 96GB VRAM) - 70B models or high throughput
+#
+# =============================================================================
