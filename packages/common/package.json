@@ -34,6 +34,11 @@
       "types": "./dist/providers/extraction/index.d.ts",
       "import": "./dist/providers/extraction/index.js",
       "require": "./dist/providers/extraction/index.js"
+    },
+    "./providers/logging": {
+      "types": "./dist/providers/logging/index.d.ts",
+      "import": "./dist/providers/logging/index.js",
+      "require": "./dist/providers/logging/index.js"
     }
   },
   "files": [
@@ -52,7 +57,8 @@
     "embeddings",
     "vectordb",
     "relationaldb",
-    "extraction"
+    "extraction",
+    "logging"
   ],
   "license": "MIT",
   "peerDependencies": {
