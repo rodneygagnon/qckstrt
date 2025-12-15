@@ -89,6 +89,12 @@ output "secrets_arn" {
   sensitive   = true
 }
 
+# Monitoring
+output "alerts_sns_topic_arn" {
+  description = "SNS topic ARN for alerts (subscribe your email to receive notifications)"
+  value       = aws_sns_topic.alerts.arn
+}
+
 # Backend Environment Variables
 output "backend_env_vars" {
   description = "Environment variables for backend configuration"

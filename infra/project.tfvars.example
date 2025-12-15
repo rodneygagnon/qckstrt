@@ -19,9 +19,10 @@ stage   = "dev"  # dev, staging, prod
 # Create one with: aws ec2 create-key-pair --key-name qckstrt-key --query 'KeyMaterial' --output text > qckstrt-key.pem
 ssh_key_name = "qckstrt-key"
 
-# Security - IMPORTANT: Restrict SSH access in production!
-# Use your IP with /32 suffix (e.g., "203.0.113.50/32")
-allowed_ssh_cidr = "0.0.0.0/0"  # Change to "YOUR_IP/32" in production
+# Security - REQUIRED: Set to your IP address
+# Find your IP: curl -s https://ifconfig.me
+# Format: "YOUR_IP/32" (e.g., "203.0.113.50/32")
+allowed_ssh_cidr = "REPLACE_WITH_YOUR_IP/32"  # <-- You MUST change this!
 
 # =============================================================================
 # Instance Configuration
