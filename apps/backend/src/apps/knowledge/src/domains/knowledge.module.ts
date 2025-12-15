@@ -9,7 +9,7 @@ import { LLMModule } from '@qckstrt/llm-provider';
  * Knowledge Module
  *
  * Provides semantic search and RAG capabilities.
- * Uses embeddings (Xenova/Ollama), vector database (ChromaDB/pgvector),
+ * Uses embeddings (Xenova/Ollama), vector database (pgvector on PostgreSQL),
  * and LLM (Ollama) for answer generation.
  *
  * All components are self-hosted OSS for full transparency and privacy.

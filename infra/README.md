@@ -19,7 +19,7 @@ Simple, cost-effective AWS infrastructure for running QCKSTRT with self-hosted A
 │  │  │  - Studio (port 3000)     │  │  │  └───────────────────────┘  │   │
 │  │  └───────────────────────────┘  │  │                             │   │
 │  │  ┌───────────────────────────┐  │  │         Spot Instance       │   │
-│  │  │    Redis + ChromaDB       │  │  │        (cost savings)       │   │
+│  │  │         Redis             │  │  │        (cost savings)       │   │
 │  │  └───────────────────────────┘  │  └─────────────────────────────┘   │
 │  └─────────────────────────────────┘                                    │
 └─────────────────────────────────────────────────────────────────────────┘
@@ -117,7 +117,7 @@ After deployment, `make outputs` displays all service URLs:
 |---------|------|-------------|
 | Supabase API | 80 | REST/GraphQL API |
 | Supabase Studio | 3000 | Admin dashboard |
-| ChromaDB | 8001 | Vector database |
+| PostgreSQL + pgvector | 5432 | Relational + Vector database |
 | vLLM | 8000 | OpenAI-compatible LLM API |
 | Embeddings | 8001 | Text embeddings API |
 
@@ -180,7 +180,8 @@ terraform output backend_env_vars
 Example `.env`:
 ```bash
 SUPABASE_URL=http://<app-server-ip>
-VECTOR_DB_CHROMA_URL=http://<app-server-ip>:8001
+VECTOR_DB_HOST=<app-server-ip>
+VECTOR_DB_PORT=5432
 LLM_URL=http://<gpu-server-ip>:8000
 EMBEDDINGS_PROVIDER=ollama
 EMBEDDINGS_OLLAMA_URL=http://<gpu-server-ip>:8001
@@ -280,7 +281,7 @@ Automated daily EBS snapshots via AWS Backup:
 
 ### What's Backed Up
 
-- App server: PostgreSQL, Supabase storage, ChromaDB vectors, Redis
+- App server: PostgreSQL (relational + pgvector), Supabase storage, Redis
 - GPU server: Model weights, configuration
 
 ### Restore from Backup
@@ -354,7 +355,6 @@ curl -I https://api.yourdomain.com
 | Service | HTTPS URL |
 |---------|-----------|
 | Supabase API | `https://api.yourdomain.com` |
-| ChromaDB | `https://api.yourdomain.com/chromadb` |
 | vLLM API | `https://gpu.yourdomain.com/v1` |
 | Embeddings | `https://gpu.yourdomain.com/embeddings` |
 

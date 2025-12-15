@@ -72,8 +72,8 @@ All documentation is located in the [`docs/`](docs/) directory:
 | Component | Default Provider | Alternative Options |
 |-----------|-----------------|---------------------|
 | **Embeddings** | Xenova (in-process) | Ollama |
-| **Vector DB** | ChromaDB | pgvector, Qdrant, Weaviate |
-| **Relational DB** | SQLite (dev), PostgreSQL (prod) | Aurora PostgreSQL |
+| **Vector DB** | pgvector (PostgreSQL) | Custom implementations |
+| **Relational DB** | PostgreSQL (via Supabase) | Aurora PostgreSQL |
 | **LLM** | Ollama (Falcon 7B) | Any Ollama model |
 
 ### Infrastructure
@@ -97,8 +97,8 @@ qckstrt/
 │   ├── common/               # Shared types and interfaces
 │   ├── llm-provider/         # LLM integration (Ollama)
 │   ├── embeddings-provider/  # Embeddings (Xenova, Ollama)
-│   ├── vectordb-provider/    # Vector DB (ChromaDB)
-│   ├── relationaldb-provider/# Relational DB (PostgreSQL, SQLite, Aurora)
+│   ├── vectordb-provider/    # Vector DB (pgvector)
+│   ├── relationaldb-provider/# Relational DB (PostgreSQL, Aurora)
 │   ├── extraction-provider/  # Text extraction
 │   ├── storage-provider/     # File storage (AWS S3)
 │   ├── auth-provider/        # Authentication (AWS Cognito)
@@ -125,8 +125,8 @@ The `packages/` directory contains reusable, publishable npm packages that provi
 | `@qckstrt/common` | Shared types and interfaces | - |
 | `@qckstrt/llm-provider` | Ollama LLM integration | 16 |
 | `@qckstrt/embeddings-provider` | Xenova/Ollama embeddings | 24 |
-| `@qckstrt/vectordb-provider` | ChromaDB vector storage | 18 |
-| `@qckstrt/relationaldb-provider` | PostgreSQL, SQLite, Aurora | 19 |
+| `@qckstrt/vectordb-provider` | pgvector (PostgreSQL) | 19 |
+| `@qckstrt/relationaldb-provider` | PostgreSQL, Aurora | 19 |
 | `@qckstrt/extraction-provider` | Text extraction from URLs | 16 |
 | `@qckstrt/storage-provider` | AWS S3 file storage | 17 |
 | `@qckstrt/auth-provider` | AWS Cognito authentication | 23 |

@@ -26,7 +26,7 @@ pnpm install
 ### 2. Start Infrastructure Services
 
 ```bash
-# Start Supabase, ChromaDB, and Ollama
+# Start Supabase (PostgreSQL + pgvector) and Ollama
 docker-compose up -d
 
 # Verify all services are running
@@ -39,7 +39,6 @@ NAME                      STATUS          PORTS
 qckstrt-supabase-db       Up              0.0.0.0:5432->5432/tcp
 qckstrt-supabase-kong     Up              0.0.0.0:8000->8000/tcp
 qckstrt-supabase-studio   Up              0.0.0.0:3100->3000/tcp
-qckstrt-chromadb          Up              0.0.0.0:8001->8000/tcp
 qckstrt-ollama            Up              0.0.0.0:11434->11434/tcp
 ```
 
@@ -64,7 +63,7 @@ cp apps/backend/.env.example apps/backend/.env
 
 # The defaults are already configured for local development:
 # - Embeddings: Xenova (in-process, no setup needed)
-# - Vector DB: ChromaDB (localhost:8001)
+# - Vector DB: pgvector (same PostgreSQL instance)
 # - LLM: Ollama/Falcon (localhost:11434)
 # - Relational DB: PostgreSQL via Supabase (localhost:5432)
 # - Auth/Storage/Secrets: Supabase (localhost:8000)
@@ -90,7 +89,6 @@ Open your browser to:
 - **Frontend**: http://localhost:5173
 - **Supabase Studio**: http://localhost:3100
 - **Supabase API**: http://localhost:8000
-- **ChromaDB**: http://localhost:8001/api/v1/heartbeat
 - **Ollama**: http://localhost:11434
 
 **Test the RAG Pipeline**:
@@ -146,8 +144,8 @@ query {
 ┌────────────────────────────────────────────────────┐
 │              Provider Layer                        │
 ├────────────────────────────────────────────────────┤
-│ Supabase  │ ChromaDB  │ Xenova    │ Ollama/Falcon │
-│ :5432     │ :8001     │(in-proc)  │ :11434        │
+│ Supabase + pgvector │ Xenova    │ Ollama/Falcon   │
+│ :5432               │(in-proc)  │ :11434          │
 └────────────────────────────────────────────────────┘
 ```
 
@@ -188,11 +186,11 @@ QCKSTRT comes with sensible defaults for local development:
 - **Runtime**: In-process (no external service)
 - **First run**: Auto-downloads model from HuggingFace (~50MB)
 
-### Vector Database: ChromaDB
-- **Provider**: ChromaDB
-- **URL**: http://localhost:8001
-- **Collection**: qckstrt-embeddings
-- **Storage**: Persistent (Docker volume)
+### Vector Database: pgvector (PostgreSQL)
+- **Provider**: pgvector (PostgreSQL extension)
+- **Host**: localhost:5432 (same as relational DB)
+- **Table**: `<project>_embeddings`
+- **Storage**: Persistent (PostgreSQL)
 
 ### LLM: Ollama with Falcon 7B
 - **Provider**: Ollama
@@ -325,20 +323,23 @@ docker exec qckstrt-ollama ollama pull falcon
 docker exec qckstrt-ollama ollama list
 ```
 
-### ChromaDB connection error
+### PostgreSQL/pgvector connection error
 
-**Error**: `Failed to connect to ChromaDB at http://localhost:8001`
+**Error**: `Failed to connect to PostgreSQL at localhost:5432`
 
 **Solution**:
 ```bash
-# Check if ChromaDB is running
-docker-compose ps chromadb
+# Check if PostgreSQL is running
+docker-compose ps supabase-db
 
 # Restart if needed
-docker-compose restart chromadb
+docker-compose restart supabase-db
 
 # View logs
-docker-compose logs chromadb
+docker-compose logs supabase-db
+
+# Verify pgvector extension
+docker exec qckstrt-supabase-db psql -U postgres -c "SELECT * FROM pg_extension WHERE extname = 'vector';"
 ```
 
 ### Port already in use
@@ -443,16 +444,14 @@ docker-compose down -v
 
 For production deployment, see:
 - [System Overview](../architecture/system-overview.md#deployment-architecture)
-- [Database Migration](database-migration.md) (ChromaDB → pgvector)
 - [Docker Setup](docker-setup.md) (Production configuration)
 
 **Key Changes for Production**:
-1. Use managed PostgreSQL (Supabase Cloud or self-hosted)
-2. Consider pgvector: `VECTOR_DB_PROVIDER=pgvector`
-3. Use managed Ollama with GPU instances
-4. Enable SSL/TLS for all connections
-5. Set up monitoring and logging
-6. Configure backups
+1. Use managed PostgreSQL with pgvector (Supabase Cloud or self-hosted)
+2. Use Ollama with GPU instances for better performance
+3. Enable SSL/TLS for all connections
+4. Set up monitoring and logging
+5. Configure backups
 
 ---
 

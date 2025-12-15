@@ -7,7 +7,7 @@ The data layer uses a dual-database architecture optimized for different data ty
 1. **Relational Database** - User data, document metadata, application state
 2. **Vector Database** - Document embeddings for semantic search
 
-Both layers use the provider pattern for flexibility and can be consolidated in production using pgvector.
+Both layers use PostgreSQL for data consolidation - relational data via standard PostgreSQL and vectors via the pgvector extension.
 
 ## Relational Database Layer
 
@@ -87,54 +87,22 @@ RELATIONAL_DB_DATABASE=qckstrt
 - Perform semantic similarity search
 - Support RAG (Retrieval-Augmented Generation)
 
-### Provider: ChromaDB (Development Default)
+### Provider: pgvector (Default)
 
-**When to use**: Development, testing, initial deployments
+**When to use**: All environments (development, staging, production)
 
 **Configuration**:
 ```bash
-VECTOR_DB_PROVIDER=chromadb
-VECTOR_DB_CHROMA_URL=http://localhost:8001  # Port 8001 (Kong uses 8000)
-VECTOR_DB_CHROMA_COLLECTION=qckstrt-embeddings
+# pgvector uses same PostgreSQL instance
+# Falls back to RELATIONAL_DB_* if not specified
+VECTOR_DB_HOST=localhost
+VECTOR_DB_PORT=5432
 VECTOR_DB_DIMENSIONS=384  # Must match embedding model
-```
-
-**Docker Compose**:
-ChromaDB is included in the main docker-compose.yml on port 8001:
-```bash
-docker-compose up -d
-```
-
-**Pros**:
-- ✅ Purpose-built for vectors
-- ✅ Simple API
-- ✅ Fast similarity search
-- ✅ Built-in persistence
-- ✅ Easy to set up
-
-**Cons**:
-- ❌ Separate database to manage
-- ❌ Additional infrastructure cost
-- ❌ No ACID transactions with relational data
-
-**File Location**: `packages/vectordb-provider/src/providers/chroma.provider.ts`
-
----
-
-### Provider: pgvector (Production Recommended)
-
-**When to use**: Production (consolidates PostgreSQL + vectors)
-
-**Configuration**:
-```bash
-VECTOR_DB_PROVIDER=pgvector
-VECTOR_DB_DIMENSIONS=384
-# Uses existing PostgreSQL connection from RELATIONAL_DB_*
 ```
 
 **Setup** (PostgreSQL extension):
 ```sql
--- Install extension
+-- Install extension (done automatically by provider)
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Verify
@@ -147,16 +115,13 @@ SELECT * FROM pg_extension WHERE extname = 'vector';
 - ✅ Reduced infrastructure complexity
 - ✅ Cost savings (one database instead of two)
 - ✅ Familiar PostgreSQL tooling
+- ✅ Integrated with Supabase stack
 
 **Cons**:
 - ❌ Requires PostgreSQL 11+ with pgvector
-- ❌ Slightly slower than dedicated vector DBs for large scale
-- ❌ More complex setup initially
+- ❌ Slightly slower than dedicated vector DBs for very large scale
 
 **File Location**: `packages/vectordb-provider/src/providers/pgvector.provider.ts`
-
-**Migration Path**:
-See [Database Migration Guide](../guides/database-migration.md#chromadb-to-pgvector)
 
 ---
 
@@ -210,18 +175,6 @@ export class Document {
 ```
 
 ### Vector Records
-
-#### ChromaDB Format
-```typescript
-{
-  ids: ['doc-123-chunk-0', 'doc-123-chunk-1'],
-  embeddings: [[0.1, 0.2, ...], [0.3, 0.4, ...]],
-  metadatas: [
-    { userId: 'user-1', documentId: 'doc-123', content: 'chunk text' },
-    { userId: 'user-1', documentId: 'doc-123', content: 'chunk text' }
-  ]
-}
-```
 
 #### pgvector Table
 ```sql
@@ -344,17 +297,12 @@ CREATE INDEX idx_documents_user_id ON documents(user_id);
 CREATE INDEX idx_documents_uploaded_at ON documents(uploaded_at DESC);
 ```
 
-### Vector Database
+### Vector Database (pgvector)
 
-**ChromaDB**:
-- In-memory caching of frequently accessed vectors
-- Batch insertions for better performance
-- Collection per tenant for isolation
-
-**pgvector**:
 - HNSW index for approximate nearest neighbor (ANN) search
 - Tune `hnsw.m` and `hnsw.ef_construction` for speed vs accuracy tradeoff
 - Partition large tables by user_id
+- Batch insertions for better performance
 
 ```sql
 -- Tune HNSW index
@@ -368,49 +316,28 @@ CREATE INDEX idx_embedding_hnsw
 
 ## Backup and Recovery
 
-### PostgreSQL (Supabase)
+### PostgreSQL (includes pgvector data)
 ```bash
-# Backup
-docker exec qckstrt-postgres pg_dump -U qckstrt_user qckstrt > backup.sql
+# Backup (includes relational data + vector embeddings)
+docker exec qckstrt-supabase-db pg_dump -U postgres postgres > backup.sql
 
 # Restore
-docker exec -i qckstrt-postgres psql -U qckstrt_user qckstrt < backup.sql
+docker exec -i qckstrt-supabase-db psql -U postgres postgres < backup.sql
 ```
 
-### ChromaDB
-```bash
-# Backup (copy volume data)
-docker cp qckstrt-chromadb:/chroma/chroma ./backups/chroma-$(date +%Y%m%d)
-
-# Restore
-docker cp ./backups/chroma-20250101 qckstrt-chromadb:/chroma/chroma
-```
-
-### pgvector
-```bash
-# Included in PostgreSQL backup (pg_dump includes extensions and data)
-docker exec qckstrt-postgres pg_dump -U qckstrt_user qckstrt > backup.sql
-```
+**Note**: pg_dump includes pgvector extension and all vector data automatically.
 
 ---
 
-## Migration Paths
+## Architecture
 
-### Default Stack (Supabase + ChromaDB)
-```
-All Environments:
-  PostgreSQL (via Supabase) + ChromaDB
-```
-
-### Consolidated (pgvector)
+### Consolidated Stack (pgvector)
 ```
 All Environments:
   PostgreSQL with pgvector (single database for relational + vectors)
 ```
 
-### ChromaDB → pgvector
-
-See detailed guide: [Database Migration](../guides/database-migration.md#chromadb-to-pgvector)
+This simplifies infrastructure by using a single PostgreSQL database for both relational and vector data.
 
 ---
 

@@ -474,7 +474,7 @@ query {
 
 **Solutions**:
 1. Check embeddings provider is running (Xenova auto-downloads, Ollama needs server)
-2. Check vector DB is accessible (ChromaDB at localhost:8000)
+2. Check PostgreSQL is accessible (localhost:5432)
 3. Verify dimensions match (384 for Xenova/all-MiniLM-L6-v2)
 4. Check logs for specific errors
 

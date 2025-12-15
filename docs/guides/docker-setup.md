@@ -8,8 +8,7 @@ Your `docker-compose.yml` includes:
 
 | Service | Purpose | Port | Image |
 |---------|---------|------|-------|
-| **PostgreSQL** | Relational database | 5432 | `postgres:16-alpine` |
-| **ChromaDB** | Vector database for embeddings | 8000 | `chromadb/chroma:latest` |
+| **PostgreSQL + pgvector** | Relational + Vector database | 5432 | Supabase stack |
 | **Ollama** | LLM inference (Falcon 7B) | 11434 | `ollama/ollama:latest` |
 
 ## Quick Start
@@ -38,10 +37,10 @@ docker exec qckstrt-ollama ollama pull falcon
 docker-compose ps
 
 # Check PostgreSQL
-docker exec qckstrt-postgres pg_isready -U qckstrt_user -d qckstrt
+docker exec qckstrt-supabase-db pg_isready -U postgres
 
-# Check ChromaDB
-curl http://localhost:8000/api/v1/heartbeat
+# Check pgvector extension
+docker exec qckstrt-supabase-db psql -U postgres -c "SELECT * FROM pg_extension WHERE extname = 'vector';"
 
 # Check Ollama
 docker exec qckstrt-ollama ollama list
@@ -54,6 +53,9 @@ Your application is configured to use these services via environment variables i
 ```bash
 # Embeddings: Xenova (in-process, no external service needed)
 EMBEDDINGS_PROVIDER='xenova'
+
+# Vector DB: pgvector (uses same PostgreSQL instance)
+VECTOR_DB_DIMENSIONS=384
 
 # LLM: Ollama with Falcon 7B
 LLM_URL='http://localhost:11434'
@@ -132,14 +134,12 @@ docker-compose up -d ollama
 
 All data is persisted in Docker volumes:
 
-- `qckstrt-postgres-data` - PostgreSQL database
-- `qckstrt-chroma-data` - ChromaDB vector embeddings
+- `qckstrt-supabase-data` - PostgreSQL database (relational + vector data)
 - `qckstrt-ollama-data` - Downloaded Ollama models
 
 To backup:
 ```bash
-docker volume inspect qckstrt-postgres-data
-docker volume inspect qckstrt-chroma-data
+docker volume inspect qckstrt-supabase-data
 docker volume inspect qckstrt-ollama-data
 ```
 
@@ -154,22 +154,22 @@ docker exec qckstrt-ollama ollama pull falcon
 docker exec qckstrt-ollama ollama list
 ```
 
-### ChromaDB connection issues
-```bash
-# Check if it's running
-curl http://localhost:8000/api/v1/heartbeat
-
-# View logs
-docker-compose logs chromadb
-```
-
 ### PostgreSQL connection issues
 ```bash
 # Check if it's ready
-docker exec qckstrt-postgres pg_isready -U qckstrt_user -d qckstrt
+docker exec qckstrt-supabase-db pg_isready -U postgres
 
 # View logs
-docker-compose logs postgres
+docker-compose logs supabase-db
+```
+
+### pgvector extension not available
+```bash
+# Check if extension is installed
+docker exec qckstrt-supabase-db psql -U postgres -c "SELECT * FROM pg_available_extensions WHERE name = 'vector';"
+
+# Install if needed
+docker exec qckstrt-supabase-db psql -U postgres -c "CREATE EXTENSION IF NOT EXISTS vector;"
 ```
 
 ## Architecture
@@ -178,12 +178,12 @@ docker-compose logs postgres
 ┌─────────────────────────────────────────┐
 │         Your Application                │
 │                                         │
-│  ┌──────────┐  ┌──────────┐  ┌───────┐│
-│  │ Xenova   │  │ ChromaDB │  │Ollama ││
-│  │(in-proc) │  │(vectors) │  │ (LLM) ││
-│  └──────────┘  └──────────┘  └───────┘│
+│  ┌──────────┐  ┌──────────┐  ┌───────┐ │
+│  │ Xenova   │  │PostgreSQL│  │Ollama │ │
+│  │(in-proc) │  │+ pgvector│  │ (LLM) │ │
+│  └──────────┘  └──────────┘  └───────┘ │
 │                 ↓              ↓       │
-│            localhost:8000  localhost:  │
+│            localhost:5432  localhost:  │
 │                              11434     │
 └─────────────────────────────────────────┘
 
@@ -194,12 +194,11 @@ docker-compose logs postgres
 
 For production, consider:
 
-1. **Use managed PostgreSQL** (AWS RDS, Azure Database, etc.)
-2. **Scale ChromaDB** horizontally or migrate to pgvector
-3. **Deploy Ollama** on GPU instances for better performance
-4. **Use environment-specific configs** (production.env)
+1. **Use managed PostgreSQL with pgvector** (AWS RDS, Supabase Cloud, etc.)
+2. **Deploy Ollama** on GPU instances for better performance
+3. **Use environment-specific configs** (production.env)
 
-See your provider modules for swapping implementations:
-- `apps/backend/src/providers/relationaldb/`
-- `apps/backend/src/providers/vectordb/`
-- `apps/backend/src/providers/llm/`
+See the platform packages for implementations:
+- `packages/relationaldb-provider/` - PostgreSQL provider
+- `packages/vectordb-provider/` - pgvector provider
+- `packages/llm-provider/` - Ollama provider
