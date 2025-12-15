@@ -26,7 +26,7 @@ pnpm install
 ### 2. Start Infrastructure Services
 
 ```bash
-# Start PostgreSQL, ChromaDB, and Ollama
+# Start Supabase, ChromaDB, and Ollama
 docker-compose up -d
 
 # Verify all services are running
@@ -35,10 +35,12 @@ docker-compose ps
 
 Expected output:
 ```
-NAME                 STATUS          PORTS
-qckstrt-postgres     Up 10 seconds   0.0.0.0:5432->5432/tcp
-qckstrt-chromadb     Up 10 seconds   0.0.0.0:8000->8000/tcp
-qckstrt-ollama       Up 10 seconds   0.0.0.0:11434->11434/tcp
+NAME                      STATUS          PORTS
+qckstrt-supabase-db       Up              0.0.0.0:5432->5432/tcp
+qckstrt-supabase-kong     Up              0.0.0.0:8000->8000/tcp
+qckstrt-supabase-studio   Up              0.0.0.0:3100->3000/tcp
+qckstrt-chromadb          Up              0.0.0.0:8001->8000/tcp
+qckstrt-ollama            Up              0.0.0.0:11434->11434/tcp
 ```
 
 ### 3. Pull the Falcon LLM Model
@@ -62,9 +64,10 @@ cp apps/backend/.env.example apps/backend/.env
 
 # The defaults are already configured for local development:
 # - Embeddings: Xenova (in-process, no setup needed)
-# - Vector DB: ChromaDB (localhost:8000)
+# - Vector DB: ChromaDB (localhost:8001)
 # - LLM: Ollama/Falcon (localhost:11434)
-# - Relational DB: SQLite (./data/dev.sqlite)
+# - Relational DB: PostgreSQL via Supabase (localhost:5432)
+# - Auth/Storage/Secrets: Supabase (localhost:8000)
 ```
 
 ### 5. Start the Application
@@ -85,7 +88,9 @@ npm run dev
 Open your browser to:
 - **API Gateway (GraphQL Playground)**: http://localhost:3000/graphql
 - **Frontend**: http://localhost:5173
-- **ChromaDB**: http://localhost:8000/api/v1/heartbeat
+- **Supabase Studio**: http://localhost:3100
+- **Supabase API**: http://localhost:8000
+- **ChromaDB**: http://localhost:8001/api/v1/heartbeat
 - **Ollama**: http://localhost:11434
 
 **Test the RAG Pipeline**:
@@ -141,8 +146,8 @@ query {
 ┌────────────────────────────────────────────────────┐
 │              Provider Layer                        │
 ├────────────────────────────────────────────────────┤
-│ SQLite    │ ChromaDB  │ Xenova    │ Ollama/Falcon │
-│ (local)   │ :8000     │(in-proc)  │ :11434        │
+│ Supabase  │ ChromaDB  │ Xenova    │ Ollama/Falcon │
+│ :5432     │ :8001     │(in-proc)  │ :11434        │
 └────────────────────────────────────────────────────┘
 ```
 
@@ -191,7 +196,7 @@ QCKSTRT comes with sensible defaults for local development:
 
 ### Vector Database: ChromaDB
 - **Provider**: ChromaDB
-- **URL**: http://localhost:8000
+- **URL**: http://localhost:8001
 - **Collection**: qckstrt-embeddings
 - **Storage**: Persistent (Docker volume)
 
@@ -201,10 +206,18 @@ QCKSTRT comes with sensible defaults for local development:
 - **Model**: Falcon 7B (TII, Apache 2.0 license)
 - **Setup**: Requires `ollama pull falcon`
 
-### Relational Database: SQLite
-- **Provider**: SQLite
-- **File**: ./data/dev.sqlite
-- **Setup**: None (auto-created)
+### Relational Database: PostgreSQL via Supabase
+- **Provider**: PostgreSQL
+- **Host**: localhost:5432
+- **Database**: postgres
+- **Setup**: Automatic via docker-compose
+
+### Auth/Storage/Secrets: Supabase
+- **Auth**: Supabase Auth (GoTrue)
+- **Storage**: Supabase Storage
+- **Secrets**: Supabase Vault
+- **API**: http://localhost:8000
+- **Studio**: http://localhost:3100
 
 ---
 
@@ -320,7 +333,7 @@ docker exec qckstrt-ollama ollama list
 
 ### ChromaDB connection error
 
-**Error**: `Failed to connect to ChromaDB at http://localhost:8000`
+**Error**: `Failed to connect to ChromaDB at http://localhost:8001`
 
 **Solution**:
 ```bash
@@ -436,16 +449,17 @@ docker-compose down -v
 
 For production deployment, see:
 - [System Overview](../architecture/system-overview.md#deployment-architecture)
-- [Database Migration](database-migration.md) (SQLite → PostgreSQL)
+- [Database Migration](database-migration.md) (ChromaDB → pgvector)
 - [Docker Setup](docker-setup.md) (Production configuration)
 
 **Key Changes for Production**:
-1. Switch to PostgreSQL: `RELATIONAL_DB_PROVIDER=postgres`
+1. Use managed PostgreSQL or Aurora: `RELATIONAL_DB_PROVIDER=aurora`
 2. Consider pgvector: `VECTOR_DB_PROVIDER=pgvector`
 3. Use managed Ollama with GPU instances
 4. Enable SSL/TLS for all connections
 5. Set up monitoring and logging
 6. Configure backups
+7. Switch to AWS services if needed: Cognito, S3, Secrets Manager
 
 ---
 

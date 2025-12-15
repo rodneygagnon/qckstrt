@@ -2,7 +2,7 @@
  * Relational Database Types and Interfaces
  *
  * Strategy Pattern for relational database connections.
- * Supports swapping between PostgreSQL, SQLite, Aurora, etc.
+ * Uses PostgreSQL via Supabase.
  */
 
 import { DataSourceOptions } from "typeorm";
@@ -12,9 +12,6 @@ import { DataSourceOptions } from "typeorm";
  */
 export enum RelationalDBType {
   PostgreSQL = "postgres",
-  SQLite = "sqlite",
-  AuroraPostgreSQL = "aurora-postgres",
-  MySQL = "mysql",
 }
 
 /**

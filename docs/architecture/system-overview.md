@@ -31,7 +31,7 @@ QCKSTRT is built on a modular, provider-based architecture with three core princ
    │              Provider Layer (Pluggable)            │
    ├────────────────────────────────────────────────────┤
    │ Relational DB │ Vector DB │ Embeddings │   LLM    │
-   │  (SQLite/PG)  │ (Chroma)  │  (Xenova)  │ (Ollama) │
+   │  (Supabase)   │ (Chroma)  │  (Xenova)  │ (Ollama) │
    └────────────────────────────────────────────────────┘
 ```
 
@@ -86,9 +86,9 @@ All external dependencies use the **Strategy Pattern + Dependency Injection** fo
 | `@qckstrt/vectordb-provider` | Vector storage & search | `VECTOR_DB_PROVIDER` |
 | `@qckstrt/embeddings-provider` | Text embeddings | `EMBEDDINGS_PROVIDER` |
 | `@qckstrt/llm-provider` | LLM inference | `LLM_PROVIDER` |
-| `@qckstrt/storage-provider` | File storage (S3) | `STORAGE_PROVIDER` |
-| `@qckstrt/auth-provider` | Authentication (Cognito) | `AUTH_PROVIDER` |
-| `@qckstrt/secrets-provider` | Secrets management | `SECRETS_PROVIDER` |
+| `@qckstrt/storage-provider` | File storage (Supabase/S3) | `STORAGE_PROVIDER` |
+| `@qckstrt/auth-provider` | Authentication (Supabase/Cognito) | `AUTH_PROVIDER` |
+| `@qckstrt/secrets-provider` | Secrets management (Supabase/AWS) | `SECRETS_PROVIDER` |
 | `@qckstrt/extraction-provider` | Text extraction | `EXTRACTION_PROVIDER` |
 
 ### Relational Database Provider
@@ -104,8 +104,7 @@ interface IRelationalDBProvider {
 ```
 
 **Implementations**:
-- `SQLiteProvider` - Zero-setup development (default)
-- `PostgresProvider` - Production standard
+- `PostgresProvider` - Default (via Supabase)
 - `AuroraProvider` - AWS serverless
 
 **See**: [Data Layer Architecture](data-layer.md)
@@ -199,17 +198,17 @@ interface ILLMProvider {
 All services use environment variables with sensible defaults:
 
 ```bash
-# Development (default)
-RELATIONAL_DB_PROVIDER=sqlite
+# Default (Supabase OSS stack)
+RELATIONAL_DB_PROVIDER=postgres
 VECTOR_DB_PROVIDER=chromadb
 EMBEDDINGS_PROVIDER=xenova
 LLM_MODEL=falcon
 
-# Production (recommended)
-RELATIONAL_DB_PROVIDER=postgres
-VECTOR_DB_PROVIDER=pgvector
-EMBEDDINGS_PROVIDER=xenova
-LLM_MODEL=falcon
+# AWS Alternative
+RELATIONAL_DB_PROVIDER=aurora
+AUTH_PROVIDER=cognito
+STORAGE_PROVIDER=s3
+SECRETS_PROVIDER=aws
 ```
 
 ### Configuration Files
@@ -225,10 +224,10 @@ LLM_MODEL=falcon
 ```
 Local Machine
 ├── Node.js (Backend services)
-├── Docker Compose
-│   ├── PostgreSQL (optional, defaults to SQLite)
-│   ├── ChromaDB
-│   └── Ollama (Falcon 7B)
+├── Docker Compose (docker-compose up)
+│   ├── Supabase (Auth, Storage, Vault, PostgreSQL)
+│   ├── ChromaDB (port 8001)
+│   └── Ollama (port 11434)
 └── Vite Dev Server (Frontend)
 ```
 
@@ -245,13 +244,12 @@ AWS/Cloud Infrastructure
 
 | Component | Technology | Version | License |
 |-----------|-----------|---------|---------|
-| **Backend Framework** | NestJS | 10.x | MIT |
-| **API Layer** | GraphQL (Apollo Federation) | 4.x | MIT |
+| **Backend Framework** | NestJS | 11.x | MIT |
+| **API Layer** | GraphQL (Apollo Federation) | 5.x | MIT |
 | **Frontend** | React + Vite | 18.x | MIT |
-| **Relational DB (dev)** | SQLite | 3.x | Public Domain |
-| **Relational DB (prod)** | PostgreSQL | 16.x | PostgreSQL |
-| **Vector DB (dev)** | ChromaDB | Latest | Apache 2.0 |
-| **Vector DB (prod)** | pgvector | Latest | PostgreSQL |
+| **Relational DB** | PostgreSQL (via Supabase) | 15.x | PostgreSQL |
+| **Auth/Storage/Secrets** | Supabase | Latest | Apache 2.0 |
+| **Vector DB** | ChromaDB | Latest | Apache 2.0 |
 | **Embeddings** | Xenova/Transformers.js | Latest | Apache 2.0 |
 | **LLM Runtime** | Ollama | Latest | MIT |
 | **LLM Model** | Falcon 7B | Latest | Apache 2.0 |
@@ -265,15 +263,15 @@ AWS/Cloud Infrastructure
 - LLM inference runs locally
 
 ### Authentication
-- User authentication via AWS Cognito
+- User authentication via Supabase Auth (default) or AWS Cognito
 - Service-to-service auth via API keys
 - GraphQL field-level authorization
 
 ### Infrastructure
-- Private VPC for production services
-- Encryption at rest (RDS, S3)
+- Self-hosted Supabase stack (default)
+- Encryption at rest (PostgreSQL, Supabase Storage)
 - Encryption in transit (TLS/HTTPS)
-- Secrets management via AWS Secrets Manager
+- Secrets management via Supabase Vault (default) or AWS Secrets Manager
 
 ## Monitoring & Observability
 

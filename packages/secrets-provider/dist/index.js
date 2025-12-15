@@ -3,11 +3,11 @@
  * @qckstrt/secrets-provider
  *
  * Secrets provider implementations for the QCKSTRT platform.
- * Provides pluggable secrets management with AWS Secrets Manager support.
+ * Provides pluggable secrets management with Supabase Vault.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SecretsModule =
-  exports.AWSSecretsProvider =
+  exports.SupabaseVaultProvider =
   exports.SecretsError =
     void 0;
 // Re-export types from common
@@ -19,11 +19,11 @@ Object.defineProperty(exports, "SecretsError", {
   },
 });
 // Providers
-var aws_secrets_provider_js_1 = require("./providers/aws-secrets.provider.js");
-Object.defineProperty(exports, "AWSSecretsProvider", {
+var supabase_vault_provider_js_1 = require("./providers/supabase-vault.provider.js");
+Object.defineProperty(exports, "SupabaseVaultProvider", {
   enumerable: true,
   get: function () {
-    return aws_secrets_provider_js_1.AWSSecretsProvider;
+    return supabase_vault_provider_js_1.SupabaseVaultProvider;
   },
 });
 // Module

@@ -1,7 +1,7 @@
 {
   "name": "@qckstrt/auth-provider",
   "version": "0.1.0",
-  "description": "Authentication provider implementations for QCKSTRT platform (Cognito, etc.)",
+  "description": "Authentication provider implementations for QCKSTRT platform (Supabase Auth)",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -24,14 +24,13 @@
   "keywords": [
     "qckstrt",
     "auth",
-    "cognito",
-    "aws",
+    "supabase",
     "provider"
   ],
   "license": "MIT",
   "dependencies": {
     "@qckstrt/common": "workspace:*",
-    "@aws-sdk/client-cognito-identity-provider": "^3.709.0"
+    "@supabase/supabase-js": "^2.49.1"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0",

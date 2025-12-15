@@ -2,7 +2,7 @@
  * @qckstrt/auth-provider
  *
  * Authentication provider implementations for the QCKSTRT platform.
- * Provides pluggable authentication with AWS Cognito support.
+ * Provides pluggable authentication with Supabase Auth.
  */
 export {
   IAuthProvider,
@@ -11,6 +11,6 @@ export {
   IRegisterUserInput,
   AuthError,
 } from "@qckstrt/common";
-export { CognitoAuthProvider } from "./providers/cognito.provider.js";
+export { SupabaseAuthProvider } from "./providers/supabase.provider.js";
 export { AuthModule } from "./auth.module.js";
 //# sourceMappingURL=index.d.ts.map

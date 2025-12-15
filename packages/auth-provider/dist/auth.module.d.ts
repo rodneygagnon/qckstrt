@@ -2,7 +2,9 @@
  * Auth Module
  *
  * Provides authentication capabilities using pluggable providers.
- * Currently supports AWS Cognito.
+ *
+ * Configure via AUTH_PROVIDER environment variable:
+ * - 'supabase' (default): Supabase Auth (GoTrue)
  */
 export declare class AuthModule {}
 //# sourceMappingURL=auth.module.d.ts.map

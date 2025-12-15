@@ -3,7 +3,7 @@
  * Relational Database Types and Interfaces
  *
  * Strategy Pattern for relational database connections.
- * Supports swapping between PostgreSQL, SQLite, Aurora, etc.
+ * Uses PostgreSQL via Supabase.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RelationalDBError = exports.RelationalDBType = void 0;
@@ -13,9 +13,6 @@ exports.RelationalDBError = exports.RelationalDBType = void 0;
 var RelationalDBType;
 (function (RelationalDBType) {
   RelationalDBType["PostgreSQL"] = "postgres";
-  RelationalDBType["SQLite"] = "sqlite";
-  RelationalDBType["AuroraPostgreSQL"] = "aurora-postgres";
-  RelationalDBType["MySQL"] = "mysql";
 })(RelationalDBType || (exports.RelationalDBType = RelationalDBType = {}));
 /**
  * Exception thrown when relational DB operations fail

@@ -3,7 +3,7 @@
  * Relational Database Provider Package
  *
  * Strategy Pattern + Dependency Injection for relational database connections.
- * Supports multiple OSS providers: SQLite (default dev), PostgreSQL, Aurora
+ * Supports PostgreSQL (via Supabase).
  */
 var __createBinding =
   (this && this.__createBinding) ||
@@ -53,8 +53,6 @@ Object.defineProperty(exports, "RelationalDBError", {
 });
 // Provider implementations
 __exportStar(require("./providers/postgres.provider.js"), exports);
-__exportStar(require("./providers/aurora.provider.js"), exports);
-__exportStar(require("./providers/sqlite.provider.js"), exports);
 // NestJS Module
 __exportStar(require("./relationaldb.module.js"), exports);
 //# sourceMappingURL=index.js.map

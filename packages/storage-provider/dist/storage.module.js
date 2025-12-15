@@ -22,12 +22,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.StorageModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
-const s3_provider_js_1 = require("./providers/s3.provider.js");
+const supabase_provider_js_1 = require("./providers/supabase.provider.js");
 /**
  * Storage Module
  *
  * Provides file storage capabilities using pluggable providers.
- * Currently supports AWS S3.
+ *
+ * Configure via STORAGE_PROVIDER environment variable:
+ * - 'supabase' (default): Supabase Storage
  */
 let StorageModule = class StorageModule {};
 exports.StorageModule = StorageModule;
@@ -37,13 +39,23 @@ exports.StorageModule = StorageModule = __decorate(
     (0, common_1.Module)({
       imports: [config_1.ConfigModule],
       providers: [
-        s3_provider_js_1.S3StorageProvider,
         {
           provide: "STORAGE_PROVIDER",
-          useExisting: s3_provider_js_1.S3StorageProvider,
+          useFactory: (configService) => {
+            const provider =
+              configService.get("storage.provider") || "supabase";
+            switch (provider.toLowerCase()) {
+              case "supabase":
+              default:
+                return new supabase_provider_js_1.SupabaseStorageProvider(
+                  configService,
+                );
+            }
+          },
+          inject: [config_1.ConfigService],
         },
       ],
-      exports: [s3_provider_js_1.S3StorageProvider, "STORAGE_PROVIDER"],
+      exports: ["STORAGE_PROVIDER"],
     }),
   ],
   StorageModule,
