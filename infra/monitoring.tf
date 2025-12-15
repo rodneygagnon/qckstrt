@@ -83,7 +83,7 @@ resource "aws_cloudwatch_metric_alarm" "app_server_disk" {
   alarm_description   = "App server disk usage exceeds 85%"
   alarm_actions       = [aws_sns_topic.alerts.arn]
   ok_actions          = [aws_sns_topic.alerts.arn]
-  treat_missing_data  = "notBreaching"  # Don't alarm if agent not installed
+  treat_missing_data  = "notBreaching" # Don't alarm if agent not installed
 
   dimensions = {
     InstanceId = aws_instance.app_server.id
