@@ -20,13 +20,13 @@ QCKSTRT is built on a modular, provider-based architecture with three core princ
 └─────────────────────────────────────────────────────────────┘
                             ↓
         ┌──────────────┬─────────────┬──────────────┐
-        ↓              ↓             ↓              ↓
-   ┌────────┐    ┌──────────┐  ┌──────────┐  ┌──────────┐
-   │ Users  │    │Documents │  │Knowledge │  │  Files   │
-   │Service │    │ Service  │  │ Service  │  │ Service  │
-   └────────┘    └──────────┘  └──────────┘  └──────────┘
-        │              │             │              │
-        ↓              ↓             ↓              ↓
+        ↓              ↓             ↓
+   ┌────────┐    ┌──────────┐  ┌──────────┐
+   │ Users  │    │Documents │  │Knowledge │
+   │Service │    │ Service  │  │ Service  │
+   └────────┘    └──────────┘  └──────────┘
+        │              │             │
+        ↓              ↓             ↓
    ┌────────────────────────────────────────────────────┐
    │              Provider Layer (Pluggable)            │
    ├────────────────────────────────────────────────────┤
@@ -53,10 +53,10 @@ QCKSTRT is built on a modular, provider-based architecture with three core princ
 ### Documents Service
 - **Technology**: NestJS + Apollo Federation
 - **Port**: 3002
-- **Purpose**: Document storage and metadata management
+- **Purpose**: Document storage, metadata management, and file processing
 - **Location**: `apps/backend/src/apps/documents`
 - **Database**: Relational (Document metadata)
-- **Storage**: S3-compatible object storage
+- **Storage**: Supabase Storage
 
 ### Knowledge Service
 - **Technology**: NestJS + Apollo Federation
@@ -67,12 +67,6 @@ QCKSTRT is built on a modular, provider-based architecture with three core princ
   - Embeddings generation (Xenova/Ollama)
   - Vector search (ChromaDB/pgvector)
   - LLM inference (Ollama with Falcon 7B)
-
-### Files Service
-- **Technology**: NestJS + Apollo Federation
-- **Port**: 3004
-- **Purpose**: File processing and OCR
-- **Location**: `apps/backend/src/apps/files`
 
 ## Provider Architecture
 
@@ -86,9 +80,9 @@ All external dependencies use the **Strategy Pattern + Dependency Injection** fo
 | `@qckstrt/vectordb-provider` | Vector storage & search | `VECTOR_DB_PROVIDER` |
 | `@qckstrt/embeddings-provider` | Text embeddings | `EMBEDDINGS_PROVIDER` |
 | `@qckstrt/llm-provider` | LLM inference | `LLM_PROVIDER` |
-| `@qckstrt/storage-provider` | File storage (Supabase/S3) | `STORAGE_PROVIDER` |
-| `@qckstrt/auth-provider` | Authentication (Supabase/Cognito) | `AUTH_PROVIDER` |
-| `@qckstrt/secrets-provider` | Secrets management (Supabase/AWS) | `SECRETS_PROVIDER` |
+| `@qckstrt/storage-provider` | File storage (Supabase) | `STORAGE_PROVIDER` |
+| `@qckstrt/auth-provider` | Authentication (Supabase) | `AUTH_PROVIDER` |
+| `@qckstrt/secrets-provider` | Secrets management (Supabase Vault) | `SECRETS_PROVIDER` |
 | `@qckstrt/extraction-provider` | Text extraction | `EXTRACTION_PROVIDER` |
 
 ### Relational Database Provider
@@ -105,7 +99,6 @@ interface IRelationalDBProvider {
 
 **Implementations**:
 - `PostgresProvider` - Default (via Supabase)
-- `AuroraProvider` - AWS serverless
 
 **See**: [Data Layer Architecture](data-layer.md)
 
@@ -203,12 +196,9 @@ RELATIONAL_DB_PROVIDER=postgres
 VECTOR_DB_PROVIDER=chromadb
 EMBEDDINGS_PROVIDER=xenova
 LLM_MODEL=falcon
-
-# AWS Alternative
-RELATIONAL_DB_PROVIDER=aurora
-AUTH_PROVIDER=cognito
-STORAGE_PROVIDER=s3
-SECRETS_PROVIDER=aws
+AUTH_PROVIDER=supabase
+STORAGE_PROVIDER=supabase
+SECRETS_PROVIDER=supabase
 ```
 
 ### Configuration Files
@@ -263,15 +253,15 @@ AWS/Cloud Infrastructure
 - LLM inference runs locally
 
 ### Authentication
-- User authentication via Supabase Auth (default) or AWS Cognito
+- User authentication via Supabase Auth
 - Service-to-service auth via API keys
 - GraphQL field-level authorization
 
 ### Infrastructure
-- Self-hosted Supabase stack (default)
+- Self-hosted Supabase stack
 - Encryption at rest (PostgreSQL, Supabase Storage)
 - Encryption in transit (TLS/HTTPS)
-- Secrets management via Supabase Vault (default) or AWS Secrets Manager
+- Secrets management via Supabase Vault
 
 ## Monitoring & Observability
 

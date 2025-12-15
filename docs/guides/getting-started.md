@@ -76,7 +76,7 @@ cp apps/backend/.env.example apps/backend/.env
 # Backend services
 cd apps/backend
 npm run start:dev
-# This starts all microservices (API Gateway, Users, Documents, Knowledge, Files)
+# This starts all microservices (API Gateway, Users, Documents, Knowledge)
 
 # Frontend (in another terminal)
 cd apps/frontend
@@ -137,12 +137,12 @@ query {
 │         API Gateway (Apollo Federation)          │
 │          http://localhost:3000                   │
 └──────────────────────────────────────────────────┘
-          ↓           ↓           ↓          ↓
-    ┌─────────┐ ┌──────────┐ ┌────────┐ ┌────────┐
-    │ Users   │ │Documents │ │Knowledge│ │ Files  │
-    │  :3001  │ │  :3002   │ │  :3003 │ │  :3004 │
-    └─────────┘ └──────────┘ └────────┘ └────────┘
-          ↓           ↓           ↓          ↓
+          ↓           ↓           ↓
+    ┌─────────┐ ┌──────────┐ ┌──────────┐
+    │ Users   │ │Documents │ │Knowledge │
+    │  :3001  │ │  :3002   │ │  :3003   │
+    └─────────┘ └──────────┘ └──────────┘
+          ↓           ↓           ↓
 ┌────────────────────────────────────────────────────┐
 │              Provider Layer                        │
 ├────────────────────────────────────────────────────┤
@@ -161,16 +161,10 @@ qckstrt/
 │   ├── backend/
 │   │   ├── src/
 │   │   │   ├── apps/          # Microservices
-│   │   │   │   ├── api/       # GraphQL Gateway (port 3000)
 │   │   │   │   ├── users/     # Users Service (port 3001)
 │   │   │   │   ├── documents/ # Documents Service (port 3002)
-│   │   │   │   ├── knowledge/ # Knowledge/RAG Service (port 3003)
-│   │   │   │   └── files/     # Files Service (port 3004)
-│   │   │   ├── providers/     # Pluggable providers
-│   │   │   │   ├── embeddings/
-│   │   │   │   ├── vectordb/
-│   │   │   │   ├── relationaldb/
-│   │   │   │   └── llm/
+│   │   │   │   └── knowledge/ # Knowledge/RAG Service (port 3003)
+│   │   │   ├── api/           # GraphQL Gateway (port 3000)
 │   │   │   ├── db/            # Database module
 │   │   │   └── config/        # Configuration
 │   │   └── .env               # Local environment config
@@ -453,13 +447,12 @@ For production deployment, see:
 - [Docker Setup](docker-setup.md) (Production configuration)
 
 **Key Changes for Production**:
-1. Use managed PostgreSQL or Aurora: `RELATIONAL_DB_PROVIDER=aurora`
+1. Use managed PostgreSQL (Supabase Cloud or self-hosted)
 2. Consider pgvector: `VECTOR_DB_PROVIDER=pgvector`
 3. Use managed Ollama with GPU instances
 4. Enable SSL/TLS for all connections
 5. Set up monitoring and logging
 6. Configure backups
-7. Switch to AWS services if needed: Cognito, S3, Secrets Manager
 
 ---
 
