@@ -2,7 +2,7 @@
 
 ## Overview
 
-QCKSTRT uses the **Strategy Pattern + Dependency Injection** to create a pluggable provider architecture. This allows swapping implementations (ChromaDB ↔ pgvector, etc.) via configuration without code changes.
+QCKSTRT uses the **Strategy Pattern + Dependency Injection** to create a pluggable provider architecture. This allows swapping implementations via configuration without code changes.
 
 ## Design Pattern
 
@@ -105,7 +105,7 @@ RELATIONAL_DB_PASSWORD=your-super-secret-password
 
 **Package**: `@qckstrt/vectordb-provider`
 
-**Purpose**: Abstract vector storage and similarity search (ChromaDB, pgvector)
+**Purpose**: Abstract vector storage and similarity search (pgvector on PostgreSQL)
 
 **Interface**:
 ```typescript
@@ -133,23 +133,19 @@ export interface IVectorDBProvider {
 }
 ```
 
-**Implementations**:
+**Implementation**:
 
 | Provider | File | Use Case | Performance |
 |----------|------|----------|-------------|
-| ChromaDB | `packages/vectordb-provider/src/providers/chroma.provider.ts` | Development | Fast (dedicated) |
-| pgvector | `packages/vectordb-provider/src/providers/pgvector.provider.ts` | Production | Fast (consolidated) |
+| pgvector | `packages/vectordb-provider/src/providers/pgvector.provider.ts` | Default | Fast (consolidated with PostgreSQL) |
 
 **Configuration**:
 ```bash
-# ChromaDB (default for dev)
-VECTOR_DB_PROVIDER=chromadb
-VECTOR_DB_CHROMA_URL=http://localhost:8000
-VECTOR_DB_CHROMA_COLLECTION=qckstrt-embeddings
-
-# pgvector (recommended for prod)
-VECTOR_DB_PROVIDER=pgvector
-# Uses existing PostgreSQL connection
+# pgvector (uses same PostgreSQL instance)
+# Falls back to RELATIONAL_DB_* config if not specified
+VECTOR_DB_HOST=localhost
+VECTOR_DB_PORT=5432
+VECTOR_DB_DIMENSIONS=384
 ```
 
 **Module**: `VectorDBModule`
@@ -407,19 +403,18 @@ const provider = process.env.RELATIONAL_DB_PROVIDER || 'postgres';
 RELATIONAL_DB_DATABASE=qckstrt_test
 ```
 
-### 3. Gradual Migration
+### 3. Consolidated Architecture
 ```typescript
-// Start with ChromaDB, migrate to pgvector later
-VECTOR_DB_PROVIDER=chromadb  // Week 1-4
-VECTOR_DB_PROVIDER=pgvector  // Week 5+
+// Vector DB uses same PostgreSQL instance as relational DB
+// Simplifies infrastructure and reduces operational overhead
+VECTOR_DB_HOST=${RELATIONAL_DB_HOST}
+VECTOR_DB_PORT=${RELATIONAL_DB_PORT}
 ```
 
 ### 4. No Code Changes
 ```bash
-# Switch from ChromaDB to pgvector
-# Old: VECTOR_DB_PROVIDER=chromadb
-# New: VECTOR_DB_PROVIDER=pgvector
-# That's it! No code changes needed.
+# Configuration changes don't require code changes
+# Just update environment variables and restart
 ```
 
 ### 5. Custom Implementations
@@ -486,8 +481,9 @@ const provider = process.env.RELATIONAL_DB_PROVIDER || 'postgres';
 
 ### Vector Database
 ```typescript
-// Explicit configuration only
-const provider = process.env.VECTOR_DB_PROVIDER || 'chromadb';
+// pgvector on PostgreSQL (default)
+const dimensions = process.env.VECTOR_DB_DIMENSIONS || 384;
+// Uses VECTOR_DB_* or falls back to RELATIONAL_DB_*
 ```
 
 ### Embeddings

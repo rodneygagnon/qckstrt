@@ -17,7 +17,7 @@ Before using the RAG demo, ensure:
    ```bash
    # From project root
    cd apps/backend
-   docker-compose up -d    # Start PostgreSQL, ChromaDB, Ollama
+   docker-compose up -d    # Start PostgreSQL (with pgvector), Ollama
    pnpm start:dev          # Start all backend services
    ```
 
@@ -30,7 +30,7 @@ Before using the RAG demo, ensure:
 3. **Services Available**
    - Frontend: http://localhost:3000
    - API Gateway: http://localhost:3000/graphql
-   - ChromaDB: http://localhost:8000
+   - PostgreSQL: localhost:5432
    - Ollama: http://localhost:11434
 
 ## Using the RAG Demo
@@ -60,7 +60,7 @@ Before using the RAG demo, ensure:
 ```
 The QCKSTRT platform is a modern application starter kit built on open-source
 technologies. It provides a RAG (Retrieval-Augmented Generation) pipeline using
-ChromaDB for vector storage and Ollama for LLM inference.
+pgvector for vector storage and Ollama for LLM inference.
 
 Key features include:
 - GraphQL Federation for API gateway
@@ -72,7 +72,7 @@ Key features include:
 **What Happens**:
 1. Text is chunked into smaller segments
 2. Each chunk is converted to a vector embedding (Xenova)
-3. Embeddings are stored in ChromaDB with metadata
+3. Embeddings are stored in PostgreSQL via pgvector with metadata
 4. Success alert confirms indexing
 
 ### Step 4: Query Your Knowledge Base
@@ -101,7 +101,7 @@ Key features include:
 **RAG Answer**:
 ```
 Based on the indexed documents, QCKSTRT is a modern application
-starter kit that provides a RAG pipeline using ChromaDB and Ollama...
+starter kit that provides a RAG pipeline using pgvector and Ollama...
 ```
 
 **Search Results**:
@@ -118,8 +118,8 @@ Chunk 2: Key features include: GraphQL Federation for API gateway...
 User Input → Chunking → Embedding → Vector Storage
      │           │           │            │
      ↓           ↓           ↓            ↓
-  "Text..."   [chunk1,    [[0.1,0.2],   ChromaDB
-              chunk2]     [0.3,0.4]]   (persisted)
+  "Text..."   [chunk1,    [[0.1,0.2],   pgvector
+              chunk2]     [0.3,0.4]]   (PostgreSQL)
 ```
 
 ### RAG Query Flow
@@ -141,12 +141,12 @@ Question → Embed Query → Vector Search → Build Prompt → LLM → Answer
 **Causes**:
 1. No documents indexed yet
 2. Query doesn't match indexed content
-3. ChromaDB service not running
+3. PostgreSQL service not running
 
 **Solutions**:
 1. Index a document first
 2. Try different query phrasing
-3. Check `docker-compose ps` for ChromaDB status
+3. Check `docker-compose ps` for PostgreSQL status
 
 ### Slow Response Times
 
@@ -168,12 +168,12 @@ Question → Embed Query → Vector Search → Build Prompt → LLM → Answer
 
 **Causes**:
 1. Backend services not running
-2. ChromaDB connection issue
+2. PostgreSQL connection issue
 3. Embeddings service error
 
 **Solutions**:
 1. Verify backend: `curl http://localhost:3000/graphql`
-2. Check ChromaDB: `curl http://localhost:8000/api/v1/heartbeat`
+2. Check PostgreSQL: `docker-compose ps supabase-db`
 3. Check backend logs for specific errors
 
 ### Session Lost

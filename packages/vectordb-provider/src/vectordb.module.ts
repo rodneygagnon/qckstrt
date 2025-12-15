@@ -1,57 +1,72 @@
 import { Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { DataSource } from "typeorm";
 import { IVectorDBProvider } from "@qckstrt/common";
-import { ChromaDBProvider } from "./providers/chroma.provider.js";
+import { PgVectorProvider } from "./providers/pgvector.provider.js";
 
 /**
  * Vector Database Module
  *
  * Configures Dependency Injection for vector database providers.
+ * Uses PostgreSQL with pgvector extension (consolidates with Supabase).
  *
- * To swap providers, change the VECTOR_DB_PROVIDER factory:
- * - chromadb (default, OSS, dedicated vector database)
- * - pgvector (OSS, consolidates with PostgreSQL - coming soon)
- * - Add your own implementation of IVectorDBProvider
+ * To add custom providers, implement IVectorDBProvider interface.
  */
 @Module({
   providers: [
-    // Vector DB provider selection
     {
       provide: "VECTOR_DB_PROVIDER",
       useFactory: async (
         configService: ConfigService,
       ): Promise<IVectorDBProvider> => {
-        const provider =
-          configService.get<string>("vectordb.provider") || "chromadb";
         const dimensions =
           configService.get<number>("vectordb.dimensions") || 384;
+        const project = configService.get<string>("project") || "default";
+        const collectionName = `${project}_embeddings`;
 
-        let vectorDBProvider: IVectorDBProvider;
+        // Use PostgreSQL with pgvector extension
+        // Uses vectordb.postgres.* config, falls back to relationaldb.postgres.* for convenience
+        const dataSource = new DataSource({
+          type: "postgres",
+          host:
+            configService.get<string>("vectordb.postgres.host") ||
+            configService.get<string>("relationaldb.postgres.host") ||
+            "localhost",
+          port:
+            configService.get<number>("vectordb.postgres.port") ||
+            configService.get<number>("relationaldb.postgres.port") ||
+            5432,
+          database:
+            configService.get<string>("vectordb.postgres.database") ||
+            configService.get<string>("relationaldb.postgres.database") ||
+            "postgres",
+          username:
+            configService.get<string>("vectordb.postgres.username") ||
+            configService.get<string>("relationaldb.postgres.username") ||
+            "postgres",
+          password:
+            configService.get<string>("vectordb.postgres.password") ||
+            configService.get<string>("relationaldb.postgres.password") ||
+            "postgres",
+          ssl:
+            (configService.get<boolean>("vectordb.postgres.ssl") ??
+            configService.get<boolean>("relationaldb.postgres.ssl"))
+              ? { rejectUnauthorized: false }
+              : false,
+          synchronize: false, // We handle schema ourselves
+          logging: configService.get<string>("NODE_ENV") !== "production",
+        });
 
-        switch (provider.toLowerCase()) {
-          case "chromadb":
-          default:
-            // OSS: Use ChromaDB (dedicated vector database)
-            const chromaUrl =
-              configService.get<string>("vectordb.chromadb.url") ||
-              "http://localhost:8000";
-            const project = configService.get<string>("project") || "default";
-            const collectionName = `${project}_embeddings`;
+        // Initialize the data source
+        await dataSource.initialize();
 
-            vectorDBProvider = new ChromaDBProvider(
-              chromaUrl,
-              collectionName,
-              dimensions,
-            );
-            break;
+        const vectorDBProvider = new PgVectorProvider(
+          dataSource,
+          collectionName,
+          dimensions,
+        );
 
-          // TODO: Add pgvector provider
-          // case 'pgvector':
-          //   vectorDBProvider = new PgVectorProvider(...);
-          //   break;
-        }
-
-        // Initialize the provider
+        // Initialize the provider (creates tables/collections)
         await vectorDBProvider.initialize();
 
         return vectorDBProvider;
