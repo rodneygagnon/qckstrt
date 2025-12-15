@@ -8,5 +8,9 @@ node_modules
 
 *.tfvars
 
+# Build outputs
+dist/
+*.tsbuildinfo
+
 # Infrastructure backup (old modules)
 infra-backup/

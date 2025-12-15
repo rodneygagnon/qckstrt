@@ -4,6 +4,55 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { ISecretsProvider, SecretsError } from "@qckstrt/common";
 
 /**
+ * Helper function to get a secret without dependency injection.
+ * Useful for bootstrap/config scenarios before DI is available.
+ *
+ * Requires environment variables:
+ * - SUPABASE_URL
+ * - SUPABASE_SERVICE_ROLE_KEY (or SUPABASE_ANON_KEY)
+ */
+export async function getSecrets(
+  secretName: string,
+  supabaseUrl?: string,
+  supabaseKey?: string,
+): Promise<string> {
+  const url = supabaseUrl || process.env.SUPABASE_URL;
+  const key =
+    supabaseKey ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_ANON_KEY;
+
+  if (!url || !key) {
+    throw new Error(
+      "Supabase URL and key are required. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.",
+    );
+  }
+
+  const supabase = createClient(url, key, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
+  const { data, error } = await supabase.rpc("vault_read_secret", {
+    secret_name: secretName,
+  });
+
+  if (error) {
+    throw new Error(
+      `Failed to retrieve secret ${secretName}: ${error.message}`,
+    );
+  }
+
+  if (!data || data.length === 0) {
+    throw new Error(`Secret not found: ${secretName}`);
+  }
+
+  return data[0]?.decrypted_secret || "";
+}
+
+/**
  * Supabase Vault Provider
  *
  * Implements secrets retrieval using Supabase Vault (pgsodium).

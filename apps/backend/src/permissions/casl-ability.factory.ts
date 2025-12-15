@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from '@nestjs/common';
 import {
   MongoAbility,
@@ -85,15 +84,22 @@ export class CaslAbilityFactory<
    * @param values - The values object containing values to replace placeholders.
    * @returns The conditions object with placeholders replaced.
    */
-  replacePlaceholders(conditions: any, values: any): any {
+  replacePlaceholders(
+    conditions: Record<string, unknown>,
+    values: object,
+  ): Record<string, unknown> {
     // Traverse the conditions object
     for (const key in conditions) {
-      if (typeof conditions[key] === 'object' && conditions[key] !== null) {
+      const value = conditions[key];
+      if (typeof value === 'object' && value !== null) {
         // Recursively replace placeholders in nested objects
-        conditions[key] = this.replacePlaceholders(conditions[key], values);
-      } else if (typeof conditions[key] === 'string') {
+        conditions[key] = this.replacePlaceholders(
+          value as Record<string, unknown>,
+          values,
+        );
+      } else if (typeof value === 'string') {
         // Replace the placeholder if it matches the {{}} pattern
-        conditions[key] = this.replacePlaceholder(conditions[key], values);
+        conditions[key] = this.replacePlaceholder(value, values);
       }
     }
     return conditions;
@@ -102,12 +108,12 @@ export class CaslAbilityFactory<
   /**
    * Replaces a single placeholder with the corresponding value from the user object.
    * @param placeholder - The placeholder string.
-   * @param user - The user object containing values to replace placeholders.
+   * @param values - The values object containing values to replace placeholders.
    * @returns The string with placeholders replaced.
    */
-  private replacePlaceholder(placeholder: string, values: any): any {
+  private replacePlaceholder(placeholder: string, values: object): string {
     const regex = /{{(.*?)}}/g;
-    return placeholder.replace(regex, (_, path) =>
+    return placeholder.replace(regex, (_, path: string) =>
       get(values, path.trim(), `{{${path}}}`),
     );
   }

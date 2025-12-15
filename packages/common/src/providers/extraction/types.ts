@@ -22,7 +22,7 @@ export interface TextExtractionResult {
     source: string;
     extractedAt: Date;
     extractor: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 

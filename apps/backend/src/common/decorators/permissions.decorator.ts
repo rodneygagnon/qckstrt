@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { SetMetadata } from '@nestjs/common';
 import { Subject as CaslSubject } from '@casl/ability';
 import { Subject } from '../../permissions/casl-ability.factory';
@@ -10,7 +9,7 @@ export interface RequiredPermissions<
 > {
   action: A;
   subject: S;
-  conditions?: any;
+  conditions?: Record<string, unknown>;
 }
 
 export const CHECK_PERMISSIONS = 'check_permissions';

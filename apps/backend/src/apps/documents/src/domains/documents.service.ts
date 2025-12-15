@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -44,16 +43,14 @@ export class DocumentsService {
     const documents = await this.documentRepo.find({ where: { userId } });
 
     const files: File[] = documents
-      ? documents.map((document: any) => {
-          return {
-            userId,
-            filename: document.key,
-            size: document.size,
-            status: document.status,
-            createdAt: document.createdAt,
-            updatedAt: document.updatedAt,
-          } as File;
-        })
+      ? documents.map((document) => ({
+          userId,
+          filename: document.key,
+          size: document.size,
+          status: document.status,
+          createdAt: document.createdAt,
+          updatedAt: document.updatedAt,
+        }))
       : [];
 
     return files;

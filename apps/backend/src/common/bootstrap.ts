@@ -1,5 +1,5 @@
 import serverlessExpress from '@codegenie/serverless-express';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, Type } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { Handler } from 'aws-lambda';
@@ -26,8 +26,7 @@ function setupSwagger(
 }
 
 export default async function bootstrap(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  AppModule: any,
+  AppModule: Type<unknown>,
 ): Promise<Handler> {
   console.time('#perf bootup time');
 
