@@ -249,7 +249,7 @@ make clean
 2. **Supabase Studio**: Only accessible from your `allowed_ssh_cidr`
 3. **Secrets**: Stored in AWS Secrets Manager, fetched securely at boot
 4. **GPU Services**: Only accessible from app server (internal VPC traffic)
-5. **No HTTPS by default**: For production, add an ALB with ACM certificate
+5. **HTTPS available**: Configure `domain_name` to enable Let's Encrypt TLS certificates
 
 ## Monitoring
 
@@ -302,6 +302,76 @@ aws backup start-restore-job \
 Edit `backup_retention_days` in `terraform.tfvars`:
 ```hcl
 backup_retention_days = 14  # Keep 2 weeks of backups
+```
+
+## HTTPS/TLS (Optional)
+
+Enable HTTPS with free, auto-renewing Let's Encrypt certificates.
+
+### Prerequisites
+
+1. **Own a domain name** (e.g., from Route53, Namecheap, etc.)
+2. **Deploy infrastructure first** to get Elastic IPs
+3. **Create DNS A records** pointing to your servers:
+   - `api.yourdomain.com` → App Server Elastic IP
+   - `gpu.yourdomain.com` → GPU Server Elastic IP
+
+### Configuration
+
+Add to `terraform.tfvars`:
+```hcl
+domain_name   = "yourdomain.com"
+app_subdomain = "api"    # → api.yourdomain.com
+gpu_subdomain = "gpu"    # → gpu.yourdomain.com
+certbot_email = "admin@yourdomain.com"
+```
+
+Then apply:
+```bash
+make apply
+```
+
+### How It Works
+
+1. **Nginx** is installed as a TLS termination proxy
+2. **Certbot** obtains certificates from Let's Encrypt
+3. **Auto-renewal** via systemd timer (runs twice daily)
+4. Traffic is encrypted between clients and servers
+
+### Verify Certificates
+
+```bash
+# SSH to server and check certificates
+make ssh-app
+sudo certbot certificates
+
+# Test HTTPS
+curl -I https://api.yourdomain.com
+```
+
+### Service URLs with HTTPS
+
+| Service | HTTPS URL |
+|---------|-----------|
+| Supabase API | `https://api.yourdomain.com` |
+| ChromaDB | `https://api.yourdomain.com/chromadb` |
+| vLLM API | `https://gpu.yourdomain.com/v1` |
+| Embeddings | `https://gpu.yourdomain.com/embeddings` |
+
+### Troubleshooting HTTPS
+
+**Certificate not obtained:**
+- Ensure DNS A record points to the correct Elastic IP
+- Wait for DNS propagation (can take up to 48 hours)
+- Check logs: `sudo tail -f /var/log/user-data.log`
+
+**Certificate renewal issues:**
+```bash
+# Check renewal status
+sudo certbot renew --dry-run
+
+# Force renewal
+sudo certbot renew --force-renewal
 ```
 
 ## Files

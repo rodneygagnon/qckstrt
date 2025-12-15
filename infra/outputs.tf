@@ -45,7 +45,7 @@ output "gpu_server_ip" {
   value       = aws_eip.gpu_server.public_ip
 }
 
-# URLs
+# URLs (conditional HTTPS when domain is configured)
 output "supabase_studio_url" {
   description = "Supabase Studio URL"
   value       = "http://${aws_eip.app_server.public_ip}:3000"
@@ -53,22 +53,22 @@ output "supabase_studio_url" {
 
 output "supabase_api_url" {
   description = "Supabase API URL"
-  value       = "http://${aws_eip.app_server.public_ip}"
+  value       = var.domain_name != "" ? "https://${var.app_subdomain}.${var.domain_name}" : "http://${aws_eip.app_server.public_ip}"
 }
 
 output "chromadb_url" {
   description = "ChromaDB URL"
-  value       = "http://${aws_eip.app_server.public_ip}:8001"
+  value       = var.domain_name != "" ? "https://${var.app_subdomain}.${var.domain_name}/chromadb" : "http://${aws_eip.app_server.public_ip}:8001"
 }
 
 output "vllm_api_url" {
   description = "vLLM API URL (OpenAI-compatible)"
-  value       = "http://${aws_eip.gpu_server.public_ip}:8000"
+  value       = var.domain_name != "" ? "https://${var.gpu_subdomain}.${var.domain_name}/v1" : "http://${aws_eip.gpu_server.public_ip}:8000"
 }
 
 output "embeddings_api_url" {
   description = "Embeddings API URL"
-  value       = "http://${aws_eip.gpu_server.public_ip}:8001"
+  value       = var.domain_name != "" ? "https://${var.gpu_subdomain}.${var.domain_name}/embeddings" : "http://${aws_eip.gpu_server.public_ip}:8001"
 }
 
 # SSH Commands
@@ -110,11 +110,11 @@ output "backup_plan_id" {
 output "backend_env_vars" {
   description = "Environment variables for backend configuration"
   value = {
-    SUPABASE_URL          = "http://${aws_eip.app_server.public_ip}"
-    VECTOR_DB_CHROMA_URL  = "http://${aws_eip.app_server.public_ip}:8001"
-    LLM_URL               = "http://${aws_eip.gpu_server.public_ip}:8000"
+    SUPABASE_URL          = var.domain_name != "" ? "https://${var.app_subdomain}.${var.domain_name}" : "http://${aws_eip.app_server.public_ip}"
+    VECTOR_DB_CHROMA_URL  = var.domain_name != "" ? "https://${var.app_subdomain}.${var.domain_name}/chromadb" : "http://${aws_eip.app_server.public_ip}:8001"
+    LLM_URL               = var.domain_name != "" ? "https://${var.gpu_subdomain}.${var.domain_name}/v1" : "http://${aws_eip.gpu_server.public_ip}:8000"
     EMBEDDINGS_PROVIDER   = "ollama"
-    EMBEDDINGS_OLLAMA_URL = "http://${aws_eip.gpu_server.public_ip}:8001"
+    EMBEDDINGS_OLLAMA_URL = var.domain_name != "" ? "https://${var.gpu_subdomain}.${var.domain_name}/embeddings" : "http://${aws_eip.gpu_server.public_ip}:8001"
     RELATIONAL_DB_HOST    = aws_eip.app_server.public_ip
     RELATIONAL_DB_PORT    = "5432"
   }

@@ -80,3 +80,31 @@ variable "backup_retention_days" {
   type        = number
   default     = 7
 }
+
+# -----------------------------------------------------------------------------
+# HTTPS/TLS Configuration (Optional)
+# -----------------------------------------------------------------------------
+
+variable "domain_name" {
+  description = "Base domain name for HTTPS (e.g., yourdomain.com). Leave empty to disable HTTPS."
+  type        = string
+  default     = ""
+}
+
+variable "app_subdomain" {
+  description = "Subdomain for app server (e.g., 'api' for api.yourdomain.com)"
+  type        = string
+  default     = "api"
+}
+
+variable "gpu_subdomain" {
+  description = "Subdomain for GPU server (e.g., 'gpu' for gpu.yourdomain.com)"
+  type        = string
+  default     = "gpu"
+}
+
+variable "certbot_email" {
+  description = "Email for Let's Encrypt certificate notifications"
+  type        = string
+  default     = ""
+}
