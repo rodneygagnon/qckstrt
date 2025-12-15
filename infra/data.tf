@@ -9,7 +9,7 @@ data "aws_availability_zones" "available" {
 # Ubuntu 22.04 LTS AMI for app server
 data "aws_ami" "ubuntu" {
   most_recent = true
-  owners      = ["099720109477"]  # Canonical
+  owners      = ["099720109477"] # Canonical
 
   filter {
     name   = "name"

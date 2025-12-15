@@ -1,5 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { subject as an, Subject as CaslSubject } from '@casl/ability';
+import {
+  AnyMongoAbility,
+  subject as an,
+  Subject as CaslSubject,
+} from '@casl/ability';
 import {
   CHECK_PERMISSIONS,
   RequiredPermissions,
@@ -83,7 +86,7 @@ export class PoliciesGuard<
         user,
       );
 
-      const conditionContext: Record<string, any> = {};
+      const conditionContext: Record<string, unknown> = {};
 
       // Set the context for the policies
       for (const policy of requiredPolicies) {
@@ -111,8 +114,8 @@ export class PoliciesGuard<
    */
   private checkPolicies(
     policies: RequiredPermissions<A, S>[],
-    abilities: any,
-    conditionContext: Record<string, any>,
+    abilities: AnyMongoAbility,
+    conditionContext: Record<string, unknown>,
   ): boolean {
     return policies.every((policy) => {
       const subject: string = policy.subject as string;

@@ -19,9 +19,14 @@ export class DbConfigError extends DbError {
   }
 }
 
+interface PostgresDriverError {
+  code: string;
+  detail?: string;
+}
+
 const handleQueryFailedError = (error: QueryFailedError): DbError => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const postgresDriverError: any = error.driverError;
+  const postgresDriverError =
+    error.driverError as unknown as PostgresDriverError;
 
   switch (postgresDriverError.code) {
     case PostgresErrorCodes.UniqueViolation:
