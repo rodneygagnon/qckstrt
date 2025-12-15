@@ -1,6 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { IntrospectAndCompose, RemoteGraphQLDataSource } from '@apollo/gateway';
+import {
+  GraphQLDataSourceProcessOptions,
+  IntrospectAndCompose,
+  RemoteGraphQLDataSource,
+} from '@apollo/gateway';
 import { ApolloGatewayDriver, ApolloGatewayDriverConfig } from '@nestjs/apollo';
 
 import {
@@ -11,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
+import { Request } from 'express';
 
 import configuration from 'src/config';
 
@@ -21,10 +24,14 @@ import { AuthMiddleware } from 'src/common/middleware/auth.middleware';
 import { APP_FILTER } from '@nestjs/core';
 import { HttpExceptionFilter } from 'src/common/exceptions/http-exception.filter';
 
-const handleAuth = ({ req }: any) => {
+interface GatewayContext {
+  user?: string;
+}
+
+const handleAuth = ({ req }: { req: Request }) => {
   if (req.headers.authorization) {
     return {
-      user: req.headers.user,
+      user: req.headers.user as string | undefined,
     };
   }
 };
@@ -51,8 +58,11 @@ const handleAuth = ({ req }: any) => {
           buildService: ({ name, url }) => {
             return new RemoteGraphQLDataSource({
               url,
-              willSendRequest({ request, context }: any) {
-                request.http.headers.set('user', context.user);
+              willSendRequest({
+                request,
+                context,
+              }: GraphQLDataSourceProcessOptions<GatewayContext>) {
+                request.http?.headers.set('user', context?.user);
               },
             });
           },

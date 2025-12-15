@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
@@ -8,8 +7,9 @@ import { IAuthConfig } from 'src/config';
 
 import { ILogin } from 'src/interfaces/login.interface';
 
-export const isLoggedIn = (login: any): login is ILogin =>
+export const isLoggedIn = (login: unknown): login is ILogin =>
   typeof login === 'object' &&
+  login !== null &&
   'email' in login &&
   'id' in login &&
   'roles' in login &&
@@ -44,13 +44,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: any): Promise<ILogin> {
+  async validate(payload: Record<string, unknown>): Promise<ILogin> {
     return Promise.resolve({
-      id: payload['sub'],
-      email: payload['email'],
-      roles: payload['cognito:groups'] || [],
-      department: payload['custom:department'],
-      clearance: payload['custom:clearance'],
+      id: payload['sub'] as string,
+      email: payload['email'] as string,
+      roles: (payload['cognito:groups'] as string[]) || [],
+      department: payload['custom:department'] as string,
+      clearance: payload['custom:clearance'] as string,
     });
   }
 }

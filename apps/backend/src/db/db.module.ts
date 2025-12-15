@@ -1,5 +1,5 @@
 import { DynamicModule, Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { DataSourceOptions } from 'typeorm';
 
@@ -30,7 +30,9 @@ export class DbModule {
         RelationalDBModule,
         TypeOrmModule.forRootAsync({
           imports: [RelationalDBModule],
-          useFactory: (dbProvider: IRelationalDBProvider) => {
+          useFactory: (
+            dbProvider: IRelationalDBProvider,
+          ): TypeOrmModuleOptions => {
             if (!dbProvider) {
               throw new DbConfigError('Database provider not initialized');
             }
@@ -40,7 +42,7 @@ export class DbModule {
               dbEntityConfig.entities,
             );
 
-            return connectionOptions;
+            return connectionOptions as TypeOrmModuleOptions;
           },
           inject: ['RELATIONAL_DB_PROVIDER'],
         }),
