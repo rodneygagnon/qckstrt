@@ -43,6 +43,14 @@ gpu_server_volume_size   = 200  # GB - for model weights
 gpu_spot_max_price = "0.60"
 
 # =============================================================================
+# Backup Configuration
+# =============================================================================
+
+# EBS snapshots are taken daily at 5 AM UTC
+# Cost: ~$0.05/GB-month for stored snapshots (incremental after first)
+backup_retention_days = 7  # Number of days to keep backups
+
+# =============================================================================
 # Scaling Options
 # =============================================================================
 #

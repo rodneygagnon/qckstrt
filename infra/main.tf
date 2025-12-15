@@ -18,6 +18,7 @@
 # - iam.tf              : IAM roles, policies, instance profile
 # - secrets.tf          : Secrets Manager and random passwords
 # - monitoring.tf       : CloudWatch alarms and SNS alerts
+# - backup.tf           : AWS Backup for EBS snapshots
 # - app-server.tf       : Application server EC2 instance
 # - gpu-server.tf       : GPU spot instance for AI inference
 # - outputs.tf          : Output values
