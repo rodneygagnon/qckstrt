@@ -24,6 +24,10 @@ resource "aws_instance" "app_server" {
     project       = var.project
     stage         = var.stage
     gpu_server_ip = aws_eip.gpu_server.public_ip
+    # HTTPS/TLS configuration
+    domain_name   = var.domain_name
+    app_subdomain = var.app_subdomain
+    certbot_email = var.certbot_email
   })
 
   tags = {

@@ -62,7 +62,7 @@ retry() {
         if eval "$cmd"; then
             return 0
         fi
-        log_error "Attempt $attempt failed. Retrying in ${delay}s..."
+        log_error "Attempt $attempt failed. Retrying in $${delay}s..."
         sleep $delay
         delay=$((delay * 2))
         attempt=$((attempt + 1))
@@ -81,22 +81,22 @@ command_exists() {
 wait_for_healthy() {
     local service_name=$1
     local check_cmd=$2
-    local max_wait=${3:-300}  # Default 5 minutes
-    local interval=${4:-10}
+    local max_wait=$${3:-300}  # Default 5 minutes
+    local interval=$${4:-10}
 
-    log "Waiting for $service_name to be healthy (max ${max_wait}s)..."
+    log "Waiting for $service_name to be healthy (max $${max_wait}s)..."
     local elapsed=0
 
     while [ $elapsed -lt $max_wait ]; do
         if eval "$check_cmd" >/dev/null 2>&1; then
-            log_success "$service_name is healthy after ${elapsed}s"
+            log_success "$service_name is healthy after $${elapsed}s"
             return 0
         fi
         sleep $interval
         elapsed=$((elapsed + interval))
     done
 
-    log_error "$service_name did not become healthy within ${max_wait}s"
+    log_error "$service_name did not become healthy within $${max_wait}s"
     return 1
 }
 
@@ -224,7 +224,7 @@ services:
     volumes:
       - huggingface-cache:/root/.cache/huggingface
     environment:
-      - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN:-}
+      - HUGGING_FACE_HUB_TOKEN=$${HUGGING_FACE_HUB_TOKEN:-}
     deploy:
       resources:
         reservations:
@@ -325,6 +325,119 @@ wait_for_healthy "vLLM API" "curl -sf http://localhost:8000/v1/models" 900 30 ||
 }
 
 # -----------------------------------------------------------------------------
+# Step 8: HTTPS Setup (Optional)
+# -----------------------------------------------------------------------------
+
+DOMAIN_NAME="${domain_name}"
+GPU_SUBDOMAIN="${gpu_subdomain}"
+CERTBOT_EMAIL="${certbot_email}"
+
+if [ -n "$DOMAIN_NAME" ] && [ "$DOMAIN_NAME" != "" ]; then
+    log "Step 8: Setting up HTTPS for $GPU_SUBDOMAIN.$DOMAIN_NAME..."
+
+    # Install nginx and certbot
+    retry $MAX_RETRIES $RETRY_DELAY "apt-get install -y nginx certbot python3-certbot-nginx"
+
+    # Create nginx config for GPU APIs proxy
+    cat > /etc/nginx/sites-available/gpu <<NGINXEOF
+# HTTP - redirect to HTTPS (after cert obtained)
+server {
+    listen 80;
+    server_name $GPU_SUBDOMAIN.$DOMAIN_NAME;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        return 301 https://\$host\$request_uri;
+    }
+}
+
+# HTTPS - proxy to AI services
+server {
+    listen 443 ssl http2;
+    server_name $GPU_SUBDOMAIN.$DOMAIN_NAME;
+
+    # Certificates (will be populated by certbot)
+    ssl_certificate /etc/letsencrypt/live/$GPU_SUBDOMAIN.$DOMAIN_NAME/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$GPU_SUBDOMAIN.$DOMAIN_NAME/privkey.pem;
+
+    # Modern SSL configuration
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    # Security headers
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options nosniff always;
+
+    # vLLM API (OpenAI-compatible) - proxy /v1/ endpoints
+    location /v1/ {
+        proxy_pass http://127.0.0.1:8000/v1/;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 300;  # Long timeout for LLM generation
+        proxy_buffering off;
+    }
+
+    # Embeddings API
+    location /embeddings/ {
+        proxy_pass http://127.0.0.1:8001/;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 120;
+    }
+
+    # Health check endpoint
+    location /health {
+        proxy_pass http://127.0.0.1:8000/health;
+        proxy_read_timeout 10;
+    }
+}
+NGINXEOF
+
+    # Enable site
+    ln -sf /etc/nginx/sites-available/gpu /etc/nginx/sites-enabled/
+    rm -f /etc/nginx/sites-enabled/default
+
+    # Create webroot for certbot
+    mkdir -p /var/www/html
+
+    # Start nginx for ACME challenge
+    systemctl start nginx
+
+    # Get certificate from Let's Encrypt
+    log "Obtaining SSL certificate from Let's Encrypt..."
+    if retry 3 30 "certbot certonly --webroot -w /var/www/html -d $GPU_SUBDOMAIN.$DOMAIN_NAME --email $CERTBOT_EMAIL --agree-tos --non-interactive"; then
+        log_success "SSL certificate obtained successfully"
+
+        # Reload nginx with SSL config
+        nginx -t && systemctl reload nginx
+
+        # Enable auto-renewal
+        systemctl enable certbot.timer
+        systemctl start certbot.timer
+
+        log_success "HTTPS configured for $GPU_SUBDOMAIN.$DOMAIN_NAME"
+    else
+        log_error "Failed to obtain SSL certificate. HTTPS not configured."
+        log "Make sure DNS A record for $GPU_SUBDOMAIN.$DOMAIN_NAME points to this server's IP"
+        systemctl stop nginx
+    fi
+else
+    log "Step 8: Skipping HTTPS setup (no domain configured)"
+fi
+
+# -----------------------------------------------------------------------------
 # Completion
 # -----------------------------------------------------------------------------
 
@@ -338,11 +451,19 @@ log "=========================================="
 log_success "QCKSTRT GPU Server Setup Complete!"
 log "=========================================="
 log ""
-log "vLLM API (OpenAI-compatible): http://$PUBLIC_IP:8000"
-log "  - Test: curl http://$PUBLIC_IP:8000/v1/models"
-log ""
-log "Embeddings API: http://$PUBLIC_IP:8001"
-log "  - Test: curl http://$PUBLIC_IP:8001/info"
+if [ -n "$DOMAIN_NAME" ] && [ "$DOMAIN_NAME" != "" ]; then
+    log "vLLM API (OpenAI-compatible): https://$GPU_SUBDOMAIN.$DOMAIN_NAME/v1"
+    log "  - Test: curl https://$GPU_SUBDOMAIN.$DOMAIN_NAME/v1/models"
+    log ""
+    log "Embeddings API: https://$GPU_SUBDOMAIN.$DOMAIN_NAME/embeddings"
+    log "  - Test: curl https://$GPU_SUBDOMAIN.$DOMAIN_NAME/embeddings/info"
+else
+    log "vLLM API (OpenAI-compatible): http://$PUBLIC_IP:8000"
+    log "  - Test: curl http://$PUBLIC_IP:8000/v1/models"
+    log ""
+    log "Embeddings API: http://$PUBLIC_IP:8001"
+    log "  - Test: curl http://$PUBLIC_IP:8001/info"
+fi
 log ""
 log "Note: First model download may take 10-20 minutes"
 log ""

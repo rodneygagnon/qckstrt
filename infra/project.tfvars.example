@@ -51,6 +51,21 @@ gpu_spot_max_price = "0.60"
 backup_retention_days = 7  # Number of days to keep backups
 
 # =============================================================================
+# HTTPS/TLS Configuration (Optional)
+# =============================================================================
+# Uncomment and set domain_name to enable HTTPS with Let's Encrypt certificates.
+# Requires: DNS A records pointing subdomains to the Elastic IPs after deployment.
+#
+# Example DNS setup:
+#   api.yourdomain.com  → App Server Elastic IP (from terraform output)
+#   gpu.yourdomain.com  → GPU Server Elastic IP (from terraform output)
+#
+# domain_name   = "yourdomain.com"
+# app_subdomain = "api"   # Results in: api.yourdomain.com
+# gpu_subdomain = "gpu"   # Results in: gpu.yourdomain.com
+# certbot_email = "admin@yourdomain.com"
+
+# =============================================================================
 # Scaling Options
 # =============================================================================
 #

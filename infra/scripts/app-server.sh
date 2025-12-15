@@ -62,7 +62,7 @@ retry() {
         if eval "$cmd"; then
             return 0
         fi
-        log_error "Attempt $attempt failed. Retrying in ${delay}s..."
+        log_error "Attempt $attempt failed. Retrying in $${delay}s..."
         sleep $delay
         delay=$((delay * 2))
         attempt=$((attempt + 1))
@@ -81,22 +81,22 @@ command_exists() {
 wait_for_healthy() {
     local service_name=$1
     local check_cmd=$2
-    local max_wait=${3:-300}  # Default 5 minutes
-    local interval=${4:-5}
+    local max_wait=$${3:-300}  # Default 5 minutes
+    local interval=$${4:-5}
 
-    log "Waiting for $service_name to be healthy (max ${max_wait}s)..."
+    log "Waiting for $service_name to be healthy (max $${max_wait}s)..."
     local elapsed=0
 
     while [ $elapsed -lt $max_wait ]; do
         if eval "$check_cmd" >/dev/null 2>&1; then
-            log_success "$service_name is healthy after ${elapsed}s"
+            log_success "$service_name is healthy after $${elapsed}s"
             return 0
         fi
         sleep $interval
         elapsed=$((elapsed + interval))
     done
 
-    log_error "$service_name did not become healthy within ${max_wait}s"
+    log_error "$service_name did not become healthy within $${max_wait}s"
     return 1
 }
 
@@ -634,6 +634,129 @@ wait_for_healthy "Kong API Gateway" "curl -sf http://localhost:80/rest/v1/" 120 
 }
 
 # -----------------------------------------------------------------------------
+# Step 11: HTTPS Setup (Optional)
+# -----------------------------------------------------------------------------
+
+DOMAIN_NAME="${domain_name}"
+APP_SUBDOMAIN="${app_subdomain}"
+CERTBOT_EMAIL="${certbot_email}"
+
+if [ -n "$DOMAIN_NAME" ] && [ "$DOMAIN_NAME" != "" ]; then
+    log "Step 11: Setting up HTTPS for $APP_SUBDOMAIN.$DOMAIN_NAME..."
+
+    # Install nginx and certbot
+    retry $MAX_RETRIES $RETRY_DELAY "apt-get install -y nginx certbot python3-certbot-nginx"
+
+    # Stop nginx temporarily to free port 80
+    systemctl stop nginx 2>/dev/null || true
+
+    # Create nginx config for Supabase proxy
+    cat > /etc/nginx/sites-available/supabase <<NGINXEOF
+# HTTP - redirect to HTTPS (after cert obtained)
+server {
+    listen 80;
+    server_name $APP_SUBDOMAIN.$DOMAIN_NAME;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location / {
+        return 301 https://\$host\$request_uri;
+    }
+}
+
+# HTTPS - proxy to Kong
+server {
+    listen 443 ssl http2;
+    server_name $APP_SUBDOMAIN.$DOMAIN_NAME;
+
+    # Certificates (will be populated by certbot)
+    ssl_certificate /etc/letsencrypt/live/$APP_SUBDOMAIN.$DOMAIN_NAME/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$APP_SUBDOMAIN.$DOMAIN_NAME/privkey.pem;
+
+    # Modern SSL configuration
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    # Security headers
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options SAMEORIGIN always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    # Proxy to Kong (Supabase API Gateway on internal port)
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 86400;
+        proxy_buffering off;
+    }
+
+    # ChromaDB endpoint
+    location /chromadb/ {
+        proxy_pass http://127.0.0.1:8001/;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_read_timeout 120;
+    }
+}
+NGINXEOF
+
+    # Enable site
+    ln -sf /etc/nginx/sites-available/supabase /etc/nginx/sites-enabled/
+    rm -f /etc/nginx/sites-enabled/default
+
+    # Create webroot for certbot
+    mkdir -p /var/www/html
+
+    # Update Kong to listen on 8000 instead of 80 (nginx will proxy)
+    log "Updating Kong port configuration..."
+    cd "$SETUP_DIR"
+    sed -i 's/- "80:8000"/- "8080:8000"/' docker-compose.yml
+    docker-compose up -d kong
+
+    # Start nginx for ACME challenge
+    systemctl start nginx
+
+    # Get certificate from Let's Encrypt
+    log "Obtaining SSL certificate from Let's Encrypt..."
+    if retry 3 30 "certbot certonly --webroot -w /var/www/html -d $APP_SUBDOMAIN.$DOMAIN_NAME --email $CERTBOT_EMAIL --agree-tos --non-interactive"; then
+        log_success "SSL certificate obtained successfully"
+
+        # Reload nginx with SSL config
+        nginx -t && systemctl reload nginx
+
+        # Enable auto-renewal
+        systemctl enable certbot.timer
+        systemctl start certbot.timer
+
+        log_success "HTTPS configured for $APP_SUBDOMAIN.$DOMAIN_NAME"
+    else
+        log_error "Failed to obtain SSL certificate. HTTPS not configured."
+        log "Make sure DNS A record for $APP_SUBDOMAIN.$DOMAIN_NAME points to this server's IP"
+        # Revert Kong to port 80
+        sed -i 's/- "8080:8000"/- "80:8000"/' docker-compose.yml
+        docker-compose up -d kong
+        systemctl stop nginx
+    fi
+else
+    log "Step 11: Skipping HTTPS setup (no domain configured)"
+fi
+
+# -----------------------------------------------------------------------------
 # Completion
 # -----------------------------------------------------------------------------
 
@@ -647,11 +770,19 @@ log "=========================================="
 log_success "QCKSTRT App Server Setup Complete!"
 log "=========================================="
 log ""
-log "Supabase Studio: http://$PUBLIC_IP:3000"
-log "Supabase API:    http://$PUBLIC_IP"
-log "ChromaDB:        http://$PUBLIC_IP:8001"
-log "PostgreSQL:      $PUBLIC_IP:5432"
-log "Redis:           $PUBLIC_IP:6379"
+if [ -n "$DOMAIN_NAME" ] && [ "$DOMAIN_NAME" != "" ]; then
+    log "Supabase Studio: http://$PUBLIC_IP:3000"
+    log "Supabase API:    https://$APP_SUBDOMAIN.$DOMAIN_NAME"
+    log "ChromaDB:        https://$APP_SUBDOMAIN.$DOMAIN_NAME/chromadb"
+    log "PostgreSQL:      $PUBLIC_IP:5432"
+    log "Redis:           $PUBLIC_IP:6379"
+else
+    log "Supabase Studio: http://$PUBLIC_IP:3000"
+    log "Supabase API:    http://$PUBLIC_IP"
+    log "ChromaDB:        http://$PUBLIC_IP:8001"
+    log "PostgreSQL:      $PUBLIC_IP:5432"
+    log "Redis:           $PUBLIC_IP:6379"
+fi
 log ""
 log "GPU Server: ${gpu_server_ip}"
 log ""

@@ -17,7 +17,7 @@ resource "aws_spot_instance_request" "gpu_server" {
   spot_price                     = var.gpu_spot_max_price
   wait_for_fulfillment           = true
   spot_type                      = "persistent"
-  instance_interruption_behavior = "stop"  # Stop (not terminate) on interruption
+  instance_interruption_behavior = "stop" # Stop (not terminate) on interruption
 
   root_block_device {
     volume_size           = var.gpu_server_volume_size
@@ -25,7 +25,12 @@ resource "aws_spot_instance_request" "gpu_server" {
     delete_on_termination = true
   }
 
-  user_data = file("${path.module}/scripts/gpu-server.sh")
+  user_data = templatefile("${path.module}/scripts/gpu-server.sh", {
+    # HTTPS/TLS configuration
+    domain_name   = var.domain_name
+    gpu_subdomain = var.gpu_subdomain
+    certbot_email = var.certbot_email
+  })
 
   tags = {
     Name    = "${var.project}-${var.stage}-gpu-server"
