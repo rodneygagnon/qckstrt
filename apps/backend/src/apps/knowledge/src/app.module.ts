@@ -8,9 +8,10 @@ import {
   NestModule,
   RequestMethod,
 } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloServerPluginInlineTrace } from '@apollo/server/plugin/inlineTrace';
+import { LoggingModule, LogLevel } from '@qckstrt/logging-provider';
 
 import { KnowledgeModule } from './domains/knowledge.module';
 
@@ -33,6 +34,19 @@ import { PoliciesGuard } from 'src/common/guards/policies.guard';
 @Module({
   imports: [
     ConfigModule.forRoot({ load: [configuration], isGlobal: true }),
+    LoggingModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        serviceName: 'knowledge-service',
+        level:
+          configService.get('NODE_ENV') === 'production'
+            ? LogLevel.INFO
+            : LogLevel.DEBUG,
+        format:
+          configService.get('NODE_ENV') === 'production' ? 'json' : 'pretty',
+      }),
+      inject: [ConfigService],
+    }),
     GraphQLModule.forRoot<ApolloFederationDriverConfig>({
       driver: ApolloFederationDriver,
       autoSchemaFile: { path: 'knowledge-schema.gql', federation: 2 },
