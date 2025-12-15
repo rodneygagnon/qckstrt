@@ -1,62 +1,135 @@
-project := qckstrt
-stage := dev
+# =============================================================================
+# QCKSTRT Infrastructure Makefile
+# =============================================================================
+# Simple commands for deploying and managing AWS infrastructure
+# =============================================================================
 
-aws_account := $(shell aws sts get-caller-identity --query "Account" --output text)
-aws_region := us-west-2
+.PHONY: help init plan apply destroy ssh-app ssh-gpu status outputs clean
 
-frontend_nextjs := $(project)-$(stage)-nextjs
-frontend_nginx := $(project)-$(stage)-nginx
+# Default values
+PROJECT ?= qckstrt
+STAGE ?= dev
+AWS_REGION ?= us-east-1
 
-backend_api := $(project)-$(stage)-api
-backend_users := $(project)-$(stage)-users
-backend_files := $(project)-$(stage)-files
+help:
+	@echo "QCKSTRT Infrastructure Commands"
+	@echo "================================"
+	@echo ""
+	@echo "Setup:"
+	@echo "  make init          - Initialize Terraform"
+	@echo "  make plan          - Preview infrastructure changes"
+	@echo "  make apply         - Deploy infrastructure"
+	@echo "  make destroy       - Destroy all infrastructure"
+	@echo ""
+	@echo "Operations:"
+	@echo "  make ssh-app       - SSH into app server"
+	@echo "  make ssh-gpu       - SSH into GPU server"
+	@echo "  make status        - Show instance status"
+	@echo "  make outputs       - Show Terraform outputs"
+	@echo "  make logs-app      - View app server setup logs"
+	@echo "  make logs-gpu      - View GPU server setup logs"
+	@echo ""
+	@echo "Maintenance:"
+	@echo "  make clean         - Clean Terraform files"
+	@echo "  make fmt           - Format Terraform files"
+	@echo ""
+	@echo "Variables:"
+	@echo "  PROJECT=$(PROJECT) STAGE=$(STAGE) AWS_REGION=$(AWS_REGION)"
 
-image_tag = latest
+# =============================================================================
+# Setup Commands
+# =============================================================================
 
-deployment_yaml = $(project)-$(stage)-deployment.yaml
+init:
+	terraform init
 
-# 1. Build AWS Images
-images-all: images-frontend images-backend
+plan:
+	terraform plan \
+		-var="project=$(PROJECT)" \
+		-var="stage=$(STAGE)" \
+		-var="aws_region=$(AWS_REGION)" \
+		-out=terraform.tfplan
 
-images-frontend: 
-	cd ../apps/frontend && $(MAKE) build
+apply:
+	@if [ ! -f terraform.tfplan ]; then \
+		echo "Run 'make plan' first"; \
+		exit 1; \
+	fi
+	terraform apply terraform.tfplan
+	@echo ""
+	@echo "=========================================="
+	@echo "Deployment complete! Wait 5-10 minutes for services to start."
+	@echo "=========================================="
+	@echo ""
+	@make outputs
 
-images-backend:
-	cd ../apps/backend && $(MAKE) build
+destroy:
+	terraform destroy \
+		-var="project=$(PROJECT)" \
+		-var="stage=$(STAGE)" \
+		-var="aws_region=$(AWS_REGION)"
 
-# 2. Setup AWS Cloud
-cloud-setup:
-	terraform init;
-	terraform plan -var-file=./$(project).tfvars -var project=$(project) -var stage=$(stage) -out terraform.tfplan;
+# =============================================================================
+# Operations Commands
+# =============================================================================
 
-cloud: cloud-setup
-	terraform apply -auto-approve -var-file=./$(project).tfvars -var project=$(project) -var stage=$(stage)
+ssh-app:
+	@APP_IP=$$(terraform output -raw app_server_ip 2>/dev/null) && \
+	echo "Connecting to app server at $$APP_IP..." && \
+	ssh -o StrictHostKeyChecking=no ubuntu@$$APP_IP
 
-# 2. Destroy AWS Cloud
-deform:
-	terraform destroy -auto-approve -var-file=./$(project).tfvars -var project="$(project)" -var stage="$(stage)"
+ssh-gpu:
+	@GPU_IP=$$(terraform output -raw gpu_server_ip 2>/dev/null) && \
+	echo "Connecting to GPU server at $$GPU_IP..." && \
+	ssh -o StrictHostKeyChecking=no ubuntu@$$GPU_IP
 
-# EXTRA: If the AWS cloud has already been formed, use the following to push (and deploy) new (dev) images
-push-all: push-frontend push-backend
+status:
+	@echo "Instance Status"
+	@echo "==============="
+	@echo ""
+	@echo "App Server:"
+	@terraform output app_server_ip 2>/dev/null || echo "  Not deployed"
+	@echo ""
+	@echo "GPU Server:"
+	@terraform output gpu_server_ip 2>/dev/null || echo "  Not deployed"
 
-push-frontend:
-	aws --region $(aws_region) ecr get-login-password | docker login --username AWS --password-stdin $(aws_account).dkr.ecr.$(aws_region).amazonaws.com;
+outputs:
+	@echo ""
+	@echo "Infrastructure Outputs"
+	@echo "======================"
+	@echo ""
+	terraform output
 
-	docker tag $(frontend_nextjs):$(image_tag) $(aws_account).dkr.ecr.$(aws_region).amazonaws.com/$(frontend_nextjs):$(image_tag)
-	docker push $(aws_account).dkr.ecr.$(aws_region).amazonaws.com/$(frontend_nextjs):$(image_tag)
+logs-app:
+	@APP_IP=$$(terraform output -raw app_server_ip 2>/dev/null) && \
+	ssh -o StrictHostKeyChecking=no ubuntu@$$APP_IP "sudo tail -f /var/log/user-data.log"
 
-	# docker tag $(frontend_nginx):$(image_tag) $(aws_account).dkr.ecr.$(aws_region).amazonaws.com/$(frontend_nginx):$(image_tag)
-	# docker push $(aws_account).dkr.ecr.$(aws_region).amazonaws.com/$(frontend_nginx):$(image_tag)
+logs-gpu:
+	@GPU_IP=$$(terraform output -raw gpu_server_ip 2>/dev/null) && \
+	ssh -o StrictHostKeyChecking=no ubuntu@$$GPU_IP "sudo tail -f /var/log/user-data.log"
 
-push-backend:
-	aws --region $(aws_region) ecr get-login-password | docker login --username AWS --password-stdin $(aws_account).dkr.ecr.$(aws_region).amazonaws.com;
+# =============================================================================
+# Maintenance Commands
+# =============================================================================
 
-	docker tag $(backend_api):$(image_tag) $(aws_account).dkr.ecr.$(aws_region).amazonaws.com/$(backend_api):$(image_tag)
-	docker push $(aws_account).dkr.ecr.$(aws_region).amazonaws.com/$(backend_api):$(image_tag)
+clean:
+	rm -rf .terraform
+	rm -f terraform.tfplan
+	rm -f terraform.tfstate*
+	rm -f .terraform.lock.hcl
 
-	docker tag $(backend_users):$(image_tag) $(aws_account).dkr.ecr.$(aws_region).amazonaws.com/$(backend_users):$(image_tag)
-	docker push $(aws_account).dkr.ecr.$(aws_region).amazonaws.com/$(backend_users):$(image_tag)
+fmt:
+	terraform fmt -recursive
 
-	docker tag $(backend_files):$(image_tag) $(aws_account).dkr.ecr.$(aws_region).amazonaws.com/$(backend_files):$(image_tag)
-	docker push $(aws_account).dkr.ecr.$(aws_region).amazonaws.com/$(backend_files):$(image_tag)
+# =============================================================================
+# Quick Deploy (for development)
+# =============================================================================
 
+quick-deploy: init
+	terraform apply \
+		-var="project=$(PROJECT)" \
+		-var="stage=$(STAGE)" \
+		-var="aws_region=$(AWS_REGION)" \
+		-auto-approve
+	@echo ""
+	@make outputs
