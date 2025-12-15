@@ -239,10 +239,33 @@ make clean
 
 ## Security Notes
 
-1. **Restrict SSH Access**: Change `allowed_ssh_cidr` from `0.0.0.0/0` to your IP
-2. **Supabase Studio**: Only accessible from `allowed_ssh_cidr`
-3. **Secrets**: Stored in AWS Secrets Manager, fetched at boot
-4. **GPU Services**: Only accessible from app server (internal network)
+1. **SSH/Admin Access**: `allowed_ssh_cidr` is **required** - you must set your IP (no default)
+   ```bash
+   # Find your IP
+   curl -s https://ifconfig.me
+   # Use format: "YOUR_IP/32"
+   ```
+2. **Supabase Studio**: Only accessible from your `allowed_ssh_cidr`
+3. **Secrets**: Stored in AWS Secrets Manager, fetched securely at boot
+4. **GPU Services**: Only accessible from app server (internal VPC traffic)
+5. **No HTTPS by default**: For production, add an ALB with ACM certificate
+
+## Monitoring
+
+CloudWatch alarms are configured for:
+- **CPU utilization** (>80% app, >90% GPU)
+- **Instance status checks** (health failures)
+- **Disk usage** (>85%, requires CloudWatch agent)
+- **Spot interruption warnings** (2-minute notice via EventBridge)
+
+To receive alerts, subscribe to the SNS topic:
+```bash
+# Get the SNS topic ARN
+terraform output -raw alerts_sns_topic_arn
+
+# Subscribe your email (do this in AWS Console or CLI)
+aws sns subscribe --topic-arn <ARN> --protocol email --notification-endpoint your@email.com
+```
 
 ## Files
 
@@ -255,6 +278,7 @@ make clean
 | `security-groups.tf` | Security groups and rules |
 | `iam.tf` | IAM roles, policies, instance profile |
 | `secrets.tf` | Secrets Manager and random passwords |
+| `monitoring.tf` | CloudWatch alarms and SNS alerts |
 | `app-server.tf` | Application server EC2 instance |
 | `gpu-server.tf` | GPU spot instance for AI inference |
 | `outputs.tf` | Terraform outputs |
