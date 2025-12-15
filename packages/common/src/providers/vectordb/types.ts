@@ -2,7 +2,7 @@
  * Vector Database Types and Interfaces
  *
  * Strategy Pattern for vector database operations.
- * Supports swapping between ChromaDB, pgvector, Qdrant, etc.
+ * Default implementation uses pgvector (PostgreSQL extension).
  */
 
 /**

@@ -31,13 +31,13 @@ PostgreSQL (via Supabase)
 
 ### Production Stack (AWS)
 ```
-- Relational DB: Aurora PostgreSQL
+- Relational DB: RDS PostgreSQL
 - Vector DB: pgvector (same PostgreSQL)
 - Embeddings: Xenova (same, in-process)
 - LLM: Ollama on GPU instance
-- Auth: AWS Cognito
-- Storage: AWS S3
-- Secrets: AWS Secrets Manager
+- Auth: Supabase Auth or AWS Cognito
+- Storage: Supabase Storage or AWS S3
+- Secrets: Supabase Vault or AWS Secrets Manager
 ```
 
 ### Migration Steps
@@ -83,7 +83,7 @@ LLM_MODEL=falcon
 # Export from Supabase PostgreSQL
 docker exec qckstrt-supabase-db pg_dump -U postgres postgres > dev-data.sql
 
-# Import to production Aurora PostgreSQL
+# Import to production RDS PostgreSQL
 psql -h qckstrt-prod.xxxx.rds.amazonaws.com \
      -U admin \
      -d qckstrt \
