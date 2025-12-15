@@ -35,7 +35,7 @@ resource "aws_security_group" "app_server" {
     from_port   = 3000
     to_port     = 3000
     protocol    = "tcp"
-    cidr_blocks = [var.allowed_ssh_cidr]  # Restrict in production
+    cidr_blocks = [var.allowed_ssh_cidr] # Restrict in production
   }
 
   # GraphQL API
@@ -95,6 +95,24 @@ resource "aws_security_group" "gpu_server" {
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = [var.allowed_ssh_cidr]
+  }
+
+  # HTTP (for Let's Encrypt certificate validation)
+  ingress {
+    description = "HTTP (Let's Encrypt ACME)"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # HTTPS (for TLS traffic when domain is configured)
+  ingress {
+    description = "HTTPS"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {

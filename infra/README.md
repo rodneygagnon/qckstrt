@@ -195,9 +195,10 @@ RELATIONAL_DB_PORT=5432
 | App Server | t3.xlarge (on-demand) | ~$120 |
 | GPU Server | g5.xlarge (spot @ $0.40/hr avg) | ~$290 |
 | EBS Storage | 400GB gp3 | ~$35 |
+| EBS Snapshots | 7-day retention (incremental) | ~$5-10 |
 | Elastic IPs | 2 | ~$7 |
 | Secrets Manager | 1 secret | ~$1 |
-| **Total** | | **~$450-600/month** |
+| **Total** | | **~$460-610/month** |
 
 *Costs vary by region and spot pricing. GPU spot prices fluctuate between $0.30-0.60/hr.*
 
@@ -248,7 +249,7 @@ make clean
 2. **Supabase Studio**: Only accessible from your `allowed_ssh_cidr`
 3. **Secrets**: Stored in AWS Secrets Manager, fetched securely at boot
 4. **GPU Services**: Only accessible from app server (internal VPC traffic)
-5. **No HTTPS by default**: For production, add an ALB with ACM certificate
+5. **HTTPS available**: Configure `domain_name` to enable Let's Encrypt TLS certificates
 
 ## Monitoring
 
@@ -267,6 +268,112 @@ terraform output -raw alerts_sns_topic_arn
 aws sns subscribe --topic-arn <ARN> --protocol email --notification-endpoint your@email.com
 ```
 
+## Backup
+
+Automated daily EBS snapshots via AWS Backup:
+
+| Setting | Value |
+|---------|-------|
+| Schedule | Daily at 5 AM UTC |
+| Retention | 7 days (configurable) |
+| Cost | ~$0.05/GB-month (incremental) |
+
+### What's Backed Up
+
+- App server: PostgreSQL, Supabase storage, ChromaDB vectors, Redis
+- GPU server: Model weights, configuration
+
+### Restore from Backup
+
+```bash
+# List available recovery points
+aws backup list-recovery-points-by-backup-vault \
+  --backup-vault-name qckstrt-dev-backup-vault
+
+# Start restore job (creates new EBS volume)
+aws backup start-restore-job \
+  --recovery-point-arn <ARN> \
+  --iam-role-arn <backup-role-arn> \
+  --metadata '{"encrypted":"false"}'
+```
+
+### Change Retention
+
+Edit `backup_retention_days` in `terraform.tfvars`:
+```hcl
+backup_retention_days = 14  # Keep 2 weeks of backups
+```
+
+## HTTPS/TLS (Optional)
+
+Enable HTTPS with free, auto-renewing Let's Encrypt certificates.
+
+### Prerequisites
+
+1. **Own a domain name** (e.g., from Route53, Namecheap, etc.)
+2. **Deploy infrastructure first** to get Elastic IPs
+3. **Create DNS A records** pointing to your servers:
+   - `api.yourdomain.com` → App Server Elastic IP
+   - `gpu.yourdomain.com` → GPU Server Elastic IP
+
+### Configuration
+
+Add to `terraform.tfvars`:
+```hcl
+domain_name   = "yourdomain.com"
+app_subdomain = "api"    # → api.yourdomain.com
+gpu_subdomain = "gpu"    # → gpu.yourdomain.com
+certbot_email = "admin@yourdomain.com"
+```
+
+Then apply:
+```bash
+make apply
+```
+
+### How It Works
+
+1. **Nginx** is installed as a TLS termination proxy
+2. **Certbot** obtains certificates from Let's Encrypt
+3. **Auto-renewal** via systemd timer (runs twice daily)
+4. Traffic is encrypted between clients and servers
+
+### Verify Certificates
+
+```bash
+# SSH to server and check certificates
+make ssh-app
+sudo certbot certificates
+
+# Test HTTPS
+curl -I https://api.yourdomain.com
+```
+
+### Service URLs with HTTPS
+
+| Service | HTTPS URL |
+|---------|-----------|
+| Supabase API | `https://api.yourdomain.com` |
+| ChromaDB | `https://api.yourdomain.com/chromadb` |
+| vLLM API | `https://gpu.yourdomain.com/v1` |
+| Embeddings | `https://gpu.yourdomain.com/embeddings` |
+
+### Troubleshooting HTTPS
+
+**Certificate not obtained:**
+- Ensure DNS A record points to the correct Elastic IP
+- Wait for DNS propagation (can take up to 48 hours)
+- Check logs: `sudo tail -f /var/log/user-data.log`
+
+**Certificate renewal issues:**
+```bash
+# Check renewal status
+sudo certbot renew --dry-run
+
+# Force renewal
+sudo certbot renew --force-renewal
+```
+
 ## Files
 
 | File | Description |
@@ -279,6 +386,7 @@ aws sns subscribe --topic-arn <ARN> --protocol email --notification-endpoint you
 | `iam.tf` | IAM roles, policies, instance profile |
 | `secrets.tf` | Secrets Manager and random passwords |
 | `monitoring.tf` | CloudWatch alarms and SNS alerts |
+| `backup.tf` | AWS Backup for EBS snapshots |
 | `app-server.tf` | Application server EC2 instance |
 | `gpu-server.tf` | GPU spot instance for AI inference |
 | `outputs.tf` | Terraform outputs |

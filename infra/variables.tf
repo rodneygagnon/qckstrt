@@ -44,13 +44,13 @@ variable "allowed_ssh_cidr" {
 variable "app_server_instance_type" {
   description = "Instance type for application server"
   type        = string
-  default     = "t3.xlarge"  # 4 vCPU, 16GB RAM
+  default     = "t3.xlarge" # 4 vCPU, 16GB RAM
 }
 
 variable "gpu_server_instance_type" {
   description = "Instance type for GPU server"
   type        = string
-  default     = "g5.xlarge"  # 1 GPU, 4 vCPU, 16GB RAM
+  default     = "g5.xlarge" # 1 GPU, 4 vCPU, 16GB RAM
 }
 
 variable "gpu_spot_max_price" {
@@ -69,4 +69,42 @@ variable "gpu_server_volume_size" {
   description = "Root volume size for GPU server (GB)"
   type        = number
   default     = 200
+}
+
+# -----------------------------------------------------------------------------
+# Backup Configuration
+# -----------------------------------------------------------------------------
+
+variable "backup_retention_days" {
+  description = "Number of days to retain EBS snapshots"
+  type        = number
+  default     = 7
+}
+
+# -----------------------------------------------------------------------------
+# HTTPS/TLS Configuration (Optional)
+# -----------------------------------------------------------------------------
+
+variable "domain_name" {
+  description = "Base domain name for HTTPS (e.g., yourdomain.com). Leave empty to disable HTTPS."
+  type        = string
+  default     = ""
+}
+
+variable "app_subdomain" {
+  description = "Subdomain for app server (e.g., 'api' for api.yourdomain.com)"
+  type        = string
+  default     = "api"
+}
+
+variable "gpu_subdomain" {
+  description = "Subdomain for GPU server (e.g., 'gpu' for gpu.yourdomain.com)"
+  type        = string
+  default     = "gpu"
+}
+
+variable "certbot_email" {
+  description = "Email for Let's Encrypt certificate notifications"
+  type        = string
+  default     = ""
 }
