@@ -59,7 +59,7 @@ This platform is built on three core principles:
 | Layer | Provider |
 |-------|----------|
 | **Embeddings** | Xenova (in-process) |
-| **Vector DB** | ChromaDB |
+| **Vector DB** | pgvector (PostgreSQL) |
 | **Relational DB** | PostgreSQL (via Supabase) |
 | **Auth** | Supabase Auth |
 | **Storage** | Supabase Storage |
@@ -75,7 +75,7 @@ The `packages/` directory contains reusable, publishable npm packages (`@qckstrt
 | `@qckstrt/common` | Shared types and interfaces |
 | `@qckstrt/llm-provider` | Ollama LLM integration |
 | `@qckstrt/embeddings-provider` | Xenova/Ollama embeddings |
-| `@qckstrt/vectordb-provider` | ChromaDB vector storage |
+| `@qckstrt/vectordb-provider` | pgvector (PostgreSQL) |
 | `@qckstrt/relationaldb-provider` | PostgreSQL (via Supabase) |
 | `@qckstrt/extraction-provider` | Text extraction from URLs |
 | `@qckstrt/storage-provider` | Supabase Storage |

@@ -5,7 +5,7 @@
 The AI/ML pipeline implements RAG (Retrieval-Augmented Generation) using a 100% open-source, self-hosted stack:
 
 1. **Embeddings** - Convert text to semantic vectors (Xenova/Ollama)
-2. **Vector Search** - Find relevant context (ChromaDB/pgvector)
+2. **Vector Search** - Find relevant context (pgvector on PostgreSQL)
 3. **LLM Generation** - Generate answers (Ollama with Falcon 7B)
 
 All processing happens locally with no data sent to third-party APIs.
@@ -34,7 +34,7 @@ All processing happens locally with no data sent to third-party APIs.
 │            2. VECTOR SIMILARITY SEARCH          │
 │                                                 │
 │  ┌───────────────────────────────────────────┐ │
-│  │ ChromaDB or pgvector                      │ │
+│  │ pgvector (PostgreSQL)                    │ │
 │  │                                           │ │
 │  │ Cosine similarity search for top-3        │ │
 │  │ most similar document chunks              │ │
@@ -189,48 +189,17 @@ Where:
   ||x|| = L2 norm
 ```
 
-**Provider: ChromaDB (Default)**
-
-**Technology**: Dedicated vector database with persistence
-
-**Configuration**:
-```bash
-VECTOR_DB_PROVIDER=chromadb
-VECTOR_DB_CHROMA_URL=http://localhost:8000
-VECTOR_DB_CHROMA_COLLECTION=qckstrt-embeddings
-VECTOR_DB_DIMENSIONS=384  # Must match embedding model
-```
-
-**Search Process**:
-```typescript
-// 1. Query with embedding
-const results = await collection.query({
-  queryEmbeddings: [queryEmbedding],
-  nResults: 3,  // Top-3 most similar
-  where: { userId: 'user-1' },  // Filter by user
-});
-
-// 2. Returns documents with similarity scores
-[
-  { id: 'doc-1-chunk-5', distance: 0.15, content: '...' },
-  { id: 'doc-2-chunk-12', distance: 0.23, content: '...' },
-  { id: 'doc-1-chunk-8', distance: 0.31, content: '...' }
-]
-```
-
-**File Location**: `apps/backend/src/providers/vectordb/providers/chroma.provider.ts`
-
----
-
-**Provider: pgvector (Production)**
+**Provider: pgvector (Default)**
 
 **Technology**: PostgreSQL extension with HNSW indexing
 
 **Configuration**:
 ```bash
-VECTOR_DB_PROVIDER=pgvector
-VECTOR_DB_DIMENSIONS=384
-# Uses existing PostgreSQL connection
+# pgvector uses same PostgreSQL instance
+# Falls back to RELATIONAL_DB_* if not specified
+VECTOR_DB_HOST=localhost
+VECTOR_DB_PORT=5432
+VECTOR_DB_DIMENSIONS=384  # Must match embedding model
 ```
 
 **Search Process**:
@@ -249,7 +218,7 @@ LIMIT 3;
 - Fast queries even with millions of vectors
 - Tunable accuracy/speed tradeoff
 
-**File Location**: `apps/backend/src/providers/vectordb/providers/pgvector.provider.ts`
+**File Location**: `packages/vectordb-provider/src/providers/pgvector.provider.ts`
 
 ---
 
@@ -370,9 +339,8 @@ async indexDocument(
 - 10-50ms per chunk (GPU)
 - Batch processing: ~200-500 chunks/second
 
-**Vector Storage**:
-- ChromaDB: ~1-5ms per insert
-- pgvector: ~1-5ms per insert
+**Vector Storage (pgvector)**:
+- ~1-5ms per insert
 
 **Example** (1000-word document):
 ```
@@ -427,9 +395,8 @@ async answerQuery(userId: string, query: string): Promise<string> {
 - Xenova: ~100-200ms (CPU)
 - Ollama: ~10-50ms (GPU)
 
-**Vector Search**:
-- ChromaDB: ~10-50ms (millions of vectors)
-- pgvector: ~10-100ms (millions of vectors)
+**Vector Search (pgvector)**:
+- ~10-100ms (millions of vectors)
 
 **LLM Generation**:
 - Falcon 7B (CPU): ~5-10 seconds

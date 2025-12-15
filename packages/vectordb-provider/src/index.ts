@@ -1,8 +1,10 @@
 /**
- * @qckstrt/vector-provider
+ * @qckstrt/vectordb-provider
  *
  * Vector database provider implementations for the QCKSTRT platform.
- * Currently supports ChromaDB for self-hosted vector storage.
+ * Uses PostgreSQL with pgvector extension (consolidates with Supabase).
+ *
+ * To add custom providers, implement IVectorDBProvider interface.
  */
 
 // Re-export types from common
@@ -14,7 +16,7 @@ export {
 } from "@qckstrt/common";
 
 // Provider implementations
-export { ChromaDBProvider } from "./providers/chroma.provider.js";
+export { PgVectorProvider } from "./providers/pgvector.provider.js";
 
 // NestJS module
 export { VectorDBModule } from "./vectordb.module.js";

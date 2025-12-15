@@ -170,7 +170,7 @@ npm run start:dev
 
 You should see in the logs:
 ```
-[KnowledgeService] KnowledgeService initialized with vector DB: ChromaDB, LLM: Ollama/mistral
+[KnowledgeService] KnowledgeService initialized with vector DB: pgvector, LLM: Ollama/mistral
 ```
 
 ### Step 4: Test

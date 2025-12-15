@@ -1,218 +1,27 @@
 # Database Migration Guide
 
-This guide covers migrating between different database providers.
+This guide covers migrating between different database configurations.
 
-## Common Migrations
+## Architecture Overview
 
-1. [ChromaDB → pgvector](#chromadb--pgvector) (Database Consolidation)
-2. [Supabase → AWS](#supabase--aws) (Cloud Provider Migration)
+QCKSTRT uses PostgreSQL with pgvector for both relational and vector data, consolidating all data in a single database.
 
----
-
-## ChromaDB → pgvector
-
-**When**: Consolidating databases in production
-
-**Why**: Single PostgreSQL database for both relational + vector data
-
-**Benefits**:
-- Reduced infrastructure complexity
-- ACID transactions across relational + vector data
-- Cost savings (one database instead of two)
-- Familiar PostgreSQL tooling
-
-### Prerequisites
-
-- PostgreSQL 11+ installed
-- pgvector extension available
-
-### Step 1: Install pgvector
-
-**Docker** (if using Docker Compose):
-```yaml
-# docker-compose.yml
-postgres:
-  image: ankane/pgvector:latest  # Use pgvector-enabled image
-  # OR
-  image: postgres:16-alpine
-  # Then install manually (see below)
 ```
-
-**Manual installation**:
-```bash
-# Connect to PostgreSQL
-docker exec -it qckstrt-postgres psql -U qckstrt_user -d qckstrt
-
-# Install extension
-CREATE EXTENSION IF NOT EXISTS vector;
-
-# Verify
-SELECT * FROM pg_extension WHERE extname = 'vector';
-```
-
-### Step 2: Export from ChromaDB
-
-**Option A: Via API**:
-```typescript
-// Export script
-import { ChromaClient } from 'chromadb';
-
-const client = new ChromaClient({ path: 'http://localhost:8001' });
-const collection = await client.getCollection({ name: 'qckstrt-embeddings' });
-
-const data = await collection.get({
-  include: ['embeddings', 'metadatas', 'documents'],
-});
-
-// Save to file
-fs.writeFileSync('chroma-export.json', JSON.stringify(data, null, 2));
-```
-
-**Option B: Direct database access** (ChromaDB uses SQLite):
-```bash
-# Copy ChromaDB data
-docker cp qckstrt-chromadb:/chroma/chroma ./chroma-backup
-```
-
-### Step 3: Update Configuration
-
-```bash
-# apps/backend/.env
-
-# Old (ChromaDB)
-# VECTOR_DB_PROVIDER=chromadb
-# VECTOR_DB_CHROMA_URL=http://localhost:8001
-
-# New (pgvector)
-VECTOR_DB_PROVIDER=pgvector
-VECTOR_DB_DIMENSIONS=384  # Must match your embedding model
-# Uses RELATIONAL_DB_* config automatically
-```
-
-### Step 4: Initialize pgvector Tables
-
-```bash
-# Start app - pgvector provider creates tables automatically
-npm run start:dev
-```
-
-This creates:
-```sql
-CREATE EXTENSION IF NOT EXISTS vector;
-
-CREATE TABLE vector_embeddings (
-  id VARCHAR(255) PRIMARY KEY,
-  user_id VARCHAR(255) NOT NULL,
-  document_id VARCHAR(255) NOT NULL,
-  embedding vector(384) NOT NULL,
-  content TEXT NOT NULL,
-  created_at TIMESTAMP DEFAULT NOW()
-);
-
-CREATE INDEX idx_embedding_hnsw
-  ON vector_embeddings
-  USING hnsw (embedding vector_cosine_ops);
-```
-
-### Step 5: Import Data to pgvector
-
-**Option A: Re-index documents** (recommended):
-```typescript
-// Re-index all documents
-for (const doc of documents) {
-  await knowledgeService.indexDocument(
-    doc.userId,
-    doc.id,
-    doc.content
-  );
-}
-```
-
-**Option B: Import exported data**:
-```typescript
-// Import script
-const exportedData = JSON.parse(fs.readFileSync('chroma-export.json'));
-
-for (let i = 0; i < exportedData.ids.length; i++) {
-  await db.query(`
-    INSERT INTO vector_embeddings (id, user_id, document_id, embedding, content)
-    VALUES ($1, $2, $3, $4, $5)
-  `, [
-    exportedData.ids[i],
-    exportedData.metadatas[i].userId,
-    exportedData.metadatas[i].documentId,
-    exportedData.embeddings[i],  // pgvector accepts arrays
-    exportedData.metadatas[i].content,
-  ]);
-}
-```
-
-### Step 6: Verify
-
-```bash
-# Connect to PostgreSQL
-psql -U qckstrt_user -d qckstrt
-
-# Check vector extension
-\dx vector
-
-# Check table
-SELECT COUNT(*) FROM vector_embeddings;
-
-# Test similarity search
-SELECT id, content, embedding <=> '[0.1, 0.2, ...]'::vector AS distance
-FROM vector_embeddings
-ORDER BY embedding <=> '[0.1, 0.2, ...]'::vector
-LIMIT 5;
-```
-
-### Step 7: Update Docker Compose
-
-Remove ChromaDB service:
-
-```yaml
-# docker-compose.yml
-
-# Comment out or remove:
-# chromadb:
-#   image: chromadb/chroma:latest
-#   ...
-
-# Keep only:
-services:
-  postgres:  # With pgvector
-    image: ankane/pgvector:latest
-    ...
-
-  ollama:  # LLM server
-    image: ollama/ollama:latest
-    ...
-```
-
-### Step 8: Test Application
-
-```bash
-# Restart services
-docker-compose down
-docker-compose up -d
-
-# Test RAG pipeline
-cd apps/backend
-npm run start:dev
-
-# Test queries via GraphQL
+PostgreSQL (via Supabase)
+├── Relational Tables (users, documents, etc.)
+└── Vector Tables (embeddings with pgvector extension)
 ```
 
 ---
 
-## Development → Production
+## Development → Production Migration
 
 **Full migration** from development stack to production stack.
 
 ### Development Stack (Supabase Self-Hosted)
 ```
 - Relational DB: PostgreSQL (via Supabase)
-- Vector DB: ChromaDB
+- Vector DB: pgvector (same PostgreSQL)
 - Embeddings: Xenova
 - LLM: Ollama (Falcon 7B)
 - Auth: Supabase Auth (GoTrue)
@@ -260,7 +69,6 @@ RELATIONAL_DB_USERNAME=admin
 RELATIONAL_DB_PASSWORD=<secure-password>
 RELATIONAL_DB_SSL=true
 
-VECTOR_DB_PROVIDER=pgvector
 VECTOR_DB_DIMENSIONS=384
 
 EMBEDDINGS_PROVIDER=xenova
@@ -273,7 +81,7 @@ LLM_MODEL=falcon
 **3. Migrate data**:
 ```bash
 # Export from Supabase PostgreSQL
-docker exec qckstrt-db pg_dump -U postgres postgres > dev-data.sql
+docker exec qckstrt-supabase-db pg_dump -U postgres postgres > dev-data.sql
 
 # Import to production Aurora PostgreSQL
 psql -h qckstrt-prod.xxxx.rds.amazonaws.com \
@@ -282,7 +90,7 @@ psql -h qckstrt-prod.xxxx.rds.amazonaws.com \
      < dev-data.sql
 ```
 
-**4. Re-index documents** (recommended over exporting vectors):
+**4. Re-index documents** (recommended for fresh embeddings):
 ```typescript
 // Re-index ensures embeddings match production configuration
 for (const document of documents) {
@@ -312,44 +120,13 @@ npm run build
 
 ---
 
-## Rollback Procedures
-
-### Rollback pgvector → ChromaDB
-
-**Step 1**: Update configuration
-```bash
-VECTOR_DB_PROVIDER=chromadb
-VECTOR_DB_CHROMA_URL=http://localhost:8000
-```
-
-**Step 2**: Restart ChromaDB
-```bash
-docker-compose up -d chromadb
-```
-
-**Step 3**: Restore ChromaDB data
-```bash
-docker cp ./chroma-backup qckstrt-chromadb:/chroma/chroma
-docker-compose restart chromadb
-```
-
-**Step 4**: Restart application
-```bash
-npm run start:dev
-```
-
----
-
 ## Best Practices
 
 ### 1. Backup Before Migration
 
 ```bash
-# Backup PostgreSQL (Supabase)
-docker exec qckstrt-db pg_dump -U postgres postgres > backup-$(date +%Y%m%d).sql
-
-# Backup ChromaDB
-docker cp qckstrt-chromadb:/chroma/chroma ./backups/chroma-$(date +%Y%m%d)
+# Backup PostgreSQL (includes pgvector data)
+docker exec qckstrt-supabase-db pg_dump -U postgres postgres > backup-$(date +%Y%m%d).sql
 ```
 
 ### 2. Test in Staging First
@@ -394,7 +171,7 @@ SELECT 'vector_embeddings', COUNT(*) FROM vector_embeddings;
 
 **Solution**:
 ```sql
--- Drop existing tables
+-- Drop existing tables (CAUTION: data loss)
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS documents CASCADE;
 DROP TABLE IF EXISTS vector_embeddings CASCADE;
@@ -406,7 +183,7 @@ DROP TABLE IF EXISTS vector_embeddings CASCADE;
 
 **Error**: `ERROR: dimensions for type vector(768) must be at least 1 and at most 16000`
 
-**Cause**: Embedding model changed between ChromaDB and pgvector
+**Cause**: Embedding model dimensions don't match table configuration
 
 **Solution**:
 ```bash
@@ -415,6 +192,10 @@ EMBEDDINGS_XENOVA_MODEL=Xenova/all-MiniLM-L6-v2  # 384 dimensions
 
 # Update pgvector config
 VECTOR_DB_DIMENSIONS=384  # Must match!
+
+# Re-create table with correct dimensions if needed
+DROP TABLE vector_embeddings;
+# Let the provider recreate it on startup
 ```
 
 ### Slow queries after migration
@@ -428,9 +209,23 @@ CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_documents_user_id ON documents(user_id);
 
 -- For pgvector, ensure HNSW index exists
-CREATE INDEX idx_embedding_hnsw
+CREATE INDEX IF NOT EXISTS idx_embedding_hnsw
   ON vector_embeddings
   USING hnsw (embedding vector_cosine_ops);
+```
+
+### pgvector extension not available
+
+**Cause**: PostgreSQL instance doesn't have pgvector installed
+
+**Solution**:
+```sql
+-- Check if extension is available
+SELECT * FROM pg_available_extensions WHERE name = 'vector';
+
+-- If not available, you need to install it on the database server
+-- For AWS RDS, use a PostgreSQL version that supports pgvector
+-- For self-hosted, install pgvector from source or package manager
 ```
 
 ---

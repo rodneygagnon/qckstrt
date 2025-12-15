@@ -663,9 +663,6 @@ importers:
       '@qckstrt/common':
         specifier: workspace:*
         version: link:../common
-      chromadb:
-        specifier: ^3.1.7
-        version: 3.1.7
     devDependencies:
       '@nestjs/common':
         specifier: ^11.1.9
@@ -682,6 +679,9 @@ importers:
       jest:
         specifier: ^30.0.0
         version: 30.2.0(@types/node@25.0.1)(ts-node@10.9.2(@types/node@25.0.1)(typescript@5.9.3))
+      pg:
+        specifier: ^8.13.1
+        version: 8.16.3
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2

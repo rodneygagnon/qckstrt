@@ -31,7 +31,7 @@ QCKSTRT is built on a modular, provider-based architecture with three core princ
    │              Provider Layer (Pluggable)            │
    ├────────────────────────────────────────────────────┤
    │ Relational DB │ Vector DB │ Embeddings │   LLM    │
-   │  (Supabase)   │ (Chroma)  │  (Xenova)  │ (Ollama) │
+   │  (Supabase)   │ (pgvector)│  (Xenova)  │ (Ollama) │
    └────────────────────────────────────────────────────┘
 ```
 
@@ -65,7 +65,7 @@ QCKSTRT is built on a modular, provider-based architecture with three core princ
 - **Location**: `apps/backend/src/apps/knowledge`
 - **Components**:
   - Embeddings generation (Xenova/Ollama)
-  - Vector search (ChromaDB/pgvector)
+  - Vector search (pgvector on PostgreSQL)
   - LLM inference (Ollama with Falcon 7B)
 
 ## Provider Architecture
@@ -116,8 +116,8 @@ interface IVectorDBProvider {
 }
 ```
 
-**Implementations**:
-- `ChromaDBProvider` - Dedicated vector DB (default)
+**Implementation**:
+- `PgVectorProvider` - PostgreSQL with pgvector extension (default)
 
 **See**: [Data Layer Architecture](data-layer.md)
 
@@ -168,7 +168,7 @@ interface ILLMProvider {
 4. Knowledge Service:
    a. Chunks document text
    b. Generates embeddings (Xenova)
-   c. Stores vectors (ChromaDB)
+   c. Stores vectors (pgvector)
 ```
 
 ### RAG Query Flow
@@ -176,7 +176,7 @@ interface ILLMProvider {
 1. User asks question → Knowledge Service
 2. Knowledge Service:
    a. Generates query embedding (Xenova)
-   b. Searches similar vectors (ChromaDB)
+   b. Searches similar vectors (pgvector)
    c. Retrieves top-k document chunks
    d. Builds prompt with context
    e. Generates answer (Ollama/Falcon)
@@ -191,9 +191,9 @@ interface ILLMProvider {
 All services use environment variables with sensible defaults:
 
 ```bash
-# Default (Supabase OSS stack)
+# Default (Supabase OSS stack with pgvector)
 RELATIONAL_DB_PROVIDER=postgres
-VECTOR_DB_PROVIDER=chromadb
+VECTOR_DB_DIMENSIONS=384
 EMBEDDINGS_PROVIDER=xenova
 LLM_MODEL=falcon
 AUTH_PROVIDER=supabase
@@ -215,8 +215,7 @@ SECRETS_PROVIDER=supabase
 Local Machine
 ├── Node.js (Backend services)
 ├── Docker Compose (docker-compose up)
-│   ├── Supabase (Auth, Storage, Vault, PostgreSQL)
-│   ├── ChromaDB (port 8001)
+│   ├── Supabase (Auth, Storage, Vault, PostgreSQL + pgvector)
 │   └── Ollama (port 11434)
 └── Vite Dev Server (Frontend)
 ```
@@ -239,7 +238,7 @@ AWS/Cloud Infrastructure
 | **Frontend** | React + Vite | 18.x | MIT |
 | **Relational DB** | PostgreSQL (via Supabase) | 15.x | PostgreSQL |
 | **Auth/Storage/Secrets** | Supabase | Latest | Apache 2.0 |
-| **Vector DB** | ChromaDB | Latest | Apache 2.0 |
+| **Vector DB** | pgvector (PostgreSQL) | Latest | PostgreSQL |
 | **Embeddings** | Xenova/Transformers.js | Latest | Apache 2.0 |
 | **LLM Runtime** | Ollama | Latest | MIT |
 | **LLM Model** | Falcon 7B | Latest | Apache 2.0 |
@@ -285,20 +284,16 @@ AWS/Cloud Infrastructure
 
 ### Vertical Scaling
 - Ollama benefits from GPU instances
-- ChromaDB can use larger instances
 - PostgreSQL can scale vertically
 
-### Database Consolidation
-- Future: Migrate to pgvector to consolidate PostgreSQL + ChromaDB
+### Consolidated Architecture
+- pgvector consolidates relational + vector data in single PostgreSQL database
 - Reduces infrastructure complexity
-- Single database for relational + vector data
-
-**See**: [Database Migration Guide](../guides/database-migration.md)
+- ACID transactions across relational + vector data
 
 ## Future Enhancements
 
 ### Planned Providers
-- **Vector DB**: Qdrant, Weaviate, Milvus
 - **LLM**: vLLM, Text Generation Inference
 - **Embeddings**: Custom fine-tuned models
 

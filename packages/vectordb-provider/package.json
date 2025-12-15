@@ -24,18 +24,18 @@
   "keywords": [
     "qckstrt",
     "vector",
-    "chromadb",
     "pgvector",
     "provider"
   ],
   "license": "MIT",
   "dependencies": {
-    "@qckstrt/common": "workspace:*",
-    "chromadb": "^3.1.7"
+    "@qckstrt/common": "workspace:*"
   },
   "peerDependencies": {
     "@nestjs/common": "^11.0.0",
-    "@nestjs/config": "^4.0.0"
+    "@nestjs/config": "^4.0.0",
+    "pg": "^8.0.0",
+    "typeorm": "^0.3.0"
   },
   "devDependencies": {
     "@nestjs/common": "^11.1.9",
@@ -43,6 +43,7 @@
     "@nestjs/typeorm": "^11.0.0",
     "@types/jest": "^30.0.0",
     "jest": "^30.0.0",
+    "pg": "^8.13.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "ts-jest": "^29.2.5",

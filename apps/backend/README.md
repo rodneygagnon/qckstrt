@@ -49,9 +49,9 @@ Edit `.env` file for local development:
 # Embeddings
 EMBEDDINGS_PROVIDER=xenova
 
-# Vector Database
-VECTOR_DB_PROVIDER=chromadb
-VECTOR_DB_CHROMA_URL=http://localhost:8001
+# Vector Database (pgvector uses same PostgreSQL instance)
+# Falls back to RELATIONAL_DB_* if not specified
+VECTOR_DB_DIMENSIONS=384
 
 # LLM
 LLM_URL=http://localhost:11434
