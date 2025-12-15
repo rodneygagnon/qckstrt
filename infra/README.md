@@ -195,9 +195,10 @@ RELATIONAL_DB_PORT=5432
 | App Server | t3.xlarge (on-demand) | ~$120 |
 | GPU Server | g5.xlarge (spot @ $0.40/hr avg) | ~$290 |
 | EBS Storage | 400GB gp3 | ~$35 |
+| EBS Snapshots | 7-day retention (incremental) | ~$5-10 |
 | Elastic IPs | 2 | ~$7 |
 | Secrets Manager | 1 secret | ~$1 |
-| **Total** | | **~$450-600/month** |
+| **Total** | | **~$460-610/month** |
 
 *Costs vary by region and spot pricing. GPU spot prices fluctuate between $0.30-0.60/hr.*
 
@@ -267,6 +268,42 @@ terraform output -raw alerts_sns_topic_arn
 aws sns subscribe --topic-arn <ARN> --protocol email --notification-endpoint your@email.com
 ```
 
+## Backup
+
+Automated daily EBS snapshots via AWS Backup:
+
+| Setting | Value |
+|---------|-------|
+| Schedule | Daily at 5 AM UTC |
+| Retention | 7 days (configurable) |
+| Cost | ~$0.05/GB-month (incremental) |
+
+### What's Backed Up
+
+- App server: PostgreSQL, Supabase storage, ChromaDB vectors, Redis
+- GPU server: Model weights, configuration
+
+### Restore from Backup
+
+```bash
+# List available recovery points
+aws backup list-recovery-points-by-backup-vault \
+  --backup-vault-name qckstrt-dev-backup-vault
+
+# Start restore job (creates new EBS volume)
+aws backup start-restore-job \
+  --recovery-point-arn <ARN> \
+  --iam-role-arn <backup-role-arn> \
+  --metadata '{"encrypted":"false"}'
+```
+
+### Change Retention
+
+Edit `backup_retention_days` in `terraform.tfvars`:
+```hcl
+backup_retention_days = 14  # Keep 2 weeks of backups
+```
+
 ## Files
 
 | File | Description |
@@ -279,6 +316,7 @@ aws sns subscribe --topic-arn <ARN> --protocol email --notification-endpoint you
 | `iam.tf` | IAM roles, policies, instance profile |
 | `secrets.tf` | Secrets Manager and random passwords |
 | `monitoring.tf` | CloudWatch alarms and SNS alerts |
+| `backup.tf` | AWS Backup for EBS snapshots |
 | `app-server.tf` | Application server EC2 instance |
 | `gpu-server.tf` | GPU spot instance for AI inference |
 | `outputs.tf` | Terraform outputs |

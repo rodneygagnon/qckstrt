@@ -95,17 +95,28 @@ output "alerts_sns_topic_arn" {
   value       = aws_sns_topic.alerts.arn
 }
 
+# Backup
+output "backup_vault_arn" {
+  description = "AWS Backup vault ARN"
+  value       = aws_backup_vault.main.arn
+}
+
+output "backup_plan_id" {
+  description = "AWS Backup plan ID"
+  value       = aws_backup_plan.daily.id
+}
+
 # Backend Environment Variables
 output "backend_env_vars" {
   description = "Environment variables for backend configuration"
   value = {
-    SUPABASE_URL             = "http://${aws_eip.app_server.public_ip}"
-    VECTOR_DB_CHROMA_URL     = "http://${aws_eip.app_server.public_ip}:8001"
-    LLM_URL                  = "http://${aws_eip.gpu_server.public_ip}:8000"
-    EMBEDDINGS_PROVIDER      = "ollama"
-    EMBEDDINGS_OLLAMA_URL    = "http://${aws_eip.gpu_server.public_ip}:8001"
-    RELATIONAL_DB_HOST       = aws_eip.app_server.public_ip
-    RELATIONAL_DB_PORT       = "5432"
+    SUPABASE_URL          = "http://${aws_eip.app_server.public_ip}"
+    VECTOR_DB_CHROMA_URL  = "http://${aws_eip.app_server.public_ip}:8001"
+    LLM_URL               = "http://${aws_eip.gpu_server.public_ip}:8000"
+    EMBEDDINGS_PROVIDER   = "ollama"
+    EMBEDDINGS_OLLAMA_URL = "http://${aws_eip.gpu_server.public_ip}:8001"
+    RELATIONAL_DB_HOST    = aws_eip.app_server.public_ip
+    RELATIONAL_DB_PORT    = "5432"
   }
   sensitive = false
 }
