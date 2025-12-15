@@ -22,12 +22,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
-const cognito_provider_js_1 = require("./providers/cognito.provider.js");
+const supabase_provider_js_1 = require("./providers/supabase.provider.js");
 /**
  * Auth Module
  *
  * Provides authentication capabilities using pluggable providers.
- * Currently supports AWS Cognito.
+ *
+ * Configure via AUTH_PROVIDER environment variable:
+ * - 'supabase' (default): Supabase Auth (GoTrue)
  */
 let AuthModule = class AuthModule {};
 exports.AuthModule = AuthModule;
@@ -37,13 +39,22 @@ exports.AuthModule = AuthModule = __decorate(
     (0, common_1.Module)({
       imports: [config_1.ConfigModule],
       providers: [
-        cognito_provider_js_1.CognitoAuthProvider,
         {
           provide: "AUTH_PROVIDER",
-          useExisting: cognito_provider_js_1.CognitoAuthProvider,
+          useFactory: (configService) => {
+            const provider = configService.get("auth.provider") || "supabase";
+            switch (provider.toLowerCase()) {
+              case "supabase":
+              default:
+                return new supabase_provider_js_1.SupabaseAuthProvider(
+                  configService,
+                );
+            }
+          },
+          inject: [config_1.ConfigService],
         },
       ],
-      exports: [cognito_provider_js_1.CognitoAuthProvider, "AUTH_PROVIDER"],
+      exports: ["AUTH_PROVIDER"],
     }),
   ],
   AuthModule,

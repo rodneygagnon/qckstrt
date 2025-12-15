@@ -27,10 +27,25 @@ var __metadata =
 var AWSSecretsProvider_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AWSSecretsProvider = void 0;
+exports.getSecrets = getSecrets;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const client_secrets_manager_1 = require("@aws-sdk/client-secrets-manager");
 const common_2 = require("@qckstrt/common");
+/**
+ * Helper function to get a secret without dependency injection.
+ * Useful for bootstrap/config scenarios before DI is available.
+ */
+async function getSecrets(secretId, region) {
+  const client = new client_secrets_manager_1.SecretsManagerClient({
+    region: region || process.env.AWS_REGION || "us-east-1",
+  });
+  const command = new client_secrets_manager_1.GetSecretValueCommand({
+    SecretId: secretId,
+  });
+  const response = await client.send(command);
+  return response.SecretString || "";
+}
 /**
  * AWS Secrets Manager Provider
  *

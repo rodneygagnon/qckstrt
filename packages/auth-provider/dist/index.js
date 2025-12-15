@@ -3,10 +3,10 @@
  * @qckstrt/auth-provider
  *
  * Authentication provider implementations for the QCKSTRT platform.
- * Provides pluggable authentication with AWS Cognito support.
+ * Provides pluggable authentication with Supabase Auth.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.AuthModule = exports.CognitoAuthProvider = exports.AuthError = void 0;
+exports.AuthModule = exports.SupabaseAuthProvider = exports.AuthError = void 0;
 // Re-export types from common
 var common_1 = require("@qckstrt/common");
 Object.defineProperty(exports, "AuthError", {
@@ -16,11 +16,11 @@ Object.defineProperty(exports, "AuthError", {
   },
 });
 // Providers
-var cognito_provider_js_1 = require("./providers/cognito.provider.js");
-Object.defineProperty(exports, "CognitoAuthProvider", {
+var supabase_provider_js_1 = require("./providers/supabase.provider.js");
+Object.defineProperty(exports, "SupabaseAuthProvider", {
   enumerable: true,
   get: function () {
-    return cognito_provider_js_1.CognitoAuthProvider;
+    return supabase_provider_js_1.SupabaseAuthProvider;
   },
 });
 // Module

@@ -17,83 +17,42 @@ Both layers use the provider pattern for flexibility and can be consolidated in 
 - Application state and configuration
 - Transactional data
 
-### Provider: SQLite (Development Default)
+### Provider: PostgreSQL via Supabase (Default)
 
-**When to use**: Local development, testing, quick prototyping
-
-**Configuration**:
-```bash
-# Auto-selected in development
-NODE_ENV=development
-
-# Or explicit
-RELATIONAL_DB_PROVIDER=sqlite
-RELATIONAL_DB_DATABASE=./data/dev.sqlite  # or :memory: for tests
-```
-
-**Pros**:
-- ✅ Zero setup - just run the app
-- ✅ No external dependencies
-- ✅ Perfect for development
-- ✅ In-memory mode for fast tests
-- ✅ Single file - easy backup
-
-**Cons**:
-- ❌ Not suitable for production
-- ❌ No concurrent writers
-- ❌ Limited to single server
-
-**File Location**: `apps/backend/src/providers/relationaldb/providers/sqlite.provider.ts`
-
----
-
-### Provider: PostgreSQL (Production Default)
-
-**When to use**: Production, staging, team development
+**When to use**: All environments (development, staging, production)
 
 **Configuration**:
 ```bash
-# Auto-selected in production
-NODE_ENV=production
-
-# Or explicit
+# Default - PostgreSQL via Supabase
 RELATIONAL_DB_PROVIDER=postgres
 RELATIONAL_DB_HOST=localhost
 RELATIONAL_DB_PORT=5432
-RELATIONAL_DB_DATABASE=qckstrt
-RELATIONAL_DB_USERNAME=qckstrt_user
-RELATIONAL_DB_PASSWORD=qckstrt_password
-RELATIONAL_DB_SSL=false  # true for production
+RELATIONAL_DB_DATABASE=postgres
+RELATIONAL_DB_USERNAME=postgres
+RELATIONAL_DB_PASSWORD=your-super-secret-password
 ```
 
 **Docker Compose**:
-```yaml
-postgres:
-  image: postgres:16-alpine
-  ports:
-    - "5432:5432"
-  environment:
-    POSTGRES_DB: qckstrt
-    POSTGRES_USER: qckstrt_user
-    POSTGRES_PASSWORD: qckstrt_password
+```bash
+# Start the full Supabase stack
+docker-compose up -d
 ```
 
+This starts PostgreSQL as part of the Supabase stack, along with Auth, Storage, and Vault.
+
 **Pros**:
-- ✅ Production-ready
+- ✅ Production-ready from day one
 - ✅ ACID compliance
 - ✅ Concurrent connections
 - ✅ Rich feature set
 - ✅ pgvector support (vector + relational)
+- ✅ Integrated with Supabase Auth, Storage, Vault
 
-**Cons**:
-- ❌ Requires server setup
-- ❌ More resource intensive
-
-**File Location**: `apps/backend/src/providers/relationaldb/providers/postgres.provider.ts`
+**File Location**: `packages/relationaldb-provider/src/providers/postgres.provider.ts`
 
 ---
 
-### Provider: Aurora PostgreSQL (AWS Serverless)
+### Provider: Aurora PostgreSQL (AWS Alternative)
 
 **When to use**: AWS deployments, serverless architecture
 
@@ -117,7 +76,7 @@ RELATIONAL_DB_DATABASE=qckstrt
 - ❌ Cold start latency
 - ❌ Higher cost for constant load
 
-**File Location**: `apps/backend/src/providers/relationaldb/providers/aurora.provider.ts`
+**File Location**: `packages/relationaldb-provider/src/providers/aurora.provider.ts`
 
 ---
 
@@ -135,22 +94,15 @@ RELATIONAL_DB_DATABASE=qckstrt
 **Configuration**:
 ```bash
 VECTOR_DB_PROVIDER=chromadb
-VECTOR_DB_CHROMA_URL=http://localhost:8000
+VECTOR_DB_CHROMA_URL=http://localhost:8001  # Port 8001 (Kong uses 8000)
 VECTOR_DB_CHROMA_COLLECTION=qckstrt-embeddings
 VECTOR_DB_DIMENSIONS=384  # Must match embedding model
 ```
 
 **Docker Compose**:
-```yaml
-chromadb:
-  image: chromadb/chroma:latest
-  ports:
-    - "8000:8000"
-  volumes:
-    - chroma-data:/chroma/chroma
-  environment:
-    - IS_PERSISTENT=TRUE
-    - PERSIST_DIRECTORY=/chroma/chroma
+ChromaDB is included in the main docker-compose.yml on port 8001:
+```bash
+docker-compose up -d
 ```
 
 **Pros**:
@@ -165,7 +117,7 @@ chromadb:
 - ❌ Additional infrastructure cost
 - ❌ No ACID transactions with relational data
 
-**File Location**: `apps/backend/src/providers/vectordb/providers/chroma.provider.ts`
+**File Location**: `packages/vectordb-provider/src/providers/chroma.provider.ts`
 
 ---
 
@@ -201,7 +153,7 @@ SELECT * FROM pg_extension WHERE extname = 'vector';
 - ❌ Slightly slower than dedicated vector DBs for large scale
 - ❌ More complex setup initially
 
-**File Location**: `apps/backend/src/providers/vectordb/providers/pgvector.provider.ts`
+**File Location**: `packages/vectordb-provider/src/providers/pgvector.provider.ts`
 
 **Migration Path**:
 See [Database Migration Guide](../guides/database-migration.md#chromadb-to-pgvector)
@@ -416,16 +368,7 @@ CREATE INDEX idx_embedding_hnsw
 
 ## Backup and Recovery
 
-### SQLite
-```bash
-# Backup (copy file)
-cp ./data/dev.sqlite ./backups/dev-$(date +%Y%m%d).sqlite
-
-# Restore
-cp ./backups/dev-20250101.sqlite ./data/dev.sqlite
-```
-
-### PostgreSQL
+### PostgreSQL (Supabase)
 ```bash
 # Backup
 docker exec qckstrt-postgres pg_dump -U qckstrt_user qckstrt > backup.sql
@@ -453,24 +396,16 @@ docker exec qckstrt-postgres pg_dump -U qckstrt_user qckstrt > backup.sql
 
 ## Migration Paths
 
-### Development → Production
-
-**Option 1: Separate Databases (ChromaDB)**
+### Default Stack (Supabase + ChromaDB)
 ```
-Development:
-  SQLite + ChromaDB
-
-Production:
-  PostgreSQL + ChromaDB
+All Environments:
+  PostgreSQL (via Supabase) + ChromaDB
 ```
 
-**Option 2: Consolidated (pgvector)**
+### Consolidated (pgvector)
 ```
-Development:
-  SQLite + ChromaDB
-
-Production:
-  PostgreSQL with pgvector (recommended)
+All Environments:
+  PostgreSQL with pgvector (single database for relational + vectors)
 ```
 
 ### ChromaDB → pgvector

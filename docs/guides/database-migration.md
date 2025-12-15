@@ -4,112 +4,8 @@ This guide covers migrating between different database providers.
 
 ## Common Migrations
 
-1. [SQLite → PostgreSQL](#sqlite--postgresql) (Dev → Prod)
-2. [ChromaDB → pgvector](#chromadb--pgvector) (Consolidation)
-3. [Development → Production](#development--production) (Full Stack)
-
----
-
-## SQLite → PostgreSQL
-
-**When**: Moving from development to production
-
-**Why**: PostgreSQL is production-ready with better concurrency, backups, and scalability
-
-### Step 1: Set Up PostgreSQL
-
-**Using Docker**:
-```bash
-docker-compose up -d postgres
-```
-
-**Or install locally**:
-```bash
-# macOS
-brew install postgresql@16
-brew services start postgresql@16
-
-# Ubuntu/Debian
-sudo apt install postgresql-16
-sudo systemctl start postgresql
-
-# Create database
-createdb qckstrt
-```
-
-### Step 2: Export Data from SQLite
-
-```bash
-cd apps/backend
-
-# Dump SQLite data to SQL
-sqlite3 ./data/dev.sqlite .dump > sqlite-backup.sql
-
-# Or use TypeORM CLI (if configured)
-npm run typeorm -- migration:generate -n InitialData
-```
-
-### Step 3: Update Configuration
-
-```bash
-# apps/backend/.env
-
-# Old (SQLite)
-# RELATIONAL_DB_PROVIDER=sqlite
-# RELATIONAL_DB_DATABASE=./data/dev.sqlite
-
-# New (PostgreSQL)
-RELATIONAL_DB_PROVIDER=postgres
-RELATIONAL_DB_HOST=localhost
-RELATIONAL_DB_PORT=5432
-RELATIONAL_DB_DATABASE=qckstrt
-RELATIONAL_DB_USERNAME=qckstrt_user
-RELATIONAL_DB_PASSWORD=qckstrt_password
-RELATIONAL_DB_SSL=false
-```
-
-### Step 4: Import Data to PostgreSQL
-
-**Option A: Let TypeORM sync** (if synchronize=true):
-```bash
-# Start app - TypeORM will create tables automatically
-npm run start:dev
-```
-
-**Option B: Manual import**:
-```bash
-# Import SQLite dump (may need adjustments)
-psql -U qckstrt_user -d qckstrt < sqlite-backup.sql
-
-# Or use TypeORM migrations
-npm run typeorm -- migration:run
-```
-
-### Step 5: Verify
-
-```bash
-# Connect to PostgreSQL
-psql -U qckstrt_user -d qckstrt
-
-# Check tables
-\dt
-
-# Check data
-SELECT * FROM users LIMIT 5;
-SELECT COUNT(*) FROM documents;
-```
-
-### Step 6: Test Application
-
-```bash
-# Start application
-npm run start:dev
-
-# Test critical flows
-# - User login
-# - Document upload
-# - RAG queries
-```
+1. [ChromaDB → pgvector](#chromadb--pgvector) (Database Consolidation)
+2. [Supabase → AWS](#supabase--aws) (Cloud Provider Migration)
 
 ---
 
@@ -161,7 +57,7 @@ SELECT * FROM pg_extension WHERE extname = 'vector';
 // Export script
 import { ChromaClient } from 'chromadb';
 
-const client = new ChromaClient({ path: 'http://localhost:8000' });
+const client = new ChromaClient({ path: 'http://localhost:8001' });
 const collection = await client.getCollection({ name: 'qckstrt-embeddings' });
 
 const data = await collection.get({
@@ -185,7 +81,7 @@ docker cp qckstrt-chromadb:/chroma/chroma ./chroma-backup
 
 # Old (ChromaDB)
 # VECTOR_DB_PROVIDER=chromadb
-# VECTOR_DB_CHROMA_URL=http://localhost:8000
+# VECTOR_DB_CHROMA_URL=http://localhost:8001
 
 # New (pgvector)
 VECTOR_DB_PROVIDER=pgvector
@@ -313,20 +209,26 @@ npm run start:dev
 
 **Full migration** from development stack to production stack.
 
-### Development Stack
+### Development Stack (Supabase Self-Hosted)
 ```
-- Relational DB: SQLite
+- Relational DB: PostgreSQL (via Supabase)
 - Vector DB: ChromaDB
 - Embeddings: Xenova
 - LLM: Ollama (Falcon 7B)
+- Auth: Supabase Auth (GoTrue)
+- Storage: Supabase Storage
+- Secrets: Supabase Vault
 ```
 
-### Production Stack (Recommended)
+### Production Stack (AWS)
 ```
-- Relational DB: PostgreSQL (RDS/managed)
+- Relational DB: Aurora PostgreSQL
 - Vector DB: pgvector (same PostgreSQL)
 - Embeddings: Xenova (same, in-process)
 - LLM: Ollama on GPU instance
+- Auth: AWS Cognito
+- Storage: AWS S3
+- Secrets: AWS Secrets Manager
 ```
 
 ### Migration Steps
@@ -370,10 +272,10 @@ LLM_MODEL=falcon
 
 **3. Migrate data**:
 ```bash
-# Export from dev SQLite
-sqlite3 ./data/dev.sqlite .dump > dev-data.sql
+# Export from Supabase PostgreSQL
+docker exec qckstrt-db pg_dump -U postgres postgres > dev-data.sql
 
-# Import to production PostgreSQL
+# Import to production Aurora PostgreSQL
 psql -h qckstrt-prod.xxxx.rds.amazonaws.com \
      -U admin \
      -d qckstrt \
@@ -412,25 +314,7 @@ npm run build
 
 ## Rollback Procedures
 
-### Rollback SQLite → PostgreSQL
-
-**Step 1**: Update configuration
-```bash
-RELATIONAL_DB_PROVIDER=sqlite
-RELATIONAL_DB_DATABASE=./data/dev.sqlite
-```
-
-**Step 2**: Restore SQLite backup
-```bash
-cp ./backups/dev-20250101.sqlite ./data/dev.sqlite
-```
-
-**Step 3**: Restart application
-```bash
-npm run start:dev
-```
-
-### Rollback ChromaDB → pgvector
+### Rollback pgvector → ChromaDB
 
 **Step 1**: Update configuration
 ```bash
@@ -461,11 +345,8 @@ npm run start:dev
 ### 1. Backup Before Migration
 
 ```bash
-# Backup SQLite
-cp ./data/dev.sqlite ./backups/dev-$(date +%Y%m%d).sqlite
-
-# Backup PostgreSQL
-pg_dump -U qckstrt_user qckstrt > backup-$(date +%Y%m%d).sql
+# Backup PostgreSQL (Supabase)
+docker exec qckstrt-db pg_dump -U postgres postgres > backup-$(date +%Y%m%d).sql
 
 # Backup ChromaDB
 docker cp qckstrt-chromadb:/chroma/chroma ./backups/chroma-$(date +%Y%m%d)

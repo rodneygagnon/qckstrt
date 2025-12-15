@@ -3,11 +3,11 @@
  * @qckstrt/storage-provider
  *
  * Storage provider implementations for the QCKSTRT platform.
- * Provides pluggable file storage with AWS S3 support.
+ * Provides pluggable file storage with Supabase Storage.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StorageModule =
-  exports.S3StorageProvider =
+  exports.SupabaseStorageProvider =
   exports.StorageError =
     void 0;
 // Re-export types from common
@@ -19,11 +19,11 @@ Object.defineProperty(exports, "StorageError", {
   },
 });
 // Providers
-var s3_provider_js_1 = require("./providers/s3.provider.js");
-Object.defineProperty(exports, "S3StorageProvider", {
+var supabase_provider_js_1 = require("./providers/supabase.provider.js");
+Object.defineProperty(exports, "SupabaseStorageProvider", {
   enumerable: true,
   get: function () {
-    return s3_provider_js_1.S3StorageProvider;
+    return supabase_provider_js_1.SupabaseStorageProvider;
   },
 });
 // Module

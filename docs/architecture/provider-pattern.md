@@ -2,12 +2,12 @@
 
 ## Overview
 
-QCKSTRT uses the **Strategy Pattern + Dependency Injection** to create a pluggable provider architecture. This allows swapping implementations (SQLite ↔ PostgreSQL, ChromaDB ↔ pgvector, etc.) via configuration without code changes.
+QCKSTRT uses the **Strategy Pattern + Dependency Injection** to create a pluggable provider architecture. This allows swapping implementations (ChromaDB ↔ pgvector, etc.) via configuration without code changes.
 
 ## Design Pattern
 
 ### Strategy Pattern
-Each provider layer defines an interface that multiple implementations can satisfy:
+Each provider layer defines an interface that implementations can satisfy:
 
 ```typescript
 // Interface defines the contract
@@ -17,10 +17,8 @@ interface IRelationalDBProvider {
   isAvailable(): Promise<boolean>;
 }
 
-// Multiple implementations
-class SQLiteProvider implements IRelationalDBProvider { ... }
+// Implementation
 class PostgresProvider implements IRelationalDBProvider { ... }
-class AuroraProvider implements IRelationalDBProvider { ... }
 ```
 
 ### Dependency Injection
@@ -32,12 +30,11 @@ NestJS modules provide the correct implementation at runtime:
     {
       provide: 'RELATIONAL_DB_PROVIDER',
       useFactory: (config: ConfigService): IRelationalDBProvider => {
-        const provider = config.get('relationaldb.provider') || 'sqlite';
+        const provider = config.get('relationaldb.provider') || 'postgres';
 
         switch (provider) {
-          case 'postgres': return new PostgresProvider(...);
-          case 'sqlite': return new SQLiteProvider(...);
-          default: return new SQLiteProvider(...);
+          case 'postgres':
+          default: return new PostgresProvider(...);
         }
       },
       inject: [ConfigService],
@@ -69,7 +66,7 @@ export class MyService {
 
 **Package**: `@qckstrt/relationaldb-provider`
 
-**Purpose**: Abstract relational database connections (SQLite, PostgreSQL, Aurora)
+**Purpose**: Abstract relational database connections (PostgreSQL via Supabase)
 
 **Interface**:
 ```typescript
@@ -81,27 +78,21 @@ export interface IRelationalDBProvider {
 }
 ```
 
-**Implementations**:
+**Implementation**:
 
 | Provider | File | Use Case | Setup Time |
 |----------|------|----------|------------|
-| SQLite | `packages/relationaldb-provider/src/providers/sqlite.provider.ts` | Development, Testing | 0 seconds |
-| PostgreSQL | `packages/relationaldb-provider/src/providers/postgres.provider.ts` | Production | 5-10 minutes |
-| Aurora | `packages/relationaldb-provider/src/providers/aurora.provider.ts` | AWS Serverless | 10-15 minutes |
+| PostgreSQL | `packages/relationaldb-provider/src/providers/postgres.provider.ts` | Default (via Supabase) | 1 minute (docker-compose up) |
 
 **Configuration**:
 ```bash
-# Auto-detected based on NODE_ENV
-NODE_ENV=development  # Uses SQLite
-NODE_ENV=production   # Uses PostgreSQL
-
-# Or explicit override
+# PostgreSQL via Supabase
 RELATIONAL_DB_PROVIDER=postgres
 RELATIONAL_DB_HOST=localhost
 RELATIONAL_DB_PORT=5432
-RELATIONAL_DB_DATABASE=qckstrt
-RELATIONAL_DB_USERNAME=user
-RELATIONAL_DB_PASSWORD=password
+RELATIONAL_DB_DATABASE=postgres
+RELATIONAL_DB_USERNAME=postgres
+RELATIONAL_DB_PASSWORD=your-super-secret-password
 ```
 
 **Module**: `RelationalDBModule`
@@ -289,19 +280,131 @@ interface GenerateOptions {
 
 ---
 
+### 5. Authentication Provider
+
+**Package**: `@qckstrt/auth-provider`
+
+**Purpose**: Abstract user authentication and management (Supabase Auth)
+
+**Interface**:
+```typescript
+export interface IAuthProvider {
+  getName(): string;
+  registerUser(params: IRegisterUserParams): Promise<string>;
+  authenticateUser(email: string, password: string): Promise<IAuthTokens>;
+  confirmUser(username: string): Promise<void>;
+  deleteUser(username: string): Promise<boolean>;
+  addToGroup(username: string, groupName: string): Promise<void>;
+  removeFromGroup(username: string, groupName: string): Promise<void>;
+  changePassword(accessToken: string, oldPassword: string, newPassword: string): Promise<boolean>;
+  forgotPassword(usernameOrEmail: string): Promise<boolean>;
+  confirmForgotPassword(usernameOrEmail: string, newPassword: string, confirmationCode: string): Promise<boolean>;
+}
+```
+
+**Implementation**:
+
+| Provider | File | Use Case | Features |
+|----------|------|----------|----------|
+| Supabase | `packages/auth-provider/src/providers/supabase.provider.ts` | Default | JWT, OAuth, Magic Links |
+
+**Configuration**:
+```bash
+# Supabase Auth
+AUTH_PROVIDER=supabase
+SUPABASE_URL=http://localhost:8000
+SUPABASE_SERVICE_ROLE_KEY=your-key
+```
+
+**Module**: `AuthModule`
+
+---
+
+### 6. Storage Provider
+
+**Package**: `@qckstrt/storage-provider`
+
+**Purpose**: Abstract file storage operations (Supabase Storage)
+
+**Interface**:
+```typescript
+export interface IStorageProvider {
+  getName(): string;
+  listFiles(bucket: string, prefix: string): Promise<IListFilesResult>;
+  getSignedUrl(bucket: string, key: string, upload: boolean, options?: ISignedUrlOptions): Promise<string>;
+  deleteFile(bucket: string, key: string): Promise<boolean>;
+  exists(bucket: string, key: string): Promise<boolean>;
+  getMetadata(bucket: string, key: string): Promise<IStorageFile | null>;
+}
+```
+
+**Implementation**:
+
+| Provider | File | Use Case | Features |
+|----------|------|----------|----------|
+| Supabase | `packages/storage-provider/src/providers/supabase.provider.ts` | Default | RLS, Transformations |
+
+**Configuration**:
+```bash
+# Supabase Storage
+STORAGE_PROVIDER=supabase
+SUPABASE_URL=http://localhost:8000
+SUPABASE_SERVICE_ROLE_KEY=your-key
+```
+
+**Module**: `StorageModule`
+
+---
+
+### 7. Secrets Provider
+
+**Package**: `@qckstrt/secrets-provider`
+
+**Purpose**: Abstract secrets management (Supabase Vault)
+
+**Interface**:
+```typescript
+export interface ISecretsProvider {
+  getName(): string;
+  getSecret(secretId: string): Promise<string | undefined>;
+  getSecrets(secretIds: string[]): Promise<Record<string, string | undefined>>;
+  getSecretJson<T>(secretId: string): Promise<T | undefined>;
+}
+```
+
+**Implementation**:
+
+| Provider | File | Use Case | Features |
+|----------|------|----------|----------|
+| Supabase | `packages/secrets-provider/src/providers/supabase-vault.provider.ts` | Default | pgsodium encryption |
+
+**Configuration**:
+```bash
+# Supabase Vault
+SECRETS_PROVIDER=supabase
+SUPABASE_URL=http://localhost:8000
+SUPABASE_SERVICE_ROLE_KEY=your-key
+```
+
+**Module**: `SecretsModule`
+
+**Note**: Supabase Vault requires the `vault_read_secret` function. See [Supabase Setup Guide](../guides/supabase-setup.md).
+
+---
+
 ## Benefits of Provider Pattern
 
-### 1. Environment-Specific Defaults
+### 1. Unified Development Stack
 ```typescript
-// Development: Zero setup
-const provider = NODE_ENV === 'production' ? 'postgres' : 'sqlite';
+// Single command to start everything
+// docker-compose up
+const provider = process.env.RELATIONAL_DB_PROVIDER || 'postgres';
 ```
 
 ### 2. Easy Testing
 ```typescript
-// Test with in-memory database
-RELATIONAL_DB_PROVIDER=sqlite
-RELATIONAL_DB_DATABASE=:memory:
+// Use test database on PostgreSQL
+RELATIONAL_DB_DATABASE=qckstrt_test
 ```
 
 ### 3. Gradual Migration
@@ -313,9 +416,9 @@ VECTOR_DB_PROVIDER=pgvector  // Week 5+
 
 ### 4. No Code Changes
 ```bash
-# Switch from SQLite to PostgreSQL
-# Old: RELATIONAL_DB_PROVIDER=sqlite
-# New: RELATIONAL_DB_PROVIDER=postgres
+# Switch from ChromaDB to pgvector
+# Old: VECTOR_DB_PROVIDER=chromadb
+# New: VECTOR_DB_PROVIDER=pgvector
 # That's it! No code changes needed.
 ```
 
@@ -377,10 +480,8 @@ Service doesn't know/care which implementation was used
 
 ### Relational Database
 ```typescript
-// Auto-detection based on environment
-const nodeEnv = process.env.NODE_ENV || 'development';
-const provider = process.env.RELATIONAL_DB_PROVIDER ||
-  (nodeEnv === 'production' ? 'postgres' : 'sqlite');
+// Default to PostgreSQL (via Supabase)
+const provider = process.env.RELATIONAL_DB_PROVIDER || 'postgres';
 ```
 
 ### Vector Database
@@ -517,3 +618,4 @@ async isAvailable(): Promise<boolean> {
 - [Data Layer Architecture](data-layer.md) - Database provider details
 - [AI/ML Pipeline](ai-ml-pipeline.md) - Embeddings and LLM providers
 - [Database Migration Guide](../guides/database-migration.md) - Switching providers
+- [Supabase Setup Guide](../guides/supabase-setup.md) - OSS alternative setup

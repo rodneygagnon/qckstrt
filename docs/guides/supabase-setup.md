@@ -1,0 +1,335 @@
+# Supabase Setup Guide
+
+This guide explains how to use Supabase as an OSS alternative to AWS services in QCKSTRT.
+
+## Overview
+
+Supabase provides open-source alternatives to several AWS services:
+
+| AWS Service | Supabase Alternative | Provider |
+|-------------|---------------------|----------|
+| AWS Cognito | Supabase Auth (GoTrue) | `SupabaseAuthProvider` |
+| AWS S3 | Supabase Storage | `SupabaseStorageProvider` |
+| AWS Secrets Manager | Supabase Vault (pgsodium) | `SupabaseVaultProvider` |
+| Amazon RDS | Supabase PostgreSQL | `PostgresProvider` (existing) |
+
+## Quick Start
+
+### 1. Start the Supabase Stack
+
+```bash
+# Copy environment template
+cp supabase/.env.example supabase/.env
+
+# Edit the .env file with your secrets
+nano supabase/.env
+
+# Start all Supabase services
+docker-compose -f docker-compose.supabase.yml up -d
+```
+
+### 2. Configure the Backend
+
+Update your `apps/backend/.env`:
+
+```bash
+# Supabase Connection
+SUPABASE_URL=http://localhost:8000
+SUPABASE_ANON_KEY=<your-anon-key>
+SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+
+# Provider Selection
+AUTH_PROVIDER=supabase
+STORAGE_PROVIDER=supabase
+SECRETS_PROVIDER=supabase
+
+# Database (connects to Supabase PostgreSQL)
+RELATIONAL_DB_PROVIDER=postgres
+RELATIONAL_DB_HOST=localhost
+RELATIONAL_DB_PORT=5433
+RELATIONAL_DB_DATABASE=postgres
+RELATIONAL_DB_USERNAME=postgres
+RELATIONAL_DB_PASSWORD=<your-postgres-password>
+```
+
+### 3. Set Up Vault Functions
+
+The vault functions are automatically applied when the database starts. You can also apply them manually:
+
+```bash
+# Connect to Supabase PostgreSQL
+psql -h localhost -p 5433 -U postgres -d postgres
+
+# Run the migration
+\i supabase/migrations/001_vault_functions.sql
+```
+
+## Services
+
+### Supabase Auth (GoTrue)
+
+**Port**: 9999 (internal), 8000/auth/* (via Kong)
+
+**Features**:
+- Email/password authentication
+- OAuth providers (Google, GitHub, etc.)
+- JWT tokens
+- User management
+- Password recovery
+
+**Environment Variables**:
+```bash
+AUTH_PROVIDER=supabase
+SUPABASE_URL=http://localhost:8000
+SUPABASE_SERVICE_ROLE_KEY=<your-key>
+```
+
+**Usage in Code**:
+```typescript
+@Inject('AUTH_PROVIDER')
+private authProvider: IAuthProvider;
+
+// Register a user
+const userId = await this.authProvider.registerUser({
+  email: 'user@example.com',
+  username: 'testuser',
+  password: 'SecurePassword123!',
+});
+
+// Authenticate
+const tokens = await this.authProvider.authenticateUser(
+  'user@example.com',
+  'SecurePassword123!'
+);
+```
+
+### Supabase Storage
+
+**Port**: 5000 (internal), 8000/storage/* (via Kong)
+
+**Features**:
+- File uploads/downloads
+- Signed URLs
+- Bucket management
+- Image transformations
+
+**Environment Variables**:
+```bash
+STORAGE_PROVIDER=supabase
+SUPABASE_URL=http://localhost:8000
+SUPABASE_SERVICE_ROLE_KEY=<your-key>
+```
+
+**Usage in Code**:
+```typescript
+@Inject('STORAGE_PROVIDER')
+private storageProvider: IStorageProvider;
+
+// Get signed URL for download
+const url = await this.storageProvider.getSignedUrl(
+  'my-bucket',
+  'path/to/file.pdf',
+  false, // false = download
+);
+
+// Get signed URL for upload
+const uploadUrl = await this.storageProvider.getSignedUrl(
+  'my-bucket',
+  'uploads/new-file.pdf',
+  true, // true = upload
+);
+```
+
+### Supabase Vault
+
+**Backend**: PostgreSQL pgsodium extension
+
+**Features**:
+- Encrypted secret storage
+- Row-level security
+- SQL-based access
+
+**Environment Variables**:
+```bash
+SECRETS_PROVIDER=supabase
+SUPABASE_URL=http://localhost:8000
+SUPABASE_SERVICE_ROLE_KEY=<your-key>
+```
+
+**Creating Secrets**:
+
+1. **Via Supabase Studio** (http://localhost:3100):
+   - Navigate to Database > Vault
+   - Click "Add new secret"
+   - Enter name and value
+
+2. **Via SQL**:
+   ```sql
+   SELECT vault.create_secret('my-secret-value', 'my-secret-name');
+   ```
+
+**Usage in Code**:
+```typescript
+@Inject('SECRETS_PROVIDER')
+private secretsProvider: ISecretsProvider;
+
+// Get a secret
+const apiKey = await this.secretsProvider.getSecret('api-key');
+
+// Get JSON secret
+const dbCredentials = await this.secretsProvider.getSecretJson<{
+  username: string;
+  password: string;
+}>('db-credentials');
+```
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Your Application                         │
+└─────────────────────────────────────────────────────────────┘
+                            │
+                    Provider Selection
+                    (via ConfigService)
+                            │
+        ┌───────────────────┼───────────────────┐
+        ▼                   ▼                   ▼
+┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+│ AuthProvider │   │StorageProvider│   │SecretsProvider│
+│  - Cognito   │   │    - S3      │   │    - AWS     │
+│  - Supabase ◄│   │  - Supabase ◄│   │  - Supabase ◄│
+└──────────────┘   └──────────────┘   └──────────────┘
+        │                   │                   │
+        └───────────────────┼───────────────────┘
+                            │
+                    ┌───────────────┐
+                    │   Supabase    │
+                    │   Stack       │
+                    │ ┌───────────┐ │
+                    │ │   Kong    │ │ ◄─── :8000
+                    │ └───────────┘ │
+                    │       │       │
+                    │ ┌─────┼─────┐ │
+                    │ ▼     ▼     ▼ │
+                    │Auth  REST  Stor│
+                    │       │       │
+                    │ ┌───────────┐ │
+                    │ │ PostgreSQL│ │ ◄─── :5433
+                    │ └───────────┘ │
+                    └───────────────┘
+```
+
+## Access Points
+
+| Service | URL | Description |
+|---------|-----|-------------|
+| API Gateway | http://localhost:8000 | Kong routes to all services |
+| Studio UI | http://localhost:3100 | Admin dashboard |
+| PostgreSQL | localhost:5433 | Direct database access |
+| Auth API | http://localhost:8000/auth/v1 | Authentication endpoints |
+| REST API | http://localhost:8000/rest/v1 | PostgREST endpoints |
+| Storage API | http://localhost:8000/storage/v1 | File storage endpoints |
+
+## Security Considerations
+
+### Production Checklist
+
+1. **Change Default Secrets**:
+   ```bash
+   # Generate secure JWT secret
+   openssl rand -base64 32
+
+   # Generate secure database password
+   openssl rand -base64 24
+   ```
+
+2. **Generate New API Keys**:
+   - Use the [Supabase key generator](https://supabase.com/docs/guides/self-hosting#generate-api-keys)
+   - Never use demo keys in production
+
+3. **Configure HTTPS**:
+   - Put Kong behind a reverse proxy (nginx/traefik)
+   - Enable TLS certificates
+
+4. **Restrict Network Access**:
+   - Don't expose PostgreSQL port (5433) publicly
+   - Use firewall rules to restrict access
+
+5. **Enable Email Verification**:
+   ```bash
+   ENABLE_EMAIL_AUTOCONFIRM=false
+   ```
+
+6. **Configure SMTP**:
+   ```bash
+   SMTP_HOST=smtp.example.com
+   SMTP_PORT=587
+   SMTP_USER=your-user
+   SMTP_PASS=your-password
+   ```
+
+## Switching Providers
+
+To switch between AWS and Supabase providers, simply change the environment variables:
+
+```bash
+# Use AWS (default)
+AUTH_PROVIDER=cognito
+STORAGE_PROVIDER=s3
+SECRETS_PROVIDER=aws
+
+# Use Supabase
+AUTH_PROVIDER=supabase
+STORAGE_PROVIDER=supabase
+SECRETS_PROVIDER=supabase
+```
+
+No code changes required - the provider pattern handles the abstraction.
+
+## Troubleshooting
+
+### Common Issues
+
+**1. Connection refused to Supabase**
+```bash
+# Check if services are running
+docker-compose -f docker-compose.supabase.yml ps
+
+# Check logs
+docker-compose -f docker-compose.supabase.yml logs supabase-kong
+```
+
+**2. Authentication errors**
+```bash
+# Verify API keys in Studio
+# Navigate to Settings > API
+
+# Check JWT secret matches between services
+docker-compose -f docker-compose.supabase.yml logs supabase-auth
+```
+
+**3. Vault functions not found**
+```sql
+-- Connect to PostgreSQL and verify
+SELECT * FROM information_schema.routines
+WHERE routine_name = 'vault_read_secret';
+
+-- Re-run migration if needed
+\i supabase/migrations/001_vault_functions.sql
+```
+
+**4. Storage bucket doesn't exist**
+```bash
+# Create bucket via Studio or API
+curl -X POST 'http://localhost:8000/storage/v1/bucket' \
+  -H 'Authorization: Bearer <service-role-key>' \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "my-bucket", "public": false}'
+```
+
+## Related Documentation
+
+- [Provider Pattern Architecture](../architecture/provider-pattern.md)
+- [Getting Started Guide](getting-started.md)
+- [Supabase Documentation](https://supabase.com/docs)

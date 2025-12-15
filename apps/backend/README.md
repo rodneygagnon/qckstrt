@@ -15,20 +15,20 @@ See the main documentation for detailed information:
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Start all microservices
-npm run start:dev
+pnpm start
 
 # Start specific service
-npm run start:dev -- api        # API Gateway
-npm run start:dev -- knowledge  # Knowledge/RAG service
+pnpm start:api        # API Gateway
+pnpm start:knowledge  # Knowledge/RAG service
 
 # Build
-npm run build
+pnpm build
 
 # Test
-npm run test
+pnpm test
 ```
 
 ## Microservices
@@ -51,14 +51,19 @@ EMBEDDINGS_PROVIDER=xenova
 
 # Vector Database
 VECTOR_DB_PROVIDER=chromadb
-VECTOR_DB_CHROMA_URL=http://localhost:8000
+VECTOR_DB_CHROMA_URL=http://localhost:8001
 
 # LLM
 LLM_URL=http://localhost:11434
 LLM_MODEL=falcon
 
-# Relational Database (auto-detected)
-NODE_ENV=development  # Uses SQLite
+# Relational Database (PostgreSQL via Supabase)
+RELATIONAL_DB_PROVIDER=postgres
+RELATIONAL_DB_HOST=localhost
+RELATIONAL_DB_PORT=5432
+RELATIONAL_DB_DATABASE=postgres
+RELATIONAL_DB_USERNAME=postgres
+RELATIONAL_DB_PASSWORD=your-super-secret-password
 ```
 
 See [Getting Started Guide](../../docs/guides/getting-started.md) for more details.
