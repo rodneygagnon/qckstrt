@@ -23,6 +23,8 @@ import configuration from 'src/config';
 import { LoggerMiddleware } from 'src/common/middleware/logger.middleware';
 import { DbModule } from 'src/db/db.module';
 import { UserEntity } from 'src/db/entities/user.entity';
+import { AuditLogEntity } from 'src/db/entities/audit-log.entity';
+import { AuditModule } from 'src/common/audit/audit.module';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { GraphQLExceptionFilter } from 'src/common/exceptions/graphql-exception.filter';
 import { RolesGuard } from 'src/common/guards/roles.guard';
@@ -63,7 +65,8 @@ import { PoliciesGuard } from 'src/common/guards/policies.guard';
         limit: 100, // 100 requests per minute
       },
     ]),
-    DbModule.forRoot({ entities: [UserEntity] }),
+    DbModule.forRoot({ entities: [UserEntity, AuditLogEntity] }),
+    AuditModule.forRoot(),
     GraphQLModule.forRoot<ApolloFederationDriverConfig>({
       driver: ApolloFederationDriver,
       autoSchemaFile: { path: 'schema.gql', federation: 2 },

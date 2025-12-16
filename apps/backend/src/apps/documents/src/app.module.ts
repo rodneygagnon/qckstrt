@@ -31,6 +31,8 @@ import { GqlThrottlerGuard } from 'src/common/guards/throttler.guard';
 import { CaslModule } from 'src/permissions/casl.module';
 import { PoliciesGuard } from 'src/common/guards/policies.guard';
 import { DocumentEntity } from 'src/db/entities/document.entity';
+import { AuditLogEntity } from 'src/db/entities/audit-log.entity';
+import { AuditModule } from 'src/common/audit/audit.module';
 
 /**
  * Documents App Module
@@ -71,7 +73,8 @@ import { DocumentEntity } from 'src/db/entities/document.entity';
         limit: 100, // 100 requests per minute
       },
     ]),
-    DbModule.forRoot({ entities: [DocumentEntity] }),
+    DbModule.forRoot({ entities: [DocumentEntity, AuditLogEntity] }),
+    AuditModule.forRoot(),
     GraphQLModule.forRoot<ApolloFederationDriverConfig>({
       driver: ApolloFederationDriver,
       autoSchemaFile: { path: 'documents-schema.gql', federation: 2 },
