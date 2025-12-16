@@ -12,6 +12,7 @@ import {
   AnswerQueryVars,
   SearchTextData,
   SearchTextVars,
+  SearchResult,
 } from "@/lib/graphql/knowledge";
 import {
   setDemoUser,
@@ -81,9 +82,12 @@ export default function RAGDemo() {
   const [documentId, setDocumentId] = useState("");
   const [query, setQuery] = useState("");
   const [answer, setAnswer] = useState("");
-  const [searchResults, setSearchResults] = useState<string[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchTotal, setSearchTotal] = useState(0);
+  const [searchHasMore, setSearchHasMore] = useState(false);
   const [activeTab, setActiveTab] = useState<"index" | "query">("index");
   const [notification, setNotification] = useState<Notification | null>(null);
+  const PAGE_SIZE = 5;
 
   // Demo user form state
   const [email, setEmail] = useState(getInitialEmail);
@@ -118,6 +122,8 @@ export default function RAGDemo() {
     setUser(null);
     setAnswer("");
     setSearchResults([]);
+    setSearchTotal(0);
+    setSearchHasMore(false);
   };
 
   const handleIndexDocument = async () => {
@@ -175,22 +181,43 @@ export default function RAGDemo() {
     }
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (loadMore = false) => {
     if (!user || !query.trim()) return;
 
     try {
+      const skip = loadMore ? searchResults.length : 0;
       const result = await searchText({
         variables: {
           userId: user.id,
           query: query,
-          count: 5,
+          skip,
+          take: PAGE_SIZE,
         },
       });
 
-      setSearchResults(result.data?.searchText || []);
+      const data = result.data?.searchText;
+      if (data) {
+        if (loadMore) {
+          setSearchResults((prev) => [...prev, ...data.results]);
+        } else {
+          setSearchResults(data.results);
+        }
+        setSearchTotal(data.total);
+        setSearchHasMore(data.hasMore);
+      } else {
+        if (!loadMore) {
+          setSearchResults([]);
+          setSearchTotal(0);
+          setSearchHasMore(false);
+        }
+      }
     } catch (error) {
       console.error("Search error:", error);
-      setSearchResults([]);
+      if (!loadMore) {
+        setSearchResults([]);
+        setSearchTotal(0);
+        setSearchHasMore(false);
+      }
     }
   };
 
@@ -376,7 +403,7 @@ export default function RAGDemo() {
                     {answering ? "Thinking..." : "Ask Question (RAG)"}
                   </button>
                   <button
-                    onClick={handleSearch}
+                    onClick={() => handleSearch()}
                     disabled={searching || !query.trim()}
                     className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white
                              font-medium py-2 px-6 rounded-md transition-colors"
@@ -405,20 +432,40 @@ export default function RAGDemo() {
             {searchResults.length > 0 && (
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                  Relevant Chunks ({searchResults.length})
+                  Relevant Chunks ({searchResults.length}
+                  {searchTotal > searchResults.length && ` of ${searchTotal}`})
                 </h3>
                 <div className="space-y-3">
                   {searchResults.map((result, index) => (
                     <div
-                      key={index}
+                      key={`${result.documentId}-${index}`}
                       className="p-3 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600"
                     >
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                          {result.documentId}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          Score: {(result.score * 100).toFixed(1)}%
+                        </span>
+                      </div>
                       <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                        {result}
+                        {result.content}
                       </p>
                     </div>
                   ))}
                 </div>
+                {searchHasMore && (
+                  <button
+                    onClick={() => handleSearch(true)}
+                    disabled={searching}
+                    className="mt-4 w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600
+                             disabled:opacity-50 text-gray-700 dark:text-gray-300
+                             font-medium py-2 px-4 rounded-md transition-colors"
+                  >
+                    {searching ? "Loading..." : "Load More Results"}
+                  </button>
+                )}
               </div>
             )}
           </div>

@@ -2,6 +2,10 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EmbeddingsService } from '@qckstrt/embeddings-provider';
 import { IVectorDBProvider } from '@qckstrt/vectordb-provider';
 import { ILLMProvider } from '@qckstrt/llm-provider';
+import {
+  SearchResult,
+  PaginatedSearchResults,
+} from './models/search-result.model';
 
 /**
  * Knowledge Service
@@ -120,28 +124,56 @@ Answer:`;
   }
 
   /**
-   * Search for relevant text chunks
+   * Search for relevant text chunks with pagination
    */
   async searchText(
     userId: string,
     query: string,
-    count: number = 3,
-  ): Promise<string[]> {
-    const texts = await this.semanticSearch(userId, query, count);
+    skip: number = 0,
+    take: number = 10,
+  ): Promise<PaginatedSearchResults> {
+    // Fetch more than needed to determine hasMore
+    const fetchCount = skip + take + 1;
+    const allResults = await this.semanticSearchWithMetadata(
+      userId,
+      query,
+      fetchCount,
+    );
 
-    this.logger.log(`Found ${texts.length} relevant chunks`);
+    const paginatedResults = allResults.slice(skip, skip + take);
+    const hasMore = allResults.length > skip + take;
 
-    return texts;
+    this.logger.log(
+      `Found ${paginatedResults.length} relevant chunks (total: ${allResults.length}, hasMore: ${hasMore})`,
+    );
+
+    return {
+      results: paginatedResults,
+      total: allResults.length > fetchCount ? fetchCount : allResults.length,
+      hasMore,
+    };
   }
 
   /**
-   * Perform semantic search using embeddings
+   * Perform semantic search using embeddings (returns text only for RAG)
    */
   private async semanticSearch(
     userId: string,
     query: string,
     count: number = 3,
   ): Promise<string[]> {
+    const results = await this.semanticSearchWithMetadata(userId, query, count);
+    return results.map((result) => result.content);
+  }
+
+  /**
+   * Perform semantic search with full metadata
+   */
+  private async semanticSearchWithMetadata(
+    userId: string,
+    query: string,
+    count: number = 3,
+  ): Promise<SearchResult[]> {
     try {
       // Get query embedding
       const queryEmbedding =
@@ -156,8 +188,12 @@ Answer:`;
 
       this.logger.log(`Semantic search returned ${results.length} results`);
 
-      // Extract text content from results
-      return results.map((result) => result.content);
+      // Transform to SearchResult format
+      return results.map((result) => ({
+        content: result.content,
+        documentId: result.metadata.source,
+        score: result.score ?? 0,
+      }));
     } catch (error) {
       this.logger.error('Error in semantic search:', error);
       return [];
