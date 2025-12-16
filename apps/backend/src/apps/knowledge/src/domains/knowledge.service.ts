@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { EmbeddingsService } from '@qckstrt/embeddings-provider';
 import { IVectorDBProvider } from '@qckstrt/vectordb-provider';

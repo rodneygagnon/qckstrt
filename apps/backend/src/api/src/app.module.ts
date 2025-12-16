@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { Request } from 'express';
 import { LoggingModule, LogLevel } from '@qckstrt/logging-provider';
 
@@ -22,7 +23,7 @@ import { HMACMiddleware } from 'src/common/middleware/hmac.middleware';
 import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from 'src/common/auth/jwt.strategy';
 import { AuthMiddleware } from 'src/common/middleware/auth.middleware';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { HttpExceptionFilter } from 'src/common/exceptions/http-exception.filter';
 
 interface GatewayContext {
@@ -56,6 +57,23 @@ const handleAuth = ({ req }: { req: Request }) => {
       }),
       inject: [ConfigService],
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'short',
+        ttl: 1000, // 1 second
+        limit: 10, // 10 requests per second
+      },
+      {
+        name: 'medium',
+        ttl: 10000, // 10 seconds
+        limit: 50, // 50 requests per 10 seconds
+      },
+      {
+        name: 'long',
+        ttl: 60000, // 1 minute
+        limit: 100, // 100 requests per minute
+      },
+    ]),
     GraphQLModule.forRootAsync<ApolloGatewayDriverConfig>({
       driver: ApolloGatewayDriver,
       imports: [
@@ -69,7 +87,7 @@ const handleAuth = ({ req }: { req: Request }) => {
           context: handleAuth,
         },
         gateway: {
-          buildService: ({ name, url }) => {
+          buildService: ({ url }) => {
             return new RemoteGraphQLDataSource({
               url,
               willSendRequest({
@@ -92,6 +110,7 @@ const handleAuth = ({ req }: { req: Request }) => {
   ],
   providers: [
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     JwtStrategy,
   ],
 })
