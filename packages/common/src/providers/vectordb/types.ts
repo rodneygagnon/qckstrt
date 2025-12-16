@@ -17,6 +17,7 @@ export interface IVectorDocument {
     [key: string]: unknown; // Additional metadata
   };
   content: string; // Text content
+  score?: number; // Optional similarity score (0-1, higher is more similar)
 }
 
 /**

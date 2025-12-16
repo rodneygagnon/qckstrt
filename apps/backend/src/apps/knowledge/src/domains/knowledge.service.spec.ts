@@ -171,19 +171,21 @@ describe('KnowledgeService', () => {
   });
 
   describe('searchText', () => {
-    it('should search for relevant text chunks', async () => {
+    it('should return paginated search results with metadata', async () => {
       const mockResults: IVectorDocument[] = [
         {
           id: '1',
           content: 'Result 1',
           embedding: [],
           metadata: { source: 'doc-1', userId: 'user-1' },
+          score: 0.95,
         },
         {
           id: '2',
           content: 'Result 2',
           embedding: [],
           metadata: { source: 'doc-2', userId: 'user-1' },
+          score: 0.85,
         },
       ];
 
@@ -195,18 +197,27 @@ describe('KnowledgeService', () => {
       const results = await knowledgeService.searchText(
         'user-1',
         'search term',
-        5,
+        0,
+        10,
       );
 
-      expect(results).toEqual(['Result 1', 'Result 2']);
+      expect(results).toEqual({
+        results: [
+          { content: 'Result 1', documentId: 'doc-1', score: 0.95 },
+          { content: 'Result 2', documentId: 'doc-2', score: 0.85 },
+        ],
+        total: 2,
+        hasMore: false,
+      });
+      // Fetches skip + take + 1 = 0 + 10 + 1 = 11
       expect(vectorDB.queryEmbeddings).toHaveBeenCalledWith(
         mockQueryEmbedding,
         'user-1',
-        5,
+        11,
       );
     });
 
-    it('should return empty array when search fails', async () => {
+    it('should return empty results when search fails', async () => {
       embeddingsService.getEmbeddingsForQuery = jest
         .fn()
         .mockRejectedValue(new Error('Search failed'));
@@ -216,10 +227,14 @@ describe('KnowledgeService', () => {
         'search term',
       );
 
-      expect(results).toEqual([]);
+      expect(results).toEqual({
+        results: [],
+        total: 0,
+        hasMore: false,
+      });
     });
 
-    it('should use default count of 3', async () => {
+    it('should use default skip=0 and take=10', async () => {
       embeddingsService.getEmbeddingsForQuery = jest
         .fn()
         .mockResolvedValue(mockQueryEmbedding);
@@ -227,11 +242,98 @@ describe('KnowledgeService', () => {
 
       await knowledgeService.searchText('user-1', 'search term');
 
+      // Default: skip=0, take=10, so fetches 0+10+1=11
       expect(vectorDB.queryEmbeddings).toHaveBeenCalledWith(
         mockQueryEmbedding,
         'user-1',
-        3,
+        11,
       );
+    });
+
+    it('should indicate hasMore when more results exist', async () => {
+      const mockResults: IVectorDocument[] = [
+        {
+          id: '1',
+          content: 'Result 1',
+          embedding: [],
+          metadata: { source: 'doc-1', userId: 'user-1' },
+          score: 0.95,
+        },
+        {
+          id: '2',
+          content: 'Result 2',
+          embedding: [],
+          metadata: { source: 'doc-2', userId: 'user-1' },
+          score: 0.85,
+        },
+        {
+          id: '3',
+          content: 'Result 3',
+          embedding: [],
+          metadata: { source: 'doc-3', userId: 'user-1' },
+          score: 0.75,
+        },
+      ];
+
+      embeddingsService.getEmbeddingsForQuery = jest
+        .fn()
+        .mockResolvedValue(mockQueryEmbedding);
+      vectorDB.queryEmbeddings = jest.fn().mockResolvedValue(mockResults);
+
+      // Request take=2, but 3 results exist
+      const results = await knowledgeService.searchText(
+        'user-1',
+        'search term',
+        0,
+        2,
+      );
+
+      expect(results.results).toHaveLength(2);
+      expect(results.hasMore).toBe(true);
+      expect(results.total).toBe(3);
+    });
+
+    it('should support pagination with skip', async () => {
+      const mockResults: IVectorDocument[] = [
+        {
+          id: '1',
+          content: 'Result 1',
+          embedding: [],
+          metadata: { source: 'doc-1', userId: 'user-1' },
+          score: 0.95,
+        },
+        {
+          id: '2',
+          content: 'Result 2',
+          embedding: [],
+          metadata: { source: 'doc-2', userId: 'user-1' },
+          score: 0.85,
+        },
+        {
+          id: '3',
+          content: 'Result 3',
+          embedding: [],
+          metadata: { source: 'doc-3', userId: 'user-1' },
+          score: 0.75,
+        },
+      ];
+
+      embeddingsService.getEmbeddingsForQuery = jest
+        .fn()
+        .mockResolvedValue(mockQueryEmbedding);
+      vectorDB.queryEmbeddings = jest.fn().mockResolvedValue(mockResults);
+
+      // Skip first 2 results
+      const results = await knowledgeService.searchText(
+        'user-1',
+        'search term',
+        2,
+        2,
+      );
+
+      expect(results.results).toHaveLength(1);
+      expect(results.results[0].content).toBe('Result 3');
+      expect(results.hasMore).toBe(false);
     });
   });
 

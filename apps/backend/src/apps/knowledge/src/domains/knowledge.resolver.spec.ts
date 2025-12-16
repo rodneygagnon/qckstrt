@@ -57,13 +57,64 @@ describe('KnowledgeResolver', () => {
   });
 
   describe('searchText', () => {
-    it('should return search results from knowledge service', async () => {
-      const mockResults = ['chunk 1', 'chunk 2', 'chunk 3'];
+    it('should return paginated search results from knowledge service', async () => {
+      const mockResults = {
+        results: [
+          { content: 'chunk 1', documentId: 'doc-1', score: 0.95 },
+          { content: 'chunk 2', documentId: 'doc-1', score: 0.85 },
+          { content: 'chunk 3', documentId: 'doc-2', score: 0.75 },
+        ],
+        total: 3,
+        hasMore: false,
+      };
       knowledgeService.searchText = jest.fn().mockResolvedValue(mockResults);
 
       const result = await knowledgeResolver.searchText(
         'user-1',
         'search term',
+        0,
+        10,
+      );
+
+      expect(result).toEqual(mockResults);
+      expect(knowledgeService.searchText).toHaveBeenCalledWith(
+        'user-1',
+        'search term',
+        0,
+        10,
+      );
+    });
+
+    it('should return empty results when no matches found', async () => {
+      const emptyResults = {
+        results: [],
+        total: 0,
+        hasMore: false,
+      };
+      knowledgeService.searchText = jest.fn().mockResolvedValue(emptyResults);
+
+      const result = await knowledgeResolver.searchText(
+        'user-1',
+        'unknown term',
+        0,
+        10,
+      );
+
+      expect(result).toEqual(emptyResults);
+    });
+
+    it('should support pagination with skip and take', async () => {
+      const mockResults = {
+        results: [{ content: 'chunk 11', documentId: 'doc-3', score: 0.65 }],
+        total: 11,
+        hasMore: false,
+      };
+      knowledgeService.searchText = jest.fn().mockResolvedValue(mockResults);
+
+      const result = await knowledgeResolver.searchText(
+        'user-1',
+        'search term',
+        10,
         5,
       );
 
@@ -71,20 +122,9 @@ describe('KnowledgeResolver', () => {
       expect(knowledgeService.searchText).toHaveBeenCalledWith(
         'user-1',
         'search term',
+        10,
         5,
       );
-    });
-
-    it('should return empty array when no results found', async () => {
-      knowledgeService.searchText = jest.fn().mockResolvedValue([]);
-
-      const result = await knowledgeResolver.searchText(
-        'user-1',
-        'unknown term',
-        3,
-      );
-
-      expect(result).toEqual([]);
     });
   });
 

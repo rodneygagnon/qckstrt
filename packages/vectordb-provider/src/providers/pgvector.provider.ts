@@ -223,6 +223,7 @@ export class PgVectorProvider implements IVectorDBProvider {
           user_id: string;
           content: string;
           embedding_text: string;
+          similarity: number;
         }) => ({
           id: row.id,
           embedding: this.parseEmbedding(row.embedding_text),
@@ -231,6 +232,7 @@ export class PgVectorProvider implements IVectorDBProvider {
             userId: row.user_id,
           },
           content: row.content,
+          score: row.similarity,
         }),
       );
 
