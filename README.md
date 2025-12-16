@@ -170,7 +170,7 @@ docker-compose logs -f   # View logs
 
 ## License
 
-Apache 2.0 - See LICENSE file for details
+GNU Affero General Public License v3.0 (AGPL-3.0) - See [LICENSE](LICENSE) file for details
 
 ## Support
 
