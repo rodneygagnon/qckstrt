@@ -4,6 +4,7 @@ import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { Action } from 'src/common/enums/action.enum';
 import { Permissions } from 'src/common/decorators/permissions.decorator';
+import { PaginatedSearchResults } from './models/search-result.model';
 
 /**
  * Knowledge Resolver
@@ -28,7 +29,7 @@ export class KnowledgeResolver {
     return this.knowledgeService.answerQuery(userId, query);
   }
 
-  @Query(() => [String])
+  @Query(() => PaginatedSearchResults)
   @UseGuards(AuthGuard)
   @Permissions({
     action: Action.Read,
@@ -38,9 +39,10 @@ export class KnowledgeResolver {
   async searchText(
     @Args({ name: 'userId', type: () => ID }) userId: string,
     @Args('query') query: string,
-    @Args({ name: 'count', type: () => Int, defaultValue: 3 }) count: number,
-  ): Promise<string[]> {
-    return this.knowledgeService.searchText(userId, query, count);
+    @Args({ name: 'skip', type: () => Int, defaultValue: 0 }) skip: number,
+    @Args({ name: 'take', type: () => Int, defaultValue: 10 }) take: number,
+  ): Promise<PaginatedSearchResults> {
+    return this.knowledgeService.searchText(userId, query, skip, take);
   }
 
   @Mutation(() => Boolean)

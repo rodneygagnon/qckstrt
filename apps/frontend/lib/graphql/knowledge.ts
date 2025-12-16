@@ -19,14 +19,27 @@ export interface AnswerQueryVars {
   query: string;
 }
 
+export interface SearchResult {
+  content: string;
+  documentId: string;
+  score: number;
+}
+
+export interface PaginatedSearchResults {
+  results: SearchResult[];
+  total: number;
+  hasMore: boolean;
+}
+
 export interface SearchTextData {
-  searchText: string[];
+  searchText: PaginatedSearchResults;
 }
 
 export interface SearchTextVars {
   userId: string;
   query: string;
-  count?: number;
+  skip?: number;
+  take?: number;
 }
 
 export const INDEX_DOCUMENT = gql`
@@ -42,7 +55,15 @@ export const ANSWER_QUERY = gql`
 `;
 
 export const SEARCH_TEXT = gql`
-  query SearchText($userId: ID!, $query: String!, $count: Int) {
-    searchText(userId: $userId, query: $query, count: $count)
+  query SearchText($userId: ID!, $query: String!, $skip: Int, $take: Int) {
+    searchText(userId: $userId, query: $query, skip: $skip, take: $take) {
+      results {
+        content
+        documentId
+        score
+      }
+      total
+      hasMore
+    }
   }
 `;

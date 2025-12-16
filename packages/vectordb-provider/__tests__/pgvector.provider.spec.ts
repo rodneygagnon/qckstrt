@@ -218,6 +218,7 @@ describe("PgVectorProvider", () => {
         embedding: [0.1, 0.2],
         metadata: { source: "doc-1", userId: "user-1" },
         content: "content 1",
+        score: 0.95,
       });
     });
 

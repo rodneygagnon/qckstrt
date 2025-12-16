@@ -481,7 +481,16 @@ describe("RAG Demo Page", () => {
 
     it("should call searchText query when Search Only is clicked", async () => {
       mockSearchText.mockResolvedValue({
-        data: { searchText: ["Chunk 1", "Chunk 2"] },
+        data: {
+          searchText: {
+            results: [
+              { content: "Chunk 1", documentId: "doc-1", score: 0.95 },
+              { content: "Chunk 2", documentId: "doc-1", score: 0.85 },
+            ],
+            total: 2,
+            hasMore: false,
+          },
+        },
       });
 
       const queryInput = screen.getByPlaceholderText(
@@ -497,9 +506,18 @@ describe("RAG Demo Page", () => {
       });
     });
 
-    it("should display search results after successful search", async () => {
+    it("should display search results with metadata after successful search", async () => {
       mockSearchText.mockResolvedValue({
-        data: { searchText: ["Result chunk 1", "Result chunk 2"] },
+        data: {
+          searchText: {
+            results: [
+              { content: "Result chunk 1", documentId: "doc-1", score: 0.95 },
+              { content: "Result chunk 2", documentId: "doc-2", score: 0.85 },
+            ],
+            total: 2,
+            hasMore: false,
+          },
+        },
       });
 
       const queryInput = screen.getByPlaceholderText(
@@ -514,6 +532,12 @@ describe("RAG Demo Page", () => {
         expect(screen.getByText("Relevant Chunks (2)")).toBeInTheDocument();
         expect(screen.getByText("Result chunk 1")).toBeInTheDocument();
         expect(screen.getByText("Result chunk 2")).toBeInTheDocument();
+        // Check document IDs are displayed
+        expect(screen.getByText("doc-1")).toBeInTheDocument();
+        expect(screen.getByText("doc-2")).toBeInTheDocument();
+        // Check scores are displayed
+        expect(screen.getByText("Score: 95.0%")).toBeInTheDocument();
+        expect(screen.getByText("Score: 85.0%")).toBeInTheDocument();
       });
     });
 
@@ -536,6 +560,66 @@ describe("RAG Demo Page", () => {
 
       // Empty results - no chunks should be displayed
       expect(screen.queryByText(/Relevant Chunks/)).not.toBeInTheDocument();
+    });
+
+    it("should show Load More button when hasMore is true", async () => {
+      mockSearchText.mockResolvedValue({
+        data: {
+          searchText: {
+            results: [
+              { content: "Chunk 1", documentId: "doc-1", score: 0.95 },
+              { content: "Chunk 2", documentId: "doc-1", score: 0.85 },
+            ],
+            total: 5,
+            hasMore: true,
+          },
+        },
+      });
+
+      const queryInput = screen.getByPlaceholderText(
+        "e.g., What are the main topics discussed in the document?",
+      );
+      fireEvent.change(queryInput, { target: { value: "What is QCKSTRT?" } });
+
+      const searchButton = screen.getByRole("button", { name: /Search Only/i });
+      fireEvent.click(searchButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText("Relevant Chunks (2 of 5)"),
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole("button", { name: /Load More Results/i }),
+        ).toBeInTheDocument();
+      });
+    });
+
+    it("should not show Load More button when hasMore is false", async () => {
+      mockSearchText.mockResolvedValue({
+        data: {
+          searchText: {
+            results: [{ content: "Chunk 1", documentId: "doc-1", score: 0.95 }],
+            total: 1,
+            hasMore: false,
+          },
+        },
+      });
+
+      const queryInput = screen.getByPlaceholderText(
+        "e.g., What are the main topics discussed in the document?",
+      );
+      fireEvent.change(queryInput, { target: { value: "What is QCKSTRT?" } });
+
+      const searchButton = screen.getByRole("button", { name: /Search Only/i });
+      fireEvent.click(searchButton);
+
+      await waitFor(() => {
+        expect(screen.getByText("Relevant Chunks (1)")).toBeInTheDocument();
+      });
+
+      expect(
+        screen.queryByRole("button", { name: /Load More Results/i }),
+      ).not.toBeInTheDocument();
     });
 
     it("should handle query on Enter key press", async () => {
@@ -588,7 +672,70 @@ describe("RAG Demo Page", () => {
       });
 
       // Results should be empty (cleared on error)
-      expect(screen.queryByText("Relevant Chunks")).not.toBeInTheDocument();
+      expect(screen.queryByText(/Relevant Chunks/)).not.toBeInTheDocument();
+    });
+
+    it("should load more results when Load More is clicked", async () => {
+      // First search returns results with hasMore=true
+      mockSearchText
+        .mockResolvedValueOnce({
+          data: {
+            searchText: {
+              results: [
+                { content: "Chunk 1", documentId: "doc-1", score: 0.95 },
+                { content: "Chunk 2", documentId: "doc-1", score: 0.85 },
+              ],
+              total: 4,
+              hasMore: true,
+            },
+          },
+        })
+        // Second search (Load More) returns additional results
+        .mockResolvedValueOnce({
+          data: {
+            searchText: {
+              results: [
+                { content: "Chunk 3", documentId: "doc-2", score: 0.75 },
+                { content: "Chunk 4", documentId: "doc-2", score: 0.65 },
+              ],
+              total: 4,
+              hasMore: false,
+            },
+          },
+        });
+
+      const queryInput = screen.getByPlaceholderText(
+        "e.g., What are the main topics discussed in the document?",
+      );
+      fireEvent.change(queryInput, { target: { value: "What is QCKSTRT?" } });
+
+      const searchButton = screen.getByRole("button", { name: /Search Only/i });
+      fireEvent.click(searchButton);
+
+      await waitFor(() => {
+        expect(
+          screen.getByText("Relevant Chunks (2 of 4)"),
+        ).toBeInTheDocument();
+      });
+
+      // Click Load More
+      const loadMoreButton = screen.getByRole("button", {
+        name: /Load More Results/i,
+      });
+      fireEvent.click(loadMoreButton);
+
+      await waitFor(() => {
+        // Should now show all 4 chunks
+        expect(screen.getByText("Chunk 1")).toBeInTheDocument();
+        expect(screen.getByText("Chunk 2")).toBeInTheDocument();
+        expect(screen.getByText("Chunk 3")).toBeInTheDocument();
+        expect(screen.getByText("Chunk 4")).toBeInTheDocument();
+      });
+
+      // Load More button should be gone since hasMore is now false
+      expect(
+        screen.queryByRole("button", { name: /Load More Results/i }),
+      ).not.toBeInTheDocument();
     });
   });
 
