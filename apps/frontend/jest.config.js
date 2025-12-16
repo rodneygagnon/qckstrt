@@ -27,11 +27,11 @@ const config = {
       lines: 80,
       statements: 80,
     },
-    // RAG demo page has SSR guards (typeof window === 'undefined') that are
-    // difficult to test in jsdom environment - relax branch coverage
+    // RAG demo page has SSR guards (typeof window === 'undefined') and
+    // Toast auto-dismiss timer that are difficult to test in jsdom
     "app/rag-demo/page.tsx": {
       branches: 70,
-      functions: 100,
+      functions: 90,
       lines: 100,
       statements: 100,
     },

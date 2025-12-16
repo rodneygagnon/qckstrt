@@ -52,10 +52,6 @@ Object.defineProperty(window, "localStorage", {
   value: localStorageMock,
 });
 
-// Mock window.alert
-const mockAlert = jest.fn();
-window.alert = mockAlert;
-
 import RAGDemo from "../app/rag-demo/page";
 
 describe("RAG Demo Page", () => {
@@ -251,7 +247,7 @@ describe("RAG Demo Page", () => {
       });
     });
 
-    it("should show success alert on successful indexing", async () => {
+    it("should show success notification on successful indexing", async () => {
       mockIndexDocument.mockResolvedValue({
         data: { indexDocument: true },
       });
@@ -274,9 +270,8 @@ describe("RAG Demo Page", () => {
       fireEvent.click(actionButton!);
 
       await waitFor(() => {
-        expect(mockAlert).toHaveBeenCalledWith(
-          expect.stringContaining("indexed successfully"),
-        );
+        expect(screen.getByRole("alert")).toBeInTheDocument();
+        expect(screen.getByText(/indexed successfully/i)).toBeInTheDocument();
       });
     });
 
@@ -316,7 +311,7 @@ describe("RAG Demo Page", () => {
       });
     });
 
-    it("should show error alert on indexing failure", async () => {
+    it("should show error notification on indexing failure", async () => {
       mockIndexDocument.mockRejectedValue(new Error("Network error"));
 
       const textArea = screen.getByPlaceholderText(
@@ -337,13 +332,14 @@ describe("RAG Demo Page", () => {
       fireEvent.click(actionButton!);
 
       await waitFor(() => {
-        expect(mockAlert).toHaveBeenCalledWith(
-          expect.stringContaining("Error indexing document"),
-        );
+        expect(screen.getByRole("alert")).toBeInTheDocument();
+        expect(
+          screen.getByText(/Error indexing document/i),
+        ).toBeInTheDocument();
       });
     });
 
-    it("should show failure alert when indexDocument returns false", async () => {
+    it("should show failure notification when indexDocument returns false", async () => {
       mockIndexDocument.mockResolvedValue({
         data: { indexDocument: false },
       });
@@ -366,7 +362,10 @@ describe("RAG Demo Page", () => {
       fireEvent.click(actionButton!);
 
       await waitFor(() => {
-        expect(mockAlert).toHaveBeenCalledWith("Failed to index document");
+        expect(screen.getByRole("alert")).toBeInTheDocument();
+        expect(
+          screen.getByText(/Failed to index document/i),
+        ).toBeInTheDocument();
       });
     });
   });
