@@ -36,6 +36,7 @@ All documentation is located in the [`docs/`](docs/) directory:
 - **[Docker Setup](docs/guides/docker-setup.md)** - Infrastructure services
 - **[Database Migration](docs/guides/database-migration.md)** - Migrating between providers
 - **[Provider Pattern](docs/architecture/provider-pattern.md)** - Pluggable architecture
+- **[Audit Logging](docs/guides/audit-logging.md)** - Compliance and security logging
 
 ### For AI/ML Engineers
 - **[AI/ML Pipeline](docs/architecture/ai-ml-pipeline.md)** - Embeddings, RAG, and LLM
@@ -164,6 +165,7 @@ docker-compose logs -f   # View logs
 - ✅ **Multi-Model Support** - Switch between Falcon, Llama, Mistral, etc.
 - ✅ **Pluggable Providers** - Swap databases and AI models via configuration
 - ✅ **GraphQL Federation** - Unified API across microservices
+- ✅ **Audit Logging** - Comprehensive logging with PII masking and retention policies
 - ✅ **100% Self-Hosted** - Complete data control and privacy
 
 ## License

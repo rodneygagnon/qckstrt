@@ -262,12 +262,29 @@ AWS/Cloud Infrastructure
 - Encryption in transit (TLS/HTTPS)
 - Secrets management via Supabase Vault
 
+### Audit Trail
+- Comprehensive audit logging of all GraphQL operations
+- Failed login tracking for security monitoring
+- PII masking protects sensitive data in logs
+- Configurable retention policies for compliance
+- Query audit logs for security investigations
+
 ## Monitoring & Observability
 
 ### Logging
 - Structured logging via NestJS Logger
 - Log levels: debug, log, warn, error
 - Per-service log streams
+
+### Audit Logging
+- **Automatic capture** of all GraphQL operations via global interceptor
+- **PII masking** for sensitive fields (passwords, tokens, emails)
+- **Non-blocking writes** via batched queue (100 entries or 5 seconds)
+- **Configurable retention** with automatic cleanup (default: 90 days)
+- **IP address tracking** with proxy/load balancer support
+- Stored in PostgreSQL with indexed queries by user, entity, and time
+
+**See**: [Audit Logging Guide](../guides/audit-logging.md)
 
 ### Metrics
 - Service health checks

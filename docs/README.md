@@ -23,6 +23,7 @@ Practical guides for common tasks and workflows.
 - [**RAG Demo Guide**](guides/frontend-rag-demo.md) - Using the RAG demo (frontend)
 - [**Frontend Testing**](guides/frontend-testing.md) - Testing the frontend application
 - [**Database Migration**](guides/database-migration.md) - Migrating between database providers
+- [**Audit Logging**](guides/audit-logging.md) - Comprehensive audit logging for compliance and security
 
 ## Quick Links
 
@@ -40,6 +41,7 @@ Practical guides for common tasks and workflows.
 - [Provider Pattern](architecture/provider-pattern.md)
 - [Data Layer Architecture](architecture/data-layer.md)
 - [Database Migration](guides/database-migration.md)
+- [Audit Logging](guides/audit-logging.md)
 
 ### For AI/ML Engineers
 - [AI/ML Pipeline](architecture/ai-ml-pipeline.md)
