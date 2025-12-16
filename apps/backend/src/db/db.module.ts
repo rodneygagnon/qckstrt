@@ -18,7 +18,7 @@ interface DbEntityConfig {
  * Database Module
  *
  * Provides TypeORM configuration using pluggable database providers.
- * Supports PostgreSQL (default, via Supabase) and Aurora (AWS).
+ * Uses PostgreSQL via Supabase (includes pgvector for vectors).
  */
 @Module({})
 export class DbModule {

@@ -10,9 +10,15 @@ export class AuthGuard implements CanActivate {
 
     // Null, undefined or equal to 'undefined' string
     if (request.headers.user == null || request.headers.user === 'undefined') {
-      return Promise.resolve(false);
+      return false;
     }
 
-    return Promise.resolve(await isLoggedIn(JSON.parse(request.headers.user)));
+    try {
+      const user = JSON.parse(request.headers.user);
+      return isLoggedIn(user);
+    } catch {
+      // Malformed JSON in user header
+      return false;
+    }
   }
 }

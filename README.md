@@ -73,7 +73,7 @@ All documentation is located in the [`docs/`](docs/) directory:
 |-----------|-----------------|---------------------|
 | **Embeddings** | Xenova (in-process) | Ollama |
 | **Vector DB** | pgvector (PostgreSQL) | Custom implementations |
-| **Relational DB** | PostgreSQL (via Supabase) | Aurora PostgreSQL |
+| **Relational DB** | PostgreSQL (via Supabase) | RDS PostgreSQL |
 | **LLM** | Ollama (Falcon 7B) | Any Ollama model |
 
 ### Infrastructure
@@ -82,12 +82,10 @@ All documentation is located in the [`docs/`](docs/) directory:
 - [Terraform](https://www.terraform.io) - AWS infrastructure as code
 - [Kubernetes](https://kubernetes.io) - Production orchestration
 
-### AWS Services (Production)
-- [AWS Cognito](https://aws.amazon.com/cognito/) - User authentication
-- [AWS RDS](https://aws.amazon.com/rds/) - Managed PostgreSQL
-- [AWS S3](https://aws.amazon.com/s3/) - Object storage
-- [AWS ECS](https://aws.amazon.com/ecs/) - Container orchestration
-- [AWS Secrets Manager](https://aws.amazon.com/secrets-manager/) - Secrets management
+### Platform Services
+- [Supabase](https://supabase.com) - Auth, Storage, and Vault (self-hosted or cloud)
+- [PostgreSQL](https://www.postgresql.org) + [pgvector](https://github.com/pgvector/pgvector) - Database and vector storage
+- [Ollama](https://ollama.ai) - Local LLM inference
 
 ## Project Structure
 
@@ -98,11 +96,11 @@ qckstrt/
 │   ├── llm-provider/         # LLM integration (Ollama)
 │   ├── embeddings-provider/  # Embeddings (Xenova, Ollama)
 │   ├── vectordb-provider/    # Vector DB (pgvector)
-│   ├── relationaldb-provider/# Relational DB (PostgreSQL, Aurora)
+│   ├── relationaldb-provider/# Relational DB (PostgreSQL)
 │   ├── extraction-provider/  # Text extraction
-│   ├── storage-provider/     # File storage (AWS S3)
-│   ├── auth-provider/        # Authentication (AWS Cognito)
-│   └── secrets-provider/     # Secrets management (AWS Secrets Manager)
+│   ├── storage-provider/     # File storage (Supabase Storage)
+│   ├── auth-provider/        # Authentication (Supabase Auth)
+│   └── secrets-provider/     # Secrets management (Supabase Vault)
 ├── apps/
 │   ├── backend/              # NestJS microservices
 │   │   └── src/
@@ -126,11 +124,11 @@ The `packages/` directory contains reusable, publishable npm packages that provi
 | `@qckstrt/llm-provider` | Ollama LLM integration | 16 |
 | `@qckstrt/embeddings-provider` | Xenova/Ollama embeddings | 24 |
 | `@qckstrt/vectordb-provider` | pgvector (PostgreSQL) | 19 |
-| `@qckstrt/relationaldb-provider` | PostgreSQL, Aurora | 19 |
+| `@qckstrt/relationaldb-provider` | PostgreSQL | 7 |
 | `@qckstrt/extraction-provider` | Text extraction from URLs | 16 |
-| `@qckstrt/storage-provider` | AWS S3 file storage | 17 |
-| `@qckstrt/auth-provider` | AWS Cognito authentication | 23 |
-| `@qckstrt/secrets-provider` | AWS Secrets Manager | 10 |
+| `@qckstrt/storage-provider` | Supabase Storage | 17 |
+| `@qckstrt/auth-provider` | Supabase Auth | 29 |
+| `@qckstrt/secrets-provider` | Supabase Vault | 10 |
 
 ## Development
 

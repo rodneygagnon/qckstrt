@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useLazyQuery } from "@apollo/client/react";
 import {
   INDEX_DOCUMENT,
@@ -19,6 +19,50 @@ import {
   clearDemoUser,
   DemoUser,
 } from "@/lib/apollo-client";
+
+interface Notification {
+  type: "success" | "error";
+  message: string;
+}
+
+function Toast({
+  notification,
+  onClose,
+}: {
+  notification: Notification;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  const bgColor =
+    notification.type === "success"
+      ? "bg-green-600 dark:bg-green-700"
+      : "bg-red-600 dark:bg-red-700";
+
+  return (
+    <div
+      className={`fixed top-4 right-4 z-50 ${bgColor} text-white px-4 py-3 rounded-lg shadow-lg max-w-md animate-slide-in`}
+      role="alert"
+    >
+      <div className="flex items-start gap-3">
+        <span className="text-lg">
+          {notification.type === "success" ? "✓" : "✕"}
+        </span>
+        <p className="flex-1">{notification.message}</p>
+        <button
+          onClick={onClose}
+          className="text-white/80 hover:text-white transition-colors"
+          aria-label="Close notification"
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function getInitialUser(): DemoUser | null {
   if (typeof window === "undefined") return null;
@@ -39,6 +83,7 @@ export default function RAGDemo() {
   const [answer, setAnswer] = useState("");
   const [searchResults, setSearchResults] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<"index" | "query">("index");
+  const [notification, setNotification] = useState<Notification | null>(null);
 
   // Demo user form state
   const [email, setEmail] = useState(getInitialEmail);
@@ -89,17 +134,24 @@ export default function RAGDemo() {
       });
 
       if (result.data?.indexDocument) {
-        alert(`Document "${docId}" indexed successfully!`);
+        setNotification({
+          type: "success",
+          message: `Document "${docId}" indexed successfully!`,
+        });
         setDocumentId("");
         setDocumentText("");
       } else {
-        alert("Failed to index document");
+        setNotification({
+          type: "error",
+          message: "Failed to index document",
+        });
       }
     } catch (error) {
       console.error("Index error:", error);
-      alert(
-        `Error indexing document: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      setNotification({
+        type: "error",
+        message: `Error indexing document: ${error instanceof Error ? error.message : "Unknown error"}`,
+      });
     }
   };
 
@@ -185,6 +237,12 @@ export default function RAGDemo() {
 
   return (
     <main className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
+      {notification && (
+        <Toast
+          notification={notification}
+          onClose={() => setNotification(null)}
+        />
+      )}
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">

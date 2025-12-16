@@ -5,5 +5,4 @@ export enum DBConnection {
 
 export enum DBType {
   Postgres = 'postgres',
-  AuroraPostgres = 'aurora-postgres',
 }

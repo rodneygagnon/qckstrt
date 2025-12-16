@@ -107,10 +107,12 @@ describe('AuthGuard', () => {
       expect(result).toBe(false);
     });
 
-    it('should handle malformed JSON gracefully', async () => {
+    it('should return false for malformed JSON in user header', async () => {
       const context = createMockContext({ user: 'not-valid-json' });
 
-      await expect(guard.canActivate(context)).rejects.toThrow();
+      const result = await guard.canActivate(context);
+
+      expect(result).toBe(false);
     });
   });
 });
