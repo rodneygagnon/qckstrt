@@ -12,6 +12,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloServerPluginInlineTrace } from '@apollo/server/plugin/inlineTrace';
 import { LoggingModule, LogLevel } from '@qckstrt/logging-provider';
+import depthLimit from 'graphql-depth-limit';
 
 import { AuthModule } from './domains/auth/auth.module';
 import { UsersModule } from './domains/user/users.module';
@@ -48,6 +49,7 @@ import { PoliciesGuard } from 'src/common/guards/policies.guard';
       driver: ApolloFederationDriver,
       autoSchemaFile: { path: 'schema.gql', federation: 2 },
       plugins: [ApolloServerPluginInlineTrace()],
+      validationRules: [depthLimit(10)],
     }),
     CaslModule.forRoot(),
     UsersModule,
