@@ -51,6 +51,7 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.1.9",
     "@nestjs/swagger": "^11.2.3",
+    "@nestjs/throttler": "^6.5.0",
     "@nestjs/typeorm": "^11.0.0",
     "@qckstrt/auth-provider": "workspace:*",
     "@qckstrt/common": "workspace:*",

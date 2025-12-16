@@ -58,7 +58,7 @@ export class KnowledgeResolver {
     try {
       await this.knowledgeService.indexDocument(userId, documentId, text);
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
