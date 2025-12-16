@@ -5,6 +5,7 @@ import { AuditLogEntity } from '../../db/entities/audit-log.entity';
 import { AuditAction } from '../enums/audit-action.enum';
 import { IAuditLogCreate } from '../interfaces/audit.interface';
 import { LOGGER } from '@qckstrt/logging-provider';
+import { AUDIT_CONFIG } from '../audit/audit.module';
 
 describe('AuditLogService', () => {
   let service: AuditLogService;
@@ -13,6 +14,7 @@ describe('AuditLogService', () => {
     create: jest.fn(),
     save: jest.fn(),
     insert: jest.fn(),
+    delete: jest.fn(),
   };
 
   const mockLogger = {
@@ -20,6 +22,11 @@ describe('AuditLogService', () => {
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn(),
+  };
+
+  const defaultConfig = {
+    retentionDays: 90,
+    cleanupIntervalMs: 86400000,
   };
 
   beforeEach(async () => {
@@ -36,6 +43,10 @@ describe('AuditLogService', () => {
         {
           provide: LOGGER,
           useValue: mockLogger,
+        },
+        {
+          provide: AUDIT_CONFIG,
+          useValue: defaultConfig,
         },
       ],
     }).compile();
@@ -205,6 +216,99 @@ describe('AuditLogService', () => {
       await service.onModuleDestroy();
 
       expect(mockRepository.save).toHaveBeenCalled();
+    });
+  });
+
+  describe('retention cleanup', () => {
+    it('should delete records older than retention period', async () => {
+      mockRepository.delete.mockResolvedValue({ affected: 50 });
+
+      const deletedCount = await service.cleanupOldRecords();
+
+      expect(mockRepository.delete).toHaveBeenCalledWith({
+        timestamp: expect.any(Object),
+      });
+      expect(deletedCount).toBe(50);
+    });
+
+    it('should return 0 when no records deleted', async () => {
+      mockRepository.delete.mockResolvedValue({ affected: 0 });
+
+      const deletedCount = await service.cleanupOldRecords();
+
+      expect(deletedCount).toBe(0);
+    });
+
+    it('should handle delete errors gracefully', async () => {
+      mockRepository.delete.mockRejectedValue(new Error('Database error'));
+
+      const deletedCount = await service.cleanupOldRecords();
+
+      expect(deletedCount).toBe(0);
+    });
+
+    it('should run cleanup on module init', async () => {
+      mockRepository.delete.mockResolvedValue({ affected: 10 });
+
+      await service.onModuleInit();
+
+      expect(mockRepository.delete).toHaveBeenCalled();
+    });
+
+    it('should log cleanup results when records deleted', async () => {
+      mockRepository.delete.mockResolvedValue({ affected: 100 });
+
+      await service.cleanupOldRecords();
+
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        expect.stringContaining('Cleaned up 100 audit log records'),
+        'AuditLogService',
+      );
+    });
+  });
+
+  describe('retention cleanup with zero retention', () => {
+    let serviceWithNoRetention: AuditLogService;
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          AuditLogService,
+          {
+            provide: getRepositoryToken(AuditLogEntity),
+            useValue: mockRepository,
+          },
+          {
+            provide: LOGGER,
+            useValue: mockLogger,
+          },
+          {
+            provide: AUDIT_CONFIG,
+            useValue: { retentionDays: 0, cleanupIntervalMs: 86400000 },
+          },
+        ],
+      }).compile();
+
+      serviceWithNoRetention = module.get<AuditLogService>(AuditLogService);
+    });
+
+    afterEach(async () => {
+      await serviceWithNoRetention.onModuleDestroy();
+    });
+
+    it('should skip cleanup when retention is 0 (indefinite)', async () => {
+      const deletedCount = await serviceWithNoRetention.cleanupOldRecords();
+
+      expect(mockRepository.delete).not.toHaveBeenCalled();
+      expect(deletedCount).toBe(0);
+    });
+
+    it('should not start cleanup timer on init when retention is 0', async () => {
+      mockRepository.delete.mockResolvedValue({ affected: 0 });
+
+      await serviceWithNoRetention.onModuleInit();
+
+      expect(mockRepository.delete).not.toHaveBeenCalled();
     });
   });
 });

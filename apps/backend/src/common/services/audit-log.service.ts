@@ -3,31 +3,52 @@ import {
   Injectable,
   Logger,
   OnModuleDestroy,
+  OnModuleInit,
   Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThan, Repository } from 'typeorm';
 import { AuditLogEntity } from '../../db/entities/audit-log.entity';
 import { IAuditLogCreate } from '../interfaces/audit.interface';
 import { maskSensitiveData } from '../utils/pii-masker';
 import { ILogger, LOGGER } from '@qckstrt/logging-provider';
+import { AUDIT_CONFIG } from '../audit/audit.module';
+
+export interface AuditConfig {
+  retentionDays: number;
+  cleanupIntervalMs: number;
+}
 
 @Injectable()
-export class AuditLogService implements OnModuleDestroy {
+export class AuditLogService implements OnModuleInit, OnModuleDestroy {
   private readonly logger: Logger;
   private readonly writeQueue: IAuditLogCreate[] = [];
   private isProcessing = false;
   private readonly batchSize = 100;
   private readonly flushInterval = 5000; // 5 seconds
   private flushTimer: NodeJS.Timeout | null = null;
+  private cleanupTimer: NodeJS.Timeout | null = null;
 
   constructor(
     @InjectRepository(AuditLogEntity)
     private readonly auditLogRepo: Repository<AuditLogEntity>,
     @Optional() @Inject(LOGGER) private structuredLogger?: ILogger,
+    @Optional()
+    @Inject(AUDIT_CONFIG)
+    private readonly config?: AuditConfig,
   ) {
     this.logger = new Logger(AuditLogService.name);
     this.startPeriodicFlush();
+  }
+
+  async onModuleInit(): Promise<void> {
+    // Start retention cleanup if configured
+    const retentionDays = this.config?.retentionDays ?? 90;
+    if (retentionDays > 0) {
+      this.startRetentionCleanup();
+      // Run initial cleanup on startup
+      await this.cleanupOldRecords();
+    }
   }
 
   /**
@@ -116,9 +137,63 @@ export class AuditLogService implements OnModuleDestroy {
       clearInterval(this.flushTimer);
     }
 
+    if (this.cleanupTimer) {
+      clearInterval(this.cleanupTimer);
+    }
+
     // Process remaining queue entries
     while (this.writeQueue.length > 0) {
       await this.processQueue();
+    }
+  }
+
+  /**
+   * Start periodic retention cleanup
+   */
+  private startRetentionCleanup(): void {
+    const intervalMs = this.config?.cleanupIntervalMs ?? 86400000; // 24 hours default
+    this.cleanupTimer = setInterval(() => {
+      this.cleanupOldRecords();
+    }, intervalMs);
+
+    this.structuredLogger?.info(
+      `Audit log retention cleanup scheduled every ${intervalMs / 3600000} hours`,
+      'AuditLogService',
+    );
+  }
+
+  /**
+   * Delete audit log records older than retention period
+   */
+  async cleanupOldRecords(): Promise<number> {
+    const retentionDays = this.config?.retentionDays ?? 90;
+    if (retentionDays <= 0) {
+      return 0;
+    }
+
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - retentionDays);
+
+    try {
+      const result = await this.auditLogRepo.delete({
+        timestamp: LessThan(cutoffDate),
+      });
+
+      const deletedCount = result.affected ?? 0;
+
+      if (deletedCount > 0) {
+        this.structuredLogger?.info(
+          `Cleaned up ${deletedCount} audit log records older than ${retentionDays} days`,
+          'AuditLogService',
+        );
+      }
+
+      return deletedCount;
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to cleanup old audit logs: ${errorMessage}`);
+      return 0;
     }
   }
 }
