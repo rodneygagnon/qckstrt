@@ -1,0 +1,25 @@
+export enum AuditAction {
+  // Authentication
+  LOGIN = 'LOGIN',
+  LOGOUT = 'LOGOUT',
+  LOGIN_FAILED = 'LOGIN_FAILED',
+  PASSWORD_CHANGE = 'PASSWORD_CHANGE',
+  PASSWORD_RESET = 'PASSWORD_RESET',
+
+  // CRUD Operations
+  CREATE = 'CREATE',
+  READ = 'READ',
+  UPDATE = 'UPDATE',
+  DELETE = 'DELETE',
+
+  // Bulk Operations
+  BULK_READ = 'BULK_READ',
+  BULK_UPDATE = 'BULK_UPDATE',
+  BULK_DELETE = 'BULK_DELETE',
+
+  // Special Operations
+  UPLOAD = 'UPLOAD',
+  DOWNLOAD = 'DOWNLOAD',
+  SEARCH = 'SEARCH',
+  EXPORT = 'EXPORT',
+}
