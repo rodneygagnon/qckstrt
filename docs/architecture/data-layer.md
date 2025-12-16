@@ -52,34 +52,6 @@ This starts PostgreSQL as part of the Supabase stack, along with Auth, Storage, 
 
 ---
 
-### Provider: Aurora PostgreSQL (AWS Alternative)
-
-**When to use**: AWS deployments, serverless architecture
-
-**Configuration**:
-```bash
-RELATIONAL_DB_PROVIDER=aurora
-RELATIONAL_DB_SECRET_ARN=arn:aws:secretsmanager:...
-RELATIONAL_DB_RESOURCE_ARN=arn:aws:rds:...
-RELATIONAL_DB_DATABASE=qckstrt
-```
-
-**Pros**:
-- ✅ Serverless auto-scaling
-- ✅ Pay-per-request pricing
-- ✅ Automatic backups
-- ✅ Multi-AZ by default
-- ✅ pgvector support
-
-**Cons**:
-- ❌ AWS-specific
-- ❌ Cold start latency
-- ❌ Higher cost for constant load
-
-**File Location**: `packages/relationaldb-provider/src/providers/aurora.provider.ts`
-
----
-
 ## Vector Database Layer
 
 ### Purpose

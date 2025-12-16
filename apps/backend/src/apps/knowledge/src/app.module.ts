@@ -29,7 +29,7 @@ import { PoliciesGuard } from 'src/common/guards/policies.guard';
  * Knowledge App Module
  *
  * Handles semantic search and RAG operations.
- * Uses ChromaDB for vector storage and embeddings for text processing.
+ * Uses pgvector for vector storage and embeddings for text processing.
  */
 @Module({
   imports: [
