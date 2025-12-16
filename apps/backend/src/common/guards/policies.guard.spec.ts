@@ -26,14 +26,6 @@ describe('PoliciesGuard', () => {
     clearance: 'Secret',
   };
 
-  const mockAdminUser = {
-    id: 'admin-123',
-    email: 'admin@example.com',
-    roles: [Role.Admin],
-    department: 'IT',
-    clearance: 'TopSecret',
-  };
-
   beforeEach(() => {
     reflector = {
       getAllAndOverride: jest.fn(),
