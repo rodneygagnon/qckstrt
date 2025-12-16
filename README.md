@@ -2,11 +2,13 @@
 
 A full-stack platform with 100% open-source AI/ML capabilities for semantic search and RAG (Retrieval-Augmented Generation).
 
+> **Source of Truth**: [Codeberg](https://codeberg.org/CommonSenseLabs/qckstrt) | **Mirror**: [GitHub](https://github.com/rodneygagnon/qckstrt)
+
 ## 🚀 Quick Start
 
 ```bash
 # Clone and install
-git clone https://github.com/your-org/qckstrt.git
+git clone https://codeberg.org/CommonSenseLabs/qckstrt.git
 cd qckstrt
 npm install
 
@@ -175,5 +177,5 @@ GNU Affero General Public License v3.0 (AGPL-3.0) - See [LICENSE](LICENSE) file 
 ## Support
 
 - 📖 Documentation: [docs/README.md](docs/README.md)
-- 🐛 Issues: [GitHub Issues](https://github.com/your-org/qckstrt/issues)
-- 💬 Discussions: [GitHub Discussions](https://github.com/your-org/qckstrt/discussions)
+- 🐛 Issues: [Codeberg Issues](https://codeberg.org/CommonSenseLabs/qckstrt/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/rodneygagnon/qckstrt/discussions) (mirror)
