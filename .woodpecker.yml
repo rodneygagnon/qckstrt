@@ -1,0 +1,48 @@
+when:
+  - event: pull_request
+  - event: push
+    branch: main
+
+variables:
+  - &node_image "node:20-slim"
+  - &playwright_image "mcr.microsoft.com/playwright:v1.57.0-jammy"
+
+steps:
+  install:
+    image: *node_image
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@latest --activate
+      - pnpm install --frozen-lockfile
+
+  lint:
+    image: *node_image
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@latest --activate
+      - pnpm install --frozen-lockfile
+      - pnpm --filter frontend lint
+      - pnpm --filter backend lint
+    depends_on:
+      - install
+
+  unit-tests:
+    image: *node_image
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@latest --activate
+      - pnpm install --frozen-lockfile
+      - pnpm --filter frontend test
+      - pnpm --filter backend test
+    depends_on:
+      - install
+
+  e2e-tests:
+    image: *playwright_image
+    commands:
+      - corepack enable
+      - corepack prepare pnpm@latest --activate
+      - pnpm install --frozen-lockfile
+      - cd apps/frontend && pnpm e2e
+    depends_on:
+      - unit-tests
