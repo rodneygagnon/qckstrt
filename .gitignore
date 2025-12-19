@@ -14,3 +14,9 @@ dist/
 
 # Infrastructure backup (old modules)
 infra-backup/
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
