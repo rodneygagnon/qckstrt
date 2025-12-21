@@ -41,10 +41,13 @@ export class AuditModule {
         useFactory: (configService: ConfigService) => ({
           retentionDays:
             options.retentionDays ??
-            parseInt(configService.get('AUDIT_RETENTION_DAYS') || '90', 10),
+            Number.parseInt(
+              configService.get('AUDIT_RETENTION_DAYS') || '90',
+              10,
+            ),
           cleanupIntervalMs:
             options.cleanupIntervalMs ??
-            parseInt(
+            Number.parseInt(
               configService.get('AUDIT_CLEANUP_INTERVAL_MS') || '86400000',
               10,
             ),

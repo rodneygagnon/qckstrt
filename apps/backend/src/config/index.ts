@@ -90,7 +90,7 @@ export default async (): Promise<IAppConfig> => {
     throw new Error('Failed to access secrets');
   }
 
-  return Promise.resolve({
+  return {
     project,
     application,
     version,
@@ -102,5 +102,5 @@ export default async (): Promise<IAppConfig> => {
     db: secrets.db as IDBConfig,
     file: secrets.file as IFileConfig,
     ai: secrets.ai as IAIConfig,
-  });
+  };
 };

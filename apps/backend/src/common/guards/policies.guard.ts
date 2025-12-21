@@ -67,7 +67,7 @@ export class PoliciesGuard<
       ) || [];
 
     if (isEmpty(requiredPolicies)) {
-      return Promise.resolve(true);
+      return true;
     }
 
     const request = ctx.getContext().req;
@@ -102,7 +102,7 @@ export class PoliciesGuard<
       return this.checkPolicies(requiredPolicies, ability, conditionContext);
     }
 
-    return Promise.resolve(false);
+    return false;
   }
 
   /**

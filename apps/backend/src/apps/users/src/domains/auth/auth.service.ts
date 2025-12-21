@@ -70,36 +70,36 @@ export class AuthService {
     const user = await this.usersService.findById(id);
 
     if (user === null) {
-      return Promise.resolve(false);
+      return false;
     }
 
     await this.authProvider.confirmUser(user.email);
 
-    return Promise.resolve(true);
+    return true;
   }
 
   async addPermission(id: string, role: Role): Promise<boolean> {
     const user = await this.usersService.findById(id);
 
     if (user === null) {
-      return Promise.resolve(false);
+      return false;
     }
 
     await this.authProvider.addToGroup(user.email, role);
 
-    return Promise.resolve(true);
+    return true;
   }
 
   async removePermission(id: string, role: Role): Promise<boolean> {
     const user = await this.usersService.findById(id);
 
     if (user === null) {
-      return Promise.resolve(false);
+      return false;
     }
 
     await this.authProvider.removeFromGroup(user.email, role);
 
-    return Promise.resolve(true);
+    return true;
   }
 
   async deleteUser(username: string): Promise<boolean> {
@@ -138,7 +138,7 @@ export class AuthService {
     const user = await this.usersService.findByEmail(email);
 
     if (user === null) {
-      return Promise.resolve(true);
+      return true;
     }
 
     return this.authProvider.forgotPassword(email);
@@ -153,7 +153,7 @@ export class AuthService {
     );
 
     if (user === null) {
-      return Promise.resolve(true);
+      return true;
     }
 
     return this.authProvider.confirmForgotPassword(

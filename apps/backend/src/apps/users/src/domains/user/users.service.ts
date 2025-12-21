@@ -109,14 +109,14 @@ export class UsersService {
       throw dbError;
     }
 
-    return Promise.resolve(true);
+    return true;
   }
 
   async delete(id: string): Promise<boolean> {
     const user = await this.userRepo.findOne({ where: { id } });
 
     if (user === null) {
-      return Promise.resolve(false);
+      return false;
     }
 
     try {
@@ -131,6 +131,6 @@ export class UsersService {
       throw error;
     }
 
-    return Promise.resolve(true);
+    return true;
   }
 }
