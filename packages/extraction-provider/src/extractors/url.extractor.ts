@@ -46,9 +46,10 @@ export class URLExtractor implements ITextExtractor {
       const html = await response.text();
 
       // Basic HTML tag stripping (very naive - use a proper library in production)
+      // Using simple patterns to avoid catastrophic backtracking
       const text = html
-        .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
-        .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
         .replace(/<[^>]+>/g, " ")
         .replace(/\s+/g, " ")
         .trim();
