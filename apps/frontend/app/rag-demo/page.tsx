@@ -235,10 +235,14 @@ export default function RAGDemo() {
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Email
                 </label>
                 <input
+                  id="email"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -325,10 +329,14 @@ export default function RAGDemo() {
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="documentId"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Document ID (optional)
                 </label>
                 <input
+                  id="documentId"
                   type="text"
                   value={documentId}
                   onChange={(e) => setDocumentId(e.target.value)}
@@ -339,10 +347,14 @@ export default function RAGDemo() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label
+                  htmlFor="documentText"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
                   Document Text
                 </label>
                 <textarea
+                  id="documentText"
                   value={documentText}
                   onChange={(e) => setDocumentText(e.target.value)}
                   rows={12}
@@ -379,10 +391,14 @@ export default function RAGDemo() {
               </p>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="query"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     Your Question
                   </label>
                   <input
+                    id="query"
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
