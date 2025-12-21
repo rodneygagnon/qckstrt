@@ -94,7 +94,7 @@ export class AuthResolver {
   ): Promise<boolean> {
     const result = await this.authService.confirmUser(id);
     if (!result) throw new UserInputError('User not confirmed!');
-    return Promise.resolve(result);
+    return result;
   }
 
   @Mutation(() => Boolean)
@@ -105,7 +105,7 @@ export class AuthResolver {
     const result = await this.authService.addPermission(id, Role.Admin);
     if (!result)
       throw new UserInputError('Admin Permissions were not granted!');
-    return Promise.resolve(result);
+    return result;
   }
 
   @Mutation(() => Boolean)
@@ -116,6 +116,6 @@ export class AuthResolver {
     const result = await this.authService.removePermission(id, Role.Admin);
     if (!result)
       throw new UserInputError('Admin Permissions were not revoked!');
-    return Promise.resolve(result);
+    return result;
   }
 }

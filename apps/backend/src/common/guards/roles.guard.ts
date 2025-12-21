@@ -22,7 +22,7 @@ export class RolesGuard implements CanActivate {
     ]);
 
     if (!requiredRoles) {
-      return Promise.resolve(true);
+      return true;
     }
 
     if (
@@ -32,11 +32,9 @@ export class RolesGuard implements CanActivate {
     ) {
       const user: ILogin = JSON.parse(request.headers.user);
 
-      return Promise.resolve(
-        requiredRoles.some((role) => user.roles?.includes(role)),
-      );
+      return requiredRoles.some((role) => user.roles?.includes(role));
     }
 
-    return Promise.resolve(false);
+    return false;
   }
 }

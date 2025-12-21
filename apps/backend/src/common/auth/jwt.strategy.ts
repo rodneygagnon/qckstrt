@@ -45,12 +45,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: Record<string, unknown>): Promise<ILogin> {
-    return Promise.resolve({
+    return {
       id: payload['sub'] as string,
       email: payload['email'] as string,
       roles: (payload['cognito:groups'] as string[]) || [],
       department: payload['custom:department'] as string,
       clearance: payload['custom:clearance'] as string,
-    });
+    };
   }
 }
