@@ -311,7 +311,7 @@ export class PgVectorProvider implements IVectorDBProvider {
   private parseEmbedding(embeddingText: string): number[] {
     try {
       // Remove brackets and split by comma
-      const cleaned = embeddingText.replace(/^\[|\]$/g, "");
+      const cleaned = embeddingText.replace(/(^\[)|(\]$)/g, "");
       return cleaned.split(",").map((v) => Number.parseFloat(v.trim()));
     } catch {
       return [];
