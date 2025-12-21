@@ -28,7 +28,7 @@ export class RolesGuard implements CanActivate {
     if (
       request.headers.user != null &&
       request.headers.user !== 'undefined' &&
-      (await isLoggedIn(JSON.parse(request.headers.user)))
+      isLoggedIn(JSON.parse(request.headers.user))
     ) {
       const user: ILogin = JSON.parse(request.headers.user);
 
