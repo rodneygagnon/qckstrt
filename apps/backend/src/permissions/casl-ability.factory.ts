@@ -112,7 +112,7 @@ export class CaslAbilityFactory<
    * @returns The string with placeholders replaced.
    */
   private replacePlaceholder(placeholder: string, values: object): string {
-    const regex = /{{(.*?)}}/g;
+    const regex = /\{\{([^{}]*)\}\}/g;
     return placeholder.replace(regex, (_, path: string) =>
       get(values, path.trim(), `{{${path}}}`),
     );
