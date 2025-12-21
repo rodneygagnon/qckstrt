@@ -7,6 +7,7 @@
     "dev": "pnpm run --parallel dev",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
+    "test:ci": "pnpm -r test -- --coverage",
     "prepare": "husky"
   },
   "keywords": [],
