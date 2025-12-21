@@ -1,25 +1,31 @@
-import { ApolloClient, InMemoryCache, createHttpLink } from "@apollo/client";
-import { setContext } from "@apollo/client/link/context";
+import {
+  ApolloClient,
+  ApolloLink,
+  HttpLink,
+  InMemoryCache,
+} from "@apollo/client";
 
-const httpLink = createHttpLink({
+const httpLink = new HttpLink({
   uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:3000/graphql",
 });
 
-const authLink = setContext((_, { headers }) => {
+const authLink = new ApolloLink((operation, forward) => {
   // Get user from localStorage if available
   const userJson =
     typeof window !== "undefined" ? localStorage.getItem("user") : null;
 
-  return {
+  operation.setContext(({ headers = {} }) => ({
     headers: {
       ...headers,
       user: userJson || undefined,
     },
-  };
+  }));
+
+  return forward(operation);
 });
 
 export const apolloClient = new ApolloClient({
-  link: authLink.concat(httpLink),
+  link: ApolloLink.from([authLink, httpLink]),
   cache: new InMemoryCache(),
 });
 
