@@ -135,14 +135,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build packages
+        run: pnpm -r --filter './packages/*' build
+
       - name: Build backend
         run: pnpm --filter backend build
 
       - name: Build frontend
         run: pnpm --filter frontend build
-
-      - name: Build packages
-        run: pnpm -r --filter './packages/*' build
 
   e2e:
     name: E2E Tests
