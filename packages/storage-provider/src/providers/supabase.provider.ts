@@ -56,7 +56,7 @@ export class SupabaseStorageProvider implements IStorageProvider {
   async listFiles(bucket: string, prefix: string): Promise<IListFilesResult> {
     try {
       // Normalize prefix - remove leading/trailing slashes for Supabase
-      const normalizedPrefix = prefix.replace(/^\/+|\/+$/g, "");
+      const normalizedPrefix = prefix.replace(/(^\/+)|(\/+$)/g, "");
 
       const { data, error } = await this.supabase.storage
         .from(bucket)

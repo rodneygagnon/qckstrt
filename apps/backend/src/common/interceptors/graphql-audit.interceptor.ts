@@ -169,81 +169,78 @@ export class GraphQLAuditInterceptor implements NestInterceptor {
     return Array.isArray(ua) ? ua[0] : ua;
   }
 
+  private static readonly MUTATION_ACTION_PATTERNS: [string[], AuditAction][] =
+    [
+      [['create', 'register'], AuditAction.CREATE],
+      [['update', 'change'], AuditAction.UPDATE],
+      [['delete', 'remove'], AuditAction.DELETE],
+      [['login'], AuditAction.LOGIN],
+      [['logout'], AuditAction.LOGOUT],
+      [['upload', 'index'], AuditAction.UPLOAD],
+    ];
+
+  private static readonly QUERY_ACTION_PATTERNS: [string[], AuditAction][] = [
+    [['search'], AuditAction.SEARCH],
+    [['download'], AuditAction.DOWNLOAD],
+    [['list', 'getall', 'find'], AuditAction.BULK_READ],
+  ];
+
   private inferAction(info: GraphQLInfo): AuditAction {
     const operationType = info.operation?.operation;
     const fieldName = info.fieldName?.toLowerCase() || '';
 
-    if (operationType === 'mutation') {
-      if (fieldName.includes('create') || fieldName.includes('register')) {
-        return AuditAction.CREATE;
+    const patterns =
+      operationType === 'mutation'
+        ? GraphQLAuditInterceptor.MUTATION_ACTION_PATTERNS
+        : GraphQLAuditInterceptor.QUERY_ACTION_PATTERNS;
+
+    for (const [keywords, action] of patterns) {
+      if (keywords.some((keyword) => fieldName.includes(keyword))) {
+        return action;
       }
-      if (fieldName.includes('update') || fieldName.includes('change')) {
-        return AuditAction.UPDATE;
-      }
-      if (fieldName.includes('delete') || fieldName.includes('remove')) {
-        return AuditAction.DELETE;
-      }
-      if (fieldName.includes('login')) {
-        return AuditAction.LOGIN;
-      }
-      if (fieldName.includes('logout')) {
-        return AuditAction.LOGOUT;
-      }
-      if (fieldName.includes('upload') || fieldName.includes('index')) {
-        return AuditAction.UPLOAD;
-      }
-      return AuditAction.UPDATE;
     }
 
-    if (fieldName.includes('search')) {
-      return AuditAction.SEARCH;
-    }
-
-    if (fieldName.includes('download')) {
-      return AuditAction.DOWNLOAD;
-    }
-
-    if (
-      fieldName.includes('list') ||
-      fieldName.includes('getall') ||
-      fieldName.includes('find')
-    ) {
-      return AuditAction.BULK_READ;
-    }
-
-    return AuditAction.READ;
+    return operationType === 'mutation' ? AuditAction.UPDATE : AuditAction.READ;
   }
 
+  private static readonly ENTITY_PATTERN =
+    /(?:get|create|update|delete|find|list|search|index|upload|download)(\w+)/i;
+
   private inferEntityType(info: GraphQLInfo): string | undefined {
-    const fieldName = info.fieldName || '';
-
-    // Extract entity type from resolver name
-    // e.g., "getUser" -> "User", "createDocument" -> "Document"
-    const match = fieldName.match(
-      /(?:get|create|update|delete|find|list|search|index|upload|download)(\w+)/i,
+    const entityFromFieldName = this.extractEntityFromFieldName(
+      info.fieldName || '',
     );
-    if (match) {
-      // Remove trailing 's' for plural forms like "getUsers" -> "User"
-      let entityType = match[1];
-      if (
-        entityType.endsWith('s') &&
-        !entityType.endsWith('ss') &&
-        entityType.length > 1
-      ) {
-        entityType = entityType.slice(0, -1);
-      }
-      return entityType;
+    if (entityFromFieldName) {
+      return entityFromFieldName;
     }
 
-    // Check parent type name
-    if (
-      info.parentType?.name &&
-      info.parentType.name !== 'Query' &&
-      info.parentType.name !== 'Mutation'
-    ) {
-      return info.parentType.name;
+    return this.extractEntityFromParentType(info.parentType?.name);
+  }
+
+  private extractEntityFromFieldName(fieldName: string): string | undefined {
+    const match = GraphQLAuditInterceptor.ENTITY_PATTERN.exec(fieldName);
+    if (!match) {
+      return undefined;
     }
 
-    return undefined;
+    return this.singularize(match[1]);
+  }
+
+  private extractEntityFromParentType(
+    parentTypeName: string | undefined,
+  ): string | undefined {
+    const isValidParentType =
+      parentTypeName &&
+      parentTypeName !== 'Query' &&
+      parentTypeName !== 'Mutation';
+
+    return isValidParentType ? parentTypeName : undefined;
+  }
+
+  private singularize(word: string): string {
+    const shouldSingularize =
+      word.length > 1 && word.endsWith('s') && !word.endsWith('ss');
+
+    return shouldSingularize ? word.slice(0, -1) : word;
   }
 }
