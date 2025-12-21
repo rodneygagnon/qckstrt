@@ -6,6 +6,7 @@ import {
   BaseEntity,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
   Index,
 } from 'typeorm';
 
@@ -50,4 +51,10 @@ export class DocumentEntity extends BaseEntity {
     select: true,
   })
   public updatedAt!: Date;
+
+  @DeleteDateColumn({
+    type: 'timestamptz',
+    select: false,
+  })
+  public deletedAt?: Date;
 }

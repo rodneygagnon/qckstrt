@@ -6,6 +6,7 @@ import {
   BaseEntity,
   CreateDateColumn,
   UpdateDateColumn,
+  DeleteDateColumn,
 } from 'typeorm';
 
 @ObjectType()
@@ -43,4 +44,11 @@ export class UserEntity extends BaseEntity {
     select: true,
   })
   public updated!: Date;
+
+  @Field({ nullable: true })
+  @DeleteDateColumn({
+    type: 'timestamptz',
+    select: false,
+  })
+  public deletedAt?: Date;
 }
