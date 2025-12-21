@@ -312,7 +312,7 @@ export class PgVectorProvider implements IVectorDBProvider {
     try {
       // Remove brackets and split by comma
       const cleaned = embeddingText.replace(/^\[|\]$/g, "");
-      return cleaned.split(",").map((v) => parseFloat(v.trim()));
+      return cleaned.split(",").map((v) => Number.parseFloat(v.trim()));
     } catch {
       return [];
     }
