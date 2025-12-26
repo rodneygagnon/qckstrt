@@ -26,6 +26,7 @@ const config = {
       {
         tsconfig: "tsconfig.json",
         useESM: false,
+        diagnostics: { ignoreCodes: [151002] },
       },
     ],
   },
