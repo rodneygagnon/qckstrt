@@ -222,6 +222,16 @@ export default function AddressesPage() {
 
   const addresses = data?.myAddresses || [];
 
+  const getSubmitButtonText = () => {
+    if (creating || updating) {
+      return t("common:buttons.saving");
+    }
+    if (editingId) {
+      return t("addresses.updateAddress");
+    }
+    return t("addresses.addAddress");
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -376,11 +386,7 @@ export default function AddressesPage() {
                 disabled={creating || updating}
                 className="px-6 py-3 bg-[#1e293b] text-white rounded-lg font-medium hover:bg-[#334155] transition-colors disabled:opacity-50"
               >
-                {creating || updating
-                  ? t("common:buttons.saving")
-                  : editingId
-                    ? t("addresses.updateAddress")
-                    : t("addresses.addAddress")}
+                {getSubmitButtonText()}
               </button>
               <button
                 type="button"

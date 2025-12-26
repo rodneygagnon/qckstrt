@@ -20,6 +20,8 @@ const config = {
     // Exclude legacy password-based flows (not part of passwordless auth)
     "!app/(auth)/forgot-password/**",
     "!app/(auth)/reset-password/**",
+    // Exclude barrel/index files
+    "!lib/**/index.ts",
     "!**/*.d.ts",
     "!**/node_modules/**",
   ],

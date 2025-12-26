@@ -6,6 +6,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   ReactNode,
 } from "react";
 import { useMutation } from "@apollo/client/react";
@@ -485,38 +486,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
   }, []);
 
+  const contextValue = useMemo(
+    () => ({
+      user,
+      tokens,
+      isLoading,
+      isAuthenticated: !!user,
+      error,
+
+      // Password-based auth
+      login,
+      register,
+
+      // Passkeys
+      supportsPasskeys,
+      hasPlatformAuthenticator,
+      loginWithPasskey,
+      registerPasskey,
+
+      // Magic Links
+      sendMagicLink,
+      verifyMagicLink,
+      registerWithMagicLink,
+      magicLinkSent,
+
+      // Common
+      logout,
+      clearError,
+    }),
+    [
+      user,
+      tokens,
+      isLoading,
+      error,
+      login,
+      register,
+      supportsPasskeys,
+      hasPlatformAuthenticator,
+      loginWithPasskey,
+      registerPasskey,
+      sendMagicLink,
+      verifyMagicLink,
+      registerWithMagicLink,
+      magicLinkSent,
+      logout,
+      clearError,
+    ],
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        tokens,
-        isLoading,
-        isAuthenticated: !!user,
-        error,
-
-        // Password-based auth
-        login,
-        register,
-
-        // Passkeys
-        supportsPasskeys,
-        hasPlatformAuthenticator,
-        loginWithPasskey,
-        registerPasskey,
-
-        // Magic Links
-        sendMagicLink,
-        verifyMagicLink,
-        registerWithMagicLink,
-        magicLinkSent,
-
-        // Common
-        logout,
-        clearError,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>
   );
 }
 

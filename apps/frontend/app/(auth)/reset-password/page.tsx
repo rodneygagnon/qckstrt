@@ -296,9 +296,9 @@ export default function ResetPasswordPage() {
                 />
               </div>
               <ul className="mt-3 space-y-1">
-                {passwordStrength.requirements.map((req, i) => (
+                {passwordStrength.requirements.map((req) => (
                   <li
-                    key={i}
+                    key={req.text}
                     className={`text-xs flex items-center gap-2 ${
                       req.met ? "text-green-600" : "text-[#94a3b8]"
                     }`}

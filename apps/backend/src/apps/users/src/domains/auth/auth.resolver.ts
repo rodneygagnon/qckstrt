@@ -37,8 +37,8 @@ import {
 @Resolver(() => Boolean)
 export class AuthResolver {
   constructor(
-    private authService: AuthService,
-    private passkeyService: PasskeyService,
+    private readonly authService: AuthService,
+    private readonly passkeyService: PasskeyService,
   ) {}
 
   @Mutation(() => Boolean)

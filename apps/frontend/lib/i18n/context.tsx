@@ -7,6 +7,7 @@ import {
   useState,
   useRef,
   useMemo,
+  useCallback,
   ReactNode,
 } from "react";
 import { useQuery } from "@apollo/client/react";
@@ -70,14 +71,19 @@ export function I18nProvider({ children }: I18nProviderProps) {
     isInitialMount.current = false;
   }, [locale, t]);
 
-  const setLocale = (newLocale: SupportedLanguage) => {
+  const setLocale = useCallback((newLocale: SupportedLanguage) => {
     if (supportedLanguages.includes(newLocale)) {
       setUserOverride(newLocale);
     }
-  };
+  }, []);
+
+  const contextValue = useMemo(
+    () => ({ locale, setLocale }),
+    [locale, setLocale],
+  );
 
   return (
-    <I18nContext.Provider value={{ locale, setLocale }}>
+    <I18nContext.Provider value={contextValue}>
       {children}
       {/* Visually hidden live region for screen reader announcements */}
       <output

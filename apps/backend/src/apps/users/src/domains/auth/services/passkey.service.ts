@@ -32,10 +32,10 @@ export class PasskeyService {
 
   constructor(
     @InjectRepository(PasskeyCredentialEntity)
-    private credentialRepo: Repository<PasskeyCredentialEntity>,
+    private readonly credentialRepo: Repository<PasskeyCredentialEntity>,
     @InjectRepository(WebAuthnChallengeEntity)
-    private challengeRepo: Repository<WebAuthnChallengeEntity>,
-    private configService: ConfigService,
+    private readonly challengeRepo: Repository<WebAuthnChallengeEntity>,
+    private readonly configService: ConfigService,
   ) {
     this.rpName =
       this.configService.get<string>('webauthn.rpName') || 'Qckstrt';

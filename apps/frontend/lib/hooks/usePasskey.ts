@@ -60,7 +60,7 @@ export function usePasskey(): UsePasskeyResult {
       }
     };
 
-    checkSupport();
+    void checkSupport();
   }, []);
 
   // GraphQL mutations with type annotations
