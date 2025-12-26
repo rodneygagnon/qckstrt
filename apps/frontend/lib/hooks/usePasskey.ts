@@ -280,7 +280,7 @@ export function usePasskey(): UsePasskeyResult {
     registerPasskey,
     authenticateWithPasskey,
     deletePasskey,
-    refetchPasskeys: () => refetchPasskeys(),
+    refetchPasskeys: () => void refetchPasskeys(),
     clearError,
   };
 }

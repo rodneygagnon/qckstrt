@@ -6,7 +6,9 @@ import { AuthProvider } from "./auth-context";
 import { I18nProvider } from "./i18n/context";
 import "@/lib/i18n";
 
-export function ApolloProvider({ children }: { children: React.ReactNode }) {
+export function ApolloProvider({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <BaseApolloProvider client={apolloClient}>
       <AuthProvider>

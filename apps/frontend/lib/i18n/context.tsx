@@ -23,10 +23,10 @@ interface I18nContextType {
 const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
 interface I18nProviderProps {
-  children: ReactNode;
+  readonly children: ReactNode;
 }
 
-export function I18nProvider({ children }: I18nProviderProps) {
+export function I18nProvider({ children }: Readonly<I18nProviderProps>) {
   const { t } = useTranslation("common");
   const [userOverride, setUserOverride] = useState<SupportedLanguage | null>(
     null,

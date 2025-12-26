@@ -55,7 +55,7 @@ function PasskeyIcon() {
   );
 }
 
-function DeviceIcon({ type }: { type: string }) {
+function DeviceIcon({ type }: Readonly<{ type: string }>) {
   if (type === "mobile") {
     return (
       <svg

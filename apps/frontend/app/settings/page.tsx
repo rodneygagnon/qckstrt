@@ -30,11 +30,11 @@ const LANGUAGES: { value: SupportedLanguage; labelKey: string }[] = [
 ];
 
 interface ProfileFormProps {
-  profile: UserProfile;
-  onSave: () => void;
+  readonly profile: UserProfile;
+  readonly onSave: () => void;
 }
 
-function ProfileForm({ profile, onSave }: ProfileFormProps) {
+function ProfileForm({ profile, onSave }: Readonly<ProfileFormProps>) {
   const { t } = useTranslation("settings");
   const { locale, setLocale } = useLocale();
   const [updateProfile, { loading: updating }] =

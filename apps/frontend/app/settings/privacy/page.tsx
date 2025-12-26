@@ -15,11 +15,14 @@ import {
 } from "@/lib/graphql/profile";
 
 interface ConsentItemProps {
-  consent: UserConsent | undefined;
-  consentType: ConsentType;
-  required?: boolean;
-  onUpdate: (consentType: ConsentType, granted: boolean) => Promise<void>;
-  loading?: boolean;
+  readonly consent: UserConsent | undefined;
+  readonly consentType: ConsentType;
+  readonly required?: boolean;
+  readonly onUpdate: (
+    consentType: ConsentType,
+    granted: boolean,
+  ) => Promise<void>;
+  readonly loading?: boolean;
 }
 
 function ConsentItem({
@@ -28,7 +31,7 @@ function ConsentItem({
   required,
   onUpdate,
   loading,
-}: ConsentItemProps) {
+}: Readonly<ConsentItemProps>) {
   const { t } = useTranslation("settings");
   const isGranted = consent?.status === "granted";
   const statusDate =

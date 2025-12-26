@@ -8,11 +8,11 @@ import {
   NestModule,
   RequestMethod,
 } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { ApolloServerPluginInlineTrace } from '@apollo/server/plugin/inlineTrace';
-import { LoggingModule, LogLevel } from '@qckstrt/logging-provider';
+import { LoggingModule } from '@qckstrt/logging-provider';
 import depthLimit from 'graphql-depth-limit';
 
 import { AuthModule } from './domains/auth/auth.module';
@@ -27,6 +27,11 @@ import secretsConfig from 'src/config/secrets.config';
 import relationaldbConfig from 'src/config/relationaldb.config';
 
 import { LoggerMiddleware } from 'src/common/middleware/logger.middleware';
+import {
+  THROTTLER_CONFIG,
+  SHARED_PROVIDERS,
+  createLoggingConfig,
+} from 'src/common/config/shared-app.config';
 import { DbModule } from 'src/db/db.module';
 import { UserEntity } from 'src/db/entities/user.entity';
 import { AuditLogEntity } from 'src/db/entities/audit-log.entity';
@@ -39,12 +44,7 @@ import { UserConsentEntity } from 'src/db/entities/user-consent.entity';
 import { PasskeyCredentialEntity } from 'src/db/entities/passkey-credential.entity';
 import { WebAuthnChallengeEntity } from 'src/db/entities/webauthn-challenge.entity';
 import { AuditModule } from 'src/common/audit/audit.module';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
-import { GraphQLExceptionFilter } from 'src/common/exceptions/graphql-exception.filter';
-import { RolesGuard } from 'src/common/guards/roles.guard';
-import { GqlThrottlerGuard } from 'src/common/guards/throttler.guard';
 import { CaslModule } from 'src/permissions/casl.module';
-import { PoliciesGuard } from 'src/common/guards/policies.guard';
 
 @Module({
   imports: [
@@ -59,36 +59,8 @@ import { PoliciesGuard } from 'src/common/guards/policies.guard';
       ],
       isGlobal: true,
     }),
-    LoggingModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        serviceName: 'users-service',
-        level:
-          configService.get('NODE_ENV') === 'production'
-            ? LogLevel.INFO
-            : LogLevel.DEBUG,
-        format:
-          configService.get('NODE_ENV') === 'production' ? 'json' : 'pretty',
-      }),
-      inject: [ConfigService],
-    }),
-    ThrottlerModule.forRoot([
-      {
-        name: 'short',
-        ttl: 1000, // 1 second
-        limit: 10, // 10 requests per second
-      },
-      {
-        name: 'medium',
-        ttl: 10000, // 10 seconds
-        limit: 50, // 50 requests per 10 seconds
-      },
-      {
-        name: 'long',
-        ttl: 60000, // 1 minute
-        limit: 100, // 100 requests per minute
-      },
-    ]),
+    LoggingModule.forRootAsync(createLoggingConfig('users-service')),
+    ThrottlerModule.forRoot(THROTTLER_CONFIG),
     DbModule.forRoot({
       entities: [
         UserEntity,
@@ -115,12 +87,7 @@ import { PoliciesGuard } from 'src/common/guards/policies.guard';
     AuthModule,
     ProfileModule,
   ],
-  providers: [
-    { provide: APP_FILTER, useClass: GraphQLExceptionFilter },
-    { provide: APP_GUARD, useClass: GqlThrottlerGuard },
-    { provide: APP_GUARD, useClass: RolesGuard },
-    { provide: APP_GUARD, useClass: PoliciesGuard },
-  ],
+  providers: SHARED_PROVIDERS,
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

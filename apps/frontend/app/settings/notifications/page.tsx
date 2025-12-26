@@ -21,7 +21,7 @@ interface ToggleProps {
   readonly disabled?: boolean;
 }
 
-function Toggle({ enabled, onChange, disabled }: ToggleProps) {
+function Toggle({ enabled, onChange, disabled }: Readonly<ToggleProps>) {
   return (
     <button
       type="button"
@@ -63,7 +63,7 @@ function NotificationForm({
   onSave,
   onUnsubscribeAll,
   unsubscribing,
-}: NotificationFormProps) {
+}: Readonly<NotificationFormProps>) {
   const { t } = useTranslation("settings");
   const [updatePreferences, { loading: updating }] =
     useMutation<UpdateNotificationPreferencesData>(

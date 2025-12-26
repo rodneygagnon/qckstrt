@@ -57,10 +57,10 @@ interface Notification {
 function Toast({
   notification,
   onClose,
-}: {
+}: Readonly<{
   notification: Notification;
   onClose: () => void;
-}) {
+}>) {
   useEffect(() => {
     const timer = setTimeout(onClose, 5000);
     return () => clearTimeout(timer);

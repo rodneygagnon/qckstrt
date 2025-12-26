@@ -1,20 +1,8 @@
 /** @type {import('jest').Config} */
+const baseConfig = require("../jest.config.base.js");
+
 module.exports = {
-  moduleFileExtensions: ["js", "json", "ts"],
-  rootDir: ".",
-  testRegex: ".*\\.spec\\.ts$",
-  transform: {
-    "^.+\\.(t|j)s$": [
-      "ts-jest",
-      {
-        tsconfig: "tsconfig.json",
-        diagnostics: { ignoreCodes: [151002] },
-      },
-    ],
-  },
-  collectCoverageFrom: ["src/**/*.(t|j)s", "!src/index.ts"],
-  coverageDirectory: "./coverage",
-  testEnvironment: "node",
+  ...baseConfig,
   coverageThreshold: {
     global: {
       branches: 80,

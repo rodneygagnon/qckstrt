@@ -41,7 +41,7 @@ export default function LoginPage() {
   const handleMagicLinkLogin = async (e: FormEvent) => {
     e.preventDefault();
     clearError();
-    await sendMagicLink(email, `${window.location.origin}/auth/callback`);
+    await sendMagicLink(email, `${globalThis.location.origin}/auth/callback`);
   };
 
   const handlePasswordLogin = async (e: FormEvent) => {

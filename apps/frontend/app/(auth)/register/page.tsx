@@ -15,7 +15,7 @@ export default function RegisterPage() {
     clearError();
     await registerWithMagicLink(
       email,
-      `${window.location.origin}/auth/callback?type=register`,
+      `${globalThis.location.origin}/auth/callback?type=register`,
     );
   };
 
@@ -61,7 +61,7 @@ export default function RegisterPage() {
           </Link>
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={() => globalThis.location.reload()}
             className="inline-block w-full py-3 px-6 bg-white text-[#1e293b] font-semibold rounded-lg border border-[#e2e8f0] hover:bg-[#f8fafc] transition-colors"
           >
             Use a different email

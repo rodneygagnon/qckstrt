@@ -63,7 +63,7 @@ function AuthCallbackContent() {
     const type = searchParams.get("type");
 
     // Check for Supabase hash params format (#access_token=...)
-    const hash = window.location.hash;
+    const hash = globalThis.location.hash;
     let accessToken = null;
 
     if (hash) {
