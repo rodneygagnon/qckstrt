@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
@@ -179,8 +180,7 @@ export class PasskeyService {
     });
 
     // Store challenge - use email if provided, otherwise generate anonymous identifier
-    const identifier =
-      email || `anon_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const identifier = email || `anon_${randomUUID()}`;
     await this.storeChallenge(identifier, options.challenge, 'authentication');
 
     this.logger.log(
