@@ -475,7 +475,7 @@ export default function LoginPage() {
       {/* Divider */}
       <div className="my-8 flex items-center">
         <div className="flex-1 border-t border-[#e2e8f0]" />
-        <span className="px-4 text-sm text-[#94a3b8]">or</span>
+        <span className="px-4 text-sm text-[#64748b]">or</span>
         <div className="flex-1 border-t border-[#e2e8f0]" />
       </div>
 

@@ -23,7 +23,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: isCI ? "pnpm run start" : "pnpm run dev",
+    // In CI, use standalone server (Next.js output: standalone). Locally, use dev server.
+    command: isCI ? "node .next/standalone/server.js" : "pnpm run dev",
     url: baseURL,
     reuseExistingServer: !isCI,
   },

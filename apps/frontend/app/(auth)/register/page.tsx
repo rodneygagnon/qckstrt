@@ -47,7 +47,7 @@ export default function RegisterPage() {
           We&apos;ve sent a verification link to
         </p>
         <p className="font-medium text-[#1e293b] mb-4">{email}</p>
-        <p className="text-[#94a3b8] text-sm mb-6">
+        <p className="text-[#64748b] text-sm mb-6">
           Click the link in your email to complete your registration.
           <br />
           The link expires in 2 hours.
@@ -198,13 +198,19 @@ export default function RegisterPage() {
         </button>
 
         {/* Terms */}
-        <p className="text-xs text-[#94a3b8] text-center">
+        <p className="text-xs text-[#64748b] text-center">
           By creating an account, you agree to our{" "}
-          <Link href="/terms" className="text-[#64748b] hover:underline">
+          <Link
+            href="/terms"
+            className="text-[#1e293b] underline hover:no-underline"
+          >
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="text-[#64748b] hover:underline">
+          <Link
+            href="/privacy"
+            className="text-[#1e293b] underline hover:no-underline"
+          >
             Privacy Policy
           </Link>
         </p>
@@ -213,7 +219,7 @@ export default function RegisterPage() {
       {/* Divider */}
       <div className="my-8 flex items-center">
         <div className="flex-1 border-t border-[#e2e8f0]" />
-        <span className="px-4 text-sm text-[#94a3b8]">or</span>
+        <span className="px-4 text-sm text-[#64748b]">or</span>
         <div className="flex-1 border-t border-[#e2e8f0]" />
       </div>
 
