@@ -24,7 +24,10 @@ export default defineConfig({
   ],
   webServer: {
     // In CI, use standalone server (Next.js output: standalone). Locally, use dev server.
-    command: isCI ? "node .next/standalone/server.js" : "pnpm run dev",
+    // Note: standalone output preserves monorepo structure, so server.js is at apps/frontend/
+    command: isCI
+      ? "node .next/standalone/apps/frontend/server.js"
+      : "pnpm run dev",
     url: baseURL,
     reuseExistingServer: !isCI,
   },
