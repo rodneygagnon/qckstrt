@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock } from '@golevelup/ts-jest';
 
@@ -284,5 +285,402 @@ describe('AuthResolver', () => {
       expect(error.message).toEqual('Failed to revoke admin permissions!');
       expect(authService.removePermission).toHaveBeenCalledTimes(1);
     }
+  });
+
+  // ============================================
+  // Passkey (WebAuthn) Tests
+  // ============================================
+
+  describe('generatePasskeyRegistrationOptions', () => {
+    let passkeyService: PasskeyService;
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          AuthResolver,
+          { provide: AuthService, useValue: createMock<AuthService>() },
+          { provide: PasskeyService, useValue: createMock<PasskeyService>() },
+        ],
+      }).compile();
+
+      resolver = module.get<AuthResolver>(AuthResolver);
+      authService = module.get<AuthService>(AuthService);
+      passkeyService = module.get<PasskeyService>(PasskeyService);
+    });
+
+    it('should generate passkey registration options', async () => {
+      const mockUser = {
+        id: 'user-1',
+        email: 'test@example.com',
+        firstName: 'Test',
+      };
+      const mockOptions = { challenge: 'abc123' };
+
+      authService.getUserByEmail = jest.fn().mockResolvedValue(mockUser);
+      passkeyService.generateRegistrationOptions = jest
+        .fn()
+        .mockResolvedValue(mockOptions);
+
+      const result = await resolver.generatePasskeyRegistrationOptions({
+        email: 'test@example.com',
+      });
+
+      expect(result).toEqual({ options: mockOptions });
+      expect(authService.getUserByEmail).toHaveBeenCalledWith(
+        'test@example.com',
+      );
+    });
+
+    it('should throw error when user not found', async () => {
+      authService.getUserByEmail = jest.fn().mockResolvedValue(null);
+
+      await expect(
+        resolver.generatePasskeyRegistrationOptions({
+          email: 'unknown@example.com',
+        }),
+      ).rejects.toThrow('User not found');
+    });
+
+    it('should throw error on failure', async () => {
+      authService.getUserByEmail = jest
+        .fn()
+        .mockRejectedValue(new Error('Service error'));
+
+      await expect(
+        resolver.generatePasskeyRegistrationOptions({
+          email: 'test@example.com',
+        }),
+      ).rejects.toThrow('Service error');
+    });
+  });
+
+  describe('verifyPasskeyRegistration', () => {
+    let passkeyService: PasskeyService;
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          AuthResolver,
+          { provide: AuthService, useValue: createMock<AuthService>() },
+          { provide: PasskeyService, useValue: createMock<PasskeyService>() },
+        ],
+      }).compile();
+
+      resolver = module.get<AuthResolver>(AuthResolver);
+      authService = module.get<AuthService>(AuthService);
+      passkeyService = module.get<PasskeyService>(PasskeyService);
+    });
+
+    it('should verify passkey registration successfully', async () => {
+      const mockUser = { id: 'user-1', email: 'test@example.com' };
+
+      authService.getUserByEmail = jest.fn().mockResolvedValue(mockUser);
+      passkeyService.verifyRegistration = jest
+        .fn()
+        .mockResolvedValue({ verified: true });
+      passkeyService.saveCredential = jest.fn().mockResolvedValue(undefined);
+
+      const result = await resolver.verifyPasskeyRegistration({
+        email: 'test@example.com',
+        response: {} as any,
+        friendlyName: 'My Device',
+      });
+
+      expect(result).toBe(true);
+      expect(passkeyService.saveCredential).toHaveBeenCalled();
+    });
+
+    it('should return false when verification fails', async () => {
+      const mockUser = { id: 'user-1', email: 'test@example.com' };
+
+      authService.getUserByEmail = jest.fn().mockResolvedValue(mockUser);
+      passkeyService.verifyRegistration = jest
+        .fn()
+        .mockResolvedValue({ verified: false });
+
+      const result = await resolver.verifyPasskeyRegistration({
+        email: 'test@example.com',
+        response: {} as any,
+      });
+
+      expect(result).toBe(false);
+    });
+
+    it('should throw error when user not found', async () => {
+      authService.getUserByEmail = jest.fn().mockResolvedValue(null);
+
+      await expect(
+        resolver.verifyPasskeyRegistration({
+          email: 'unknown@example.com',
+          response: {} as any,
+        }),
+      ).rejects.toThrow('User not found');
+    });
+  });
+
+  describe('generatePasskeyAuthenticationOptions', () => {
+    let passkeyService: PasskeyService;
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          AuthResolver,
+          { provide: AuthService, useValue: createMock<AuthService>() },
+          { provide: PasskeyService, useValue: createMock<PasskeyService>() },
+        ],
+      }).compile();
+
+      resolver = module.get<AuthResolver>(AuthResolver);
+      passkeyService = module.get<PasskeyService>(PasskeyService);
+    });
+
+    it('should generate passkey authentication options', async () => {
+      const mockResult = {
+        options: { challenge: 'xyz' },
+        identifier: 'session-1',
+      };
+      passkeyService.generateAuthenticationOptions = jest
+        .fn()
+        .mockResolvedValue(mockResult);
+
+      const result = await resolver.generatePasskeyAuthenticationOptions({
+        email: 'test@example.com',
+      });
+
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should work without input', async () => {
+      const mockResult = {
+        options: { challenge: 'xyz' },
+        identifier: 'session-1',
+      };
+      passkeyService.generateAuthenticationOptions = jest
+        .fn()
+        .mockResolvedValue(mockResult);
+
+      const result = await resolver.generatePasskeyAuthenticationOptions();
+
+      expect(result).toEqual(mockResult);
+    });
+
+    it('should throw error on failure', async () => {
+      passkeyService.generateAuthenticationOptions = jest
+        .fn()
+        .mockRejectedValue(new Error('Auth options error'));
+
+      await expect(
+        resolver.generatePasskeyAuthenticationOptions({
+          email: 'test@example.com',
+        }),
+      ).rejects.toThrow('Auth options error');
+    });
+  });
+
+  describe('verifyPasskeyAuthentication', () => {
+    let passkeyService: PasskeyService;
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          AuthResolver,
+          { provide: AuthService, useValue: createMock<AuthService>() },
+          { provide: PasskeyService, useValue: createMock<PasskeyService>() },
+        ],
+      }).compile();
+
+      resolver = module.get<AuthResolver>(AuthResolver);
+      authService = module.get<AuthService>(AuthService);
+      passkeyService = module.get<PasskeyService>(PasskeyService);
+    });
+
+    it('should verify passkey authentication successfully', async () => {
+      const mockUser = { id: 'user-1', email: 'test@example.com' };
+      const mockAuth = { accessToken: 'token', refreshToken: 'refresh' };
+
+      passkeyService.verifyAuthentication = jest.fn().mockResolvedValue({
+        verification: { verified: true },
+        user: mockUser,
+      });
+      authService.generateTokensForUser = jest.fn().mockResolvedValue(mockAuth);
+
+      const result = await resolver.verifyPasskeyAuthentication({
+        identifier: 'session-1',
+        response: {} as any,
+      });
+
+      expect(result).toEqual(mockAuth);
+    });
+
+    it('should throw error when verification fails', async () => {
+      passkeyService.verifyAuthentication = jest.fn().mockResolvedValue({
+        verification: { verified: false },
+        user: null,
+      });
+
+      await expect(
+        resolver.verifyPasskeyAuthentication({
+          identifier: 'session-1',
+          response: {} as any,
+        }),
+      ).rejects.toThrow('Passkey verification failed');
+    });
+  });
+
+  describe('myPasskeys', () => {
+    let passkeyService: PasskeyService;
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          AuthResolver,
+          { provide: AuthService, useValue: createMock<AuthService>() },
+          { provide: PasskeyService, useValue: createMock<PasskeyService>() },
+        ],
+      }).compile();
+
+      resolver = module.get<AuthResolver>(AuthResolver);
+      passkeyService = module.get<PasskeyService>(PasskeyService);
+    });
+
+    it('should return user passkeys', async () => {
+      const mockCredentials = [{ id: 'cred-1', friendlyName: 'Device 1' }];
+      passkeyService.getUserCredentials = jest
+        .fn()
+        .mockResolvedValue(mockCredentials);
+
+      const context = {
+        req: { headers: { user: JSON.stringify({ id: 'user-1' }) } },
+      };
+      const result = await resolver.myPasskeys(context);
+
+      expect(result).toEqual(mockCredentials);
+    });
+
+    it('should throw error when user not authenticated', async () => {
+      const context = { req: { headers: { user: '' } } };
+
+      await expect(resolver.myPasskeys(context)).rejects.toThrow(
+        'User not authenticated',
+      );
+    });
+  });
+
+  describe('deletePasskey', () => {
+    let passkeyService: PasskeyService;
+
+    beforeEach(async () => {
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          AuthResolver,
+          { provide: AuthService, useValue: createMock<AuthService>() },
+          { provide: PasskeyService, useValue: createMock<PasskeyService>() },
+        ],
+      }).compile();
+
+      resolver = module.get<AuthResolver>(AuthResolver);
+      passkeyService = module.get<PasskeyService>(PasskeyService);
+    });
+
+    it('should delete passkey successfully', async () => {
+      passkeyService.deleteCredential = jest.fn().mockResolvedValue(true);
+
+      const context = {
+        req: { headers: { user: JSON.stringify({ id: 'user-1' }) } },
+      };
+      const result = await resolver.deletePasskey('cred-1', context);
+
+      expect(result).toBe(true);
+      expect(passkeyService.deleteCredential).toHaveBeenCalledWith(
+        'cred-1',
+        'user-1',
+      );
+    });
+
+    it('should throw error when user not authenticated', async () => {
+      const context = { req: { headers: { user: '' } } };
+
+      await expect(resolver.deletePasskey('cred-1', context)).rejects.toThrow(
+        'User not authenticated',
+      );
+    });
+  });
+
+  // ============================================
+  // Magic Link Tests
+  // ============================================
+
+  describe('sendMagicLink', () => {
+    it('should send magic link successfully', async () => {
+      authService.sendMagicLink = jest.fn().mockResolvedValue(true);
+
+      const result = await resolver.sendMagicLink({
+        email: 'test@example.com',
+        redirectTo: 'http://localhost',
+      });
+
+      expect(result).toBe(true);
+      expect(authService.sendMagicLink).toHaveBeenCalledWith(
+        'test@example.com',
+        'http://localhost',
+      );
+    });
+
+    it('should throw error on failure', async () => {
+      authService.sendMagicLink = jest
+        .fn()
+        .mockRejectedValue(new Error('Send failed'));
+
+      await expect(
+        resolver.sendMagicLink({ email: 'test@example.com' }),
+      ).rejects.toThrow('Send failed');
+    });
+  });
+
+  describe('verifyMagicLink', () => {
+    it('should verify magic link successfully', async () => {
+      const mockAuth = { accessToken: 'token', refreshToken: 'refresh' };
+      authService.verifyMagicLink = jest.fn().mockResolvedValue(mockAuth);
+
+      const result = await resolver.verifyMagicLink({
+        email: 'test@example.com',
+        token: '123456',
+      });
+
+      expect(result).toEqual(mockAuth);
+    });
+
+    it('should throw error on failure', async () => {
+      authService.verifyMagicLink = jest
+        .fn()
+        .mockRejectedValue(new Error('Verify failed'));
+
+      await expect(
+        resolver.verifyMagicLink({ email: 'test@example.com', token: 'bad' }),
+      ).rejects.toThrow('Verify failed');
+    });
+  });
+
+  describe('registerWithMagicLink', () => {
+    it('should register with magic link successfully', async () => {
+      authService.registerWithMagicLink = jest.fn().mockResolvedValue(true);
+
+      const result = await resolver.registerWithMagicLink({
+        email: 'new@example.com',
+        redirectTo: 'http://localhost',
+      });
+
+      expect(result).toBe(true);
+    });
+
+    it('should throw error on failure', async () => {
+      authService.registerWithMagicLink = jest
+        .fn()
+        .mockRejectedValue(new Error('Register failed'));
+
+      await expect(
+        resolver.registerWithMagicLink({ email: 'new@example.com' }),
+      ).rejects.toThrow('Register failed');
+    });
   });
 });
