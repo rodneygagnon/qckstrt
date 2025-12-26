@@ -1,14 +1,19 @@
 import { defineConfig, devices } from "@playwright/test";
 
+// In CI, use production build (port 3000). Locally, use dev server (port 3200).
+const isCI = !!process.env.CI;
+const port = isCI ? 3000 : 3200;
+const baseURL = `http://localhost:${port}`;
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  forbidOnly: isCI,
+  retries: isCI ? 2 : 0,
+  workers: isCI ? 1 : undefined,
   reporter: "html",
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL,
     trace: "on-first-retry",
   },
   projects: [
@@ -18,8 +23,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
+    command: isCI ? "pnpm run start" : "pnpm run dev",
+    url: baseURL,
+    reuseExistingServer: !isCI,
   },
 });
