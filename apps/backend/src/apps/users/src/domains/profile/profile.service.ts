@@ -119,7 +119,7 @@ export class ProfileService {
     }
 
     // Update only provided fields (excluding id)
-    const { id, ...updateData } = updateDto;
+    const { id: _id, ...updateData } = updateDto;
     Object.assign(address, updateData);
 
     return this.addressRepository.save(address);

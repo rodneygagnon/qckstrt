@@ -250,7 +250,7 @@ export class AuthService {
   /**
    * Generate auth tokens for a user (used after passkey authentication)
    */
-  async generateTokensForUser(user: UserEntity): Promise<Auth> {
+  async generateTokensForUser(_user: UserEntity): Promise<Auth> {
     // For passkey auth, we need to generate tokens without password
     // Use the auth provider's magic link verification as a workaround
     // since we've already verified the user via WebAuthn
