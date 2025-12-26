@@ -172,6 +172,13 @@ jobs:
       - name: Build frontend
         run: pnpm --filter frontend build
 
+      - name: Copy static assets for standalone build
+        run: |
+          # Next.js standalone requires static files to be copied manually
+          # See: https://nextjs.org/docs/app/api-reference/config/next-config-js/output
+          cp -r apps/frontend/.next/static apps/frontend/.next/standalone/apps/frontend/.next/static
+          cp -r apps/frontend/public apps/frontend/.next/standalone/apps/frontend/public
+
       - name: Run E2E tests
         run: pnpm --filter frontend e2e
 

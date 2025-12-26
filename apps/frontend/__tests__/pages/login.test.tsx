@@ -249,7 +249,7 @@ describe("LoginPage", () => {
       const passwordTab = screen.getByRole("button", { name: "Password" });
       await userEvent.click(passwordTab);
 
-      expect(screen.getByLabelText(/Password/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Password$/i)).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: "Sign in" }),
       ).toBeInTheDocument();
@@ -285,7 +285,7 @@ describe("LoginPage", () => {
       const emailInput = screen.getByLabelText(/Email Address/i);
       await userEvent.type(emailInput, "test@example.com");
 
-      const passwordInput = screen.getByLabelText(/Password/i);
+      const passwordInput = screen.getByLabelText(/^Password$/i);
       await userEvent.type(passwordInput, "password123");
 
       const submitButton = screen.getByRole("button", { name: "Sign in" });
@@ -302,7 +302,7 @@ describe("LoginPage", () => {
       const emailInput = screen.getByLabelText(/Email Address/i);
       await userEvent.type(emailInput, "test@example.com");
 
-      const passwordInput = screen.getByLabelText(/Password/i);
+      const passwordInput = screen.getByLabelText(/^Password$/i);
       await userEvent.type(passwordInput, "password123");
 
       const submitButton = screen.getByRole("button", { name: "Sign in" });
@@ -321,19 +321,20 @@ describe("LoginPage", () => {
       const passwordTab = screen.getByRole("button", { name: "Password" });
       await userEvent.click(passwordTab);
 
-      const passwordInput = screen.getByLabelText(/Password/i);
+      const passwordInput = screen.getByLabelText(/^Password$/i);
       expect(passwordInput).toHaveAttribute("type", "password");
 
-      // Find the show/hide password button (it's the only button in the password field area)
-      const toggleButtons = screen.getAllByRole("button");
-      const toggleButton = toggleButtons.find((btn) =>
-        btn.className.includes("-translate-y-1/2"),
-      );
+      // Find the show/hide password button using its aria-label
+      const toggleButton = screen.getByRole("button", {
+        name: /show password/i,
+      });
 
-      if (toggleButton) {
-        await userEvent.click(toggleButton);
-        expect(passwordInput).toHaveAttribute("type", "text");
-      }
+      await userEvent.click(toggleButton);
+      expect(passwordInput).toHaveAttribute("type", "text");
+
+      // After clicking, the button label changes to "Hide password"
+      const hideButton = screen.getByRole("button", { name: /hide password/i });
+      expect(hideButton).toBeInTheDocument();
     });
 
     it("should redirect to rag-demo on successful password login", async () => {
@@ -346,7 +347,7 @@ describe("LoginPage", () => {
       const emailInput = screen.getByLabelText(/Email Address/i);
       await userEvent.type(emailInput, "test@example.com");
 
-      const passwordInput = screen.getByLabelText(/Password/i);
+      const passwordInput = screen.getByLabelText(/^Password$/i);
       await userEvent.type(passwordInput, "password123");
 
       const submitButton = screen.getByRole("button", { name: "Sign in" });

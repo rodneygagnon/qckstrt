@@ -6,7 +6,9 @@ test.describe("Home Page", () => {
   });
 
   test("should display the Qckstrt title", async ({ page }) => {
-    await expect(page.getByText("Qckstrt")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Qckstrt", level: 1 }),
+    ).toBeVisible();
   });
 
   test("should display the RAG Demo link", async ({ page }) => {

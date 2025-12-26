@@ -130,6 +130,7 @@ export default function LoginPage() {
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -181,6 +182,7 @@ export default function LoginPage() {
                   className="animate-spin h-4 w-4"
                   fill="none"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <circle
                     className="opacity-25"
@@ -205,6 +207,7 @@ export default function LoginPage() {
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -231,6 +234,7 @@ export default function LoginPage() {
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -294,6 +298,7 @@ export default function LoginPage() {
                       className="animate-spin h-4 w-4"
                       fill="none"
                       viewBox="0 0 24 24"
+                      aria-hidden="true"
                     >
                       <circle
                         className="opacity-25"
@@ -318,6 +323,7 @@ export default function LoginPage() {
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
+                      aria-hidden="true"
                     >
                       <path
                         strokeLinecap="round"
@@ -384,6 +390,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748b] hover:text-[#1e293b] transition-colors"
               >
                 {showPassword ? (
@@ -392,6 +399,7 @@ export default function LoginPage() {
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -406,6 +414,7 @@ export default function LoginPage() {
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -448,6 +457,7 @@ export default function LoginPage() {
                   className="animate-spin h-4 w-4"
                   fill="none"
                   viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
                   <circle
                     className="opacity-25"
