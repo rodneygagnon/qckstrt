@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   useRef,
+  useMemo,
   ReactNode,
 } from "react";
 import { useQuery } from "@apollo/client/react";
@@ -26,21 +27,30 @@ interface I18nProviderProps {
 
 export function I18nProvider({ children }: I18nProviderProps) {
   const { t } = useTranslation("common");
-  const [locale, setLocaleState] = useState<SupportedLanguage>("en");
+  const [userOverride, setUserOverride] = useState<SupportedLanguage | null>(
+    null,
+  );
   const [announcement, setAnnouncement] = useState("");
   const isInitialMount = useRef(true);
   const { data } = useQuery<MyProfileData>(GET_MY_PROFILE);
 
-  // Sync locale with user's profile preference
-  useEffect(() => {
-    const profileLanguage = data?.myProfile?.preferredLanguage;
+  // Derive locale from profile or user override (no setState in effect)
+  const profileLanguage = data?.myProfile?.preferredLanguage;
+  const locale = useMemo<SupportedLanguage>(() => {
+    // User override takes precedence
+    if (userOverride) {
+      return userOverride;
+    }
+    // Then profile preference
     if (
       profileLanguage &&
       supportedLanguages.includes(profileLanguage as SupportedLanguage)
     ) {
-      setLocaleState(profileLanguage as SupportedLanguage);
+      return profileLanguage as SupportedLanguage;
     }
-  }, [data?.myProfile?.preferredLanguage]);
+    // Default to English
+    return "en";
+  }, [userOverride, profileLanguage]);
 
   // Update i18n and document lang when locale changes
   useEffect(() => {
@@ -62,7 +72,7 @@ export function I18nProvider({ children }: I18nProviderProps) {
 
   const setLocale = (newLocale: SupportedLanguage) => {
     if (supportedLanguages.includes(newLocale)) {
-      setLocaleState(newLocale);
+      setUserOverride(newLocale);
     }
   };
 

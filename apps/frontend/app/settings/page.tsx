@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useMutation, useQuery } from "@apollo/client/react";
 import { useTranslation } from "react-i18next";
 import {
@@ -40,6 +40,7 @@ function ProfileForm({ profile, onSave }: ProfileFormProps) {
   const [updateProfile, { loading: updating }] =
     useMutation<UpdateMyProfileData>(UPDATE_MY_PROFILE);
 
+  // Initialize form with locale from context (already synced with profile)
   const [formData, setFormData] = useState<UpdateProfileInput>({
     firstName: profile.firstName || "",
     lastName: profile.lastName || "",
@@ -47,18 +48,11 @@ function ProfileForm({ profile, onSave }: ProfileFormProps) {
     preferredName: profile.preferredName || "",
     phone: profile.phone || "",
     timezone: profile.timezone || "America/Los_Angeles",
-    preferredLanguage: profile.preferredLanguage || "en",
+    preferredLanguage: locale,
     bio: profile.bio || "",
   });
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-
-  // Sync form language with locale context
-  useEffect(() => {
-    if (formData.preferredLanguage !== locale) {
-      setFormData((prev) => ({ ...prev, preferredLanguage: locale }));
-    }
-  }, [locale, formData.preferredLanguage]);
 
   const handleChange = (
     e: React.ChangeEvent<

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore, useCallback } from "react";
 import { useMutation, useLazyQuery } from "@apollo/client/react";
 import {
   INDEX_DOCUMENT,
@@ -21,6 +21,33 @@ import {
   DemoUser,
 } from "@/lib/apollo-client";
 import { Header } from "@/components/Header";
+
+// SSR-safe hook for localStorage demo user
+// Cache the snapshot to prevent infinite loops in useSyncExternalStore
+let cachedUser: DemoUser | null = null;
+let cachedUserJson: string | null = null;
+
+function useDemoUserStorage() {
+  const subscribe = useCallback((callback: () => void) => {
+    globalThis.addEventListener("storage", callback);
+    return () => globalThis.removeEventListener("storage", callback);
+  }, []);
+
+  const getSnapshot = useCallback(() => {
+    const user = getDemoUser();
+    const userJson = JSON.stringify(user);
+    // Only update cache if the value actually changed
+    if (userJson !== cachedUserJson) {
+      cachedUser = user;
+      cachedUserJson = userJson;
+    }
+    return cachedUser;
+  }, []);
+
+  const getServerSnapshot = useCallback(() => null, []);
+
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
 
 interface Notification {
   type: "success" | "error";
@@ -67,7 +94,14 @@ function Toast({
 }
 
 export default function RAGDemo() {
-  const [user, setUser] = useState<DemoUser | null>(null);
+  // SSR-safe user state from localStorage (reactive via useSyncExternalStore)
+  const storedUser = useDemoUserStorage();
+  // Local state for immediate UI updates during login/logout
+  const [localUser, setLocalUser] = useState<DemoUser | null>(null);
+  // Derive effective user: local state takes precedence, then storage
+  // This avoids setState in effect by deriving the value
+  const user = localUser ?? storedUser;
+
   const [documentText, setDocumentText] = useState("");
   const [documentId, setDocumentId] = useState("");
   const [query, setQuery] = useState("");
@@ -79,17 +113,8 @@ export default function RAGDemo() {
   const [notification, setNotification] = useState<Notification | null>(null);
   const PAGE_SIZE = 5;
 
-  // Demo user form state
-  const [email, setEmail] = useState("demo@example.com");
-
-  // Hydrate from localStorage after mount to avoid SSR mismatch
-  useEffect(() => {
-    const savedUser = getDemoUser();
-    if (savedUser) {
-      setUser(savedUser);
-      setEmail(savedUser.email);
-    }
-  }, []);
+  // Demo user form state - derive initial email from stored user
+  const [email, setEmail] = useState(storedUser?.email ?? "demo@example.com");
 
   const [indexDocument, { loading: indexing }] = useMutation<
     IndexDocumentData,
@@ -113,12 +138,12 @@ export default function RAGDemo() {
       clearance: "public",
     };
     setDemoUser(demoUser);
-    setUser(demoUser);
+    setLocalUser(demoUser);
   };
 
   const handleLogout = () => {
     clearDemoUser();
-    setUser(null);
+    setLocalUser(null);
     setAnswer("");
     setSearchResults([]);
     setSearchTotal(0);
