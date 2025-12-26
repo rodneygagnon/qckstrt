@@ -16,7 +16,7 @@ export class File implements IFile {
   @Field()
   size!: number;
 
-  @Field()
+  @Field(() => DocumentStatus)
   status!: DocumentStatus;
 
   @Field(() => User)

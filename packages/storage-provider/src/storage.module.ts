@@ -1,5 +1,5 @@
 import { Module, Global } from "@nestjs/common";
-import { ConfigModule, ConfigService } from "@nestjs/config";
+import { ConfigService } from "@nestjs/config";
 import { IStorageProvider } from "@qckstrt/common";
 import { SupabaseStorageProvider } from "./providers/supabase.provider.js";
 
@@ -7,13 +7,13 @@ import { SupabaseStorageProvider } from "./providers/supabase.provider.js";
  * Storage Module
  *
  * Provides file storage capabilities using pluggable providers.
+ * Requires ConfigModule.forRoot() to be called in the parent app module with isGlobal: true.
  *
  * Configure via STORAGE_PROVIDER environment variable:
  * - 'supabase' (default): Supabase Storage
  */
 @Global()
 @Module({
-  imports: [ConfigModule],
   providers: [
     {
       provide: "STORAGE_PROVIDER",

@@ -1,0 +1,101 @@
+"use client";
+
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+  ReactNode,
+} from "react";
+import { useQuery } from "@apollo/client/react";
+import { useTranslation } from "react-i18next";
+import i18n, { SupportedLanguage, supportedLanguages } from "./index";
+import { GET_MY_PROFILE, MyProfileData } from "@/lib/graphql/profile";
+
+interface I18nContextType {
+  locale: SupportedLanguage;
+  setLocale: (locale: SupportedLanguage) => void;
+}
+
+const I18nContext = createContext<I18nContextType | undefined>(undefined);
+
+interface I18nProviderProps {
+  children: ReactNode;
+}
+
+export function I18nProvider({ children }: I18nProviderProps) {
+  const { t } = useTranslation("common");
+  const [locale, setLocaleState] = useState<SupportedLanguage>("en");
+  const [announcement, setAnnouncement] = useState("");
+  const isInitialMount = useRef(true);
+  const { data } = useQuery<MyProfileData>(GET_MY_PROFILE);
+
+  // Sync locale with user's profile preference
+  useEffect(() => {
+    const profileLanguage = data?.myProfile?.preferredLanguage;
+    if (
+      profileLanguage &&
+      supportedLanguages.includes(profileLanguage as SupportedLanguage)
+    ) {
+      setLocaleState(profileLanguage as SupportedLanguage);
+    }
+  }, [data?.myProfile?.preferredLanguage]);
+
+  // Update i18n and document lang when locale changes
+  useEffect(() => {
+    if (i18n.language !== locale) {
+      i18n.changeLanguage(locale);
+    }
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = locale;
+    }
+    // Announce language change to screen readers (skip initial mount)
+    if (!isInitialMount.current) {
+      // Small delay to ensure translation is loaded
+      setTimeout(() => {
+        setAnnouncement(t("accessibility.languageChanged"));
+      }, 100);
+    }
+    isInitialMount.current = false;
+  }, [locale, t]);
+
+  const setLocale = (newLocale: SupportedLanguage) => {
+    if (supportedLanguages.includes(newLocale)) {
+      setLocaleState(newLocale);
+    }
+  };
+
+  return (
+    <I18nContext.Provider value={{ locale, setLocale }}>
+      {children}
+      {/* Visually hidden live region for screen reader announcements */}
+      <output
+        aria-live="polite"
+        aria-atomic="true"
+        className="sr-only"
+        style={{
+          position: "absolute",
+          width: "1px",
+          height: "1px",
+          padding: 0,
+          margin: "-1px",
+          overflow: "hidden",
+          clip: "rect(0, 0, 0, 0)",
+          whiteSpace: "nowrap",
+          border: 0,
+        }}
+      >
+        {announcement}
+      </output>
+    </I18nContext.Provider>
+  );
+}
+
+export function useLocale() {
+  const context = useContext(I18nContext);
+  if (context === undefined) {
+    throw new Error("useLocale must be used within an I18nProvider");
+  }
+  return context;
+}

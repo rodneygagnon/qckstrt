@@ -5,18 +5,29 @@ import { RegisterUserDto } from './dto/register-user.dto';
 import { Auth } from './models/auth.model';
 
 import { UsersService } from '../user/users.service';
-import { IAuthProvider } from '@qckstrt/auth-provider';
+import { IAuthProvider, IAuthResult } from '@qckstrt/auth-provider';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ConfirmForgotPasswordDto } from './dto/confirm-forgot-password.dto';
 import { Role } from 'src/common/enums/role.enum';
+import { UserEntity } from 'src/db/entities/user.entity';
+import { User } from '../user/models/user.model';
+
+// Extended auth provider type with optional magic link methods
+interface IAuthProviderWithMagicLink extends IAuthProvider {
+  sendMagicLink?(email: string, redirectTo?: string): Promise<boolean>;
+  verifyMagicLink?(email: string, token: string): Promise<IAuthResult>;
+  registerWithMagicLink?(email: string, redirectTo?: string): Promise<boolean>;
+}
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(UsersService.name, { timestamp: true });
+  private readonly logger = new Logger(AuthService.name, { timestamp: true });
 
   constructor(
-    @Inject(forwardRef(() => UsersService)) private usersService: UsersService,
-    @Inject('AUTH_PROVIDER') private authProvider: IAuthProvider,
+    @Inject(forwardRef(() => UsersService))
+    private readonly usersService: UsersService,
+    @Inject('AUTH_PROVIDER')
+    private readonly authProvider: IAuthProviderWithMagicLink,
   ) {}
 
   async registerUser(registerUserDto: RegisterUserDto): Promise<string> {
@@ -160,6 +171,114 @@ export class AuthService {
       confirmforgotPassword.email,
       confirmforgotPassword.password,
       confirmforgotPassword.confirmationCode,
+    );
+  }
+
+  // ============================================
+  // Passwordless Authentication Methods
+  // ============================================
+
+  /**
+   * Get a user by email address
+   */
+  async getUserByEmail(email: string): Promise<User | null> {
+    return this.usersService.findByEmail(email);
+  }
+
+  /**
+   * Send a magic link for passwordless login
+   */
+  async sendMagicLink(email: string, redirectTo?: string): Promise<boolean> {
+    // Check if user exists first (don't reveal if they don't)
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      // Still return true to not reveal if email exists
+      this.logger.warn(`Magic link requested for non-existent user: ${email}`);
+      return true;
+    }
+
+    if (!this.authProvider.sendMagicLink) {
+      throw new Error('Magic link not supported by auth provider');
+    }
+
+    return this.authProvider.sendMagicLink(email, redirectTo);
+  }
+
+  /**
+   * Verify a magic link token and return auth tokens
+   */
+  async verifyMagicLink(email: string, token: string): Promise<Auth> {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    if (!this.authProvider.verifyMagicLink) {
+      throw new Error('Magic link not supported by auth provider');
+    }
+
+    return this.authProvider.verifyMagicLink(email, token);
+  }
+
+  /**
+   * Register a new user with magic link (passwordless)
+   */
+  async registerWithMagicLink(
+    email: string,
+    redirectTo?: string,
+  ): Promise<boolean> {
+    // Check if user already exists
+    const existingUser = await this.usersService.findByEmail(email);
+    if (existingUser) {
+      // User exists, just send a login magic link instead
+      this.logger.log(
+        `User already exists, sending login magic link: ${email}`,
+      );
+      return this.sendMagicLink(email, redirectTo);
+    }
+
+    if (!this.authProvider.registerWithMagicLink) {
+      throw new Error('Magic link registration not supported by auth provider');
+    }
+
+    // Create user in our database first (passwordless - no password required)
+    await this.usersService.createPasswordlessUser(email);
+
+    return this.authProvider.registerWithMagicLink(email, redirectTo);
+  }
+
+  /**
+   * Generate auth tokens for a user (used after passkey authentication)
+   */
+  async generateTokensForUser(user: UserEntity): Promise<Auth> {
+    // For passkey auth, we need to generate tokens without password
+    // Use the auth provider's magic link verification as a workaround
+    // since we've already verified the user via WebAuthn
+
+    // Option 1: If using Supabase, we can use admin API to create a session
+    // For now, we'll use a simplified approach that works with the provider
+
+    if (
+      !this.authProvider.sendMagicLink ||
+      !this.authProvider.verifyMagicLink
+    ) {
+      throw new Error(
+        'Token generation for passkey auth requires magic link support',
+      );
+    }
+
+    // This is a placeholder - in production, you'd want to use
+    // a proper token generation method from your auth provider
+    // For Supabase, you might use admin.generateLink() or similar
+    this.logger.warn(
+      'generateTokensForUser: Using fallback token generation for passkey auth',
+    );
+
+    // For now, throw an error indicating this needs proper implementation
+    // based on your specific auth provider capabilities
+    throw new Error(
+      'Passkey token generation not yet implemented. ' +
+        'Configure your auth provider to support session creation for verified users.',
     );
   }
 }

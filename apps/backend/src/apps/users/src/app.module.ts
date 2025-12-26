@@ -17,13 +17,27 @@ import depthLimit from 'graphql-depth-limit';
 
 import { AuthModule } from './domains/auth/auth.module';
 import { UsersModule } from './domains/user/users.module';
+import { ProfileModule } from './domains/profile/profile.module';
 
 import configuration from 'src/config';
+import supabaseConfig from 'src/config/supabase.config';
+import storageConfig from 'src/config/storage.config';
+import authConfig from 'src/config/auth.config';
+import secretsConfig from 'src/config/secrets.config';
+import relationaldbConfig from 'src/config/relationaldb.config';
 
 import { LoggerMiddleware } from 'src/common/middleware/logger.middleware';
 import { DbModule } from 'src/db/db.module';
 import { UserEntity } from 'src/db/entities/user.entity';
 import { AuditLogEntity } from 'src/db/entities/audit-log.entity';
+import { UserProfileEntity } from 'src/db/entities/user-profile.entity';
+import { UserLoginEntity } from 'src/db/entities/user-login.entity';
+import { UserSessionEntity } from 'src/db/entities/user-session.entity';
+import { UserAddressEntity } from 'src/db/entities/user-address.entity';
+import { NotificationPreferenceEntity } from 'src/db/entities/notification-preference.entity';
+import { UserConsentEntity } from 'src/db/entities/user-consent.entity';
+import { PasskeyCredentialEntity } from 'src/db/entities/passkey-credential.entity';
+import { WebAuthnChallengeEntity } from 'src/db/entities/webauthn-challenge.entity';
 import { AuditModule } from 'src/common/audit/audit.module';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { GraphQLExceptionFilter } from 'src/common/exceptions/graphql-exception.filter';
@@ -34,7 +48,17 @@ import { PoliciesGuard } from 'src/common/guards/policies.guard';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ load: [configuration], isGlobal: true }),
+    ConfigModule.forRoot({
+      load: [
+        configuration,
+        supabaseConfig,
+        storageConfig,
+        authConfig,
+        secretsConfig,
+        relationaldbConfig,
+      ],
+      isGlobal: true,
+    }),
     LoggingModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -65,7 +89,20 @@ import { PoliciesGuard } from 'src/common/guards/policies.guard';
         limit: 100, // 100 requests per minute
       },
     ]),
-    DbModule.forRoot({ entities: [UserEntity, AuditLogEntity] }),
+    DbModule.forRoot({
+      entities: [
+        UserEntity,
+        AuditLogEntity,
+        UserProfileEntity,
+        UserLoginEntity,
+        UserSessionEntity,
+        UserAddressEntity,
+        NotificationPreferenceEntity,
+        UserConsentEntity,
+        PasskeyCredentialEntity,
+        WebAuthnChallengeEntity,
+      ],
+    }),
     AuditModule.forRoot(),
     GraphQLModule.forRoot<ApolloFederationDriverConfig>({
       driver: ApolloFederationDriver,
@@ -76,6 +113,7 @@ import { PoliciesGuard } from 'src/common/guards/policies.guard';
     CaslModule.forRoot(),
     UsersModule,
     AuthModule,
+    ProfileModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: GraphQLExceptionFilter },

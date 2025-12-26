@@ -4,6 +4,7 @@ import { createMock } from '@golevelup/ts-jest';
 
 import { AuthResolver } from './auth.resolver';
 import { AuthService } from './auth.service';
+import { PasskeyService } from './services/passkey.service';
 
 import {
   changePasswordDto,
@@ -26,6 +27,7 @@ describe('AuthResolver', () => {
       providers: [
         AuthResolver,
         { provide: AuthService, useValue: createMock<AuthService>() },
+        { provide: PasskeyService, useValue: createMock<PasskeyService>() },
       ],
     }).compile();
 

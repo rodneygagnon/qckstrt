@@ -1,3 +1,5 @@
+import { registerEnumType } from '@nestjs/graphql';
+
 export enum DocumentStatus {
   PROCESSINGNPENDING = 'Processing',
   TEXTEXTERACTIONSTARTED = 'Text Extraction Started',
@@ -8,3 +10,8 @@ export enum DocumentStatus {
   AIEMBEDDINGSFAILED = 'AI Embeddings Failed',
   PROCESSINGNCOMPLETE = 'Complete',
 }
+
+registerEnumType(DocumentStatus, {
+  name: 'DocumentStatus',
+  description: 'Document processing status',
+});

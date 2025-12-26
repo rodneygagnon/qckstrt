@@ -71,7 +71,7 @@ describe('GqlThrottlerGuard', () => {
       expect(result).toEqual({ req: mockReq, res: mockRes });
     });
 
-    it('should handle context with undefined response', () => {
+    it('should create mock response when context has undefined response', () => {
       const mockReq = { ip: '127.0.0.1', headers: {} };
 
       const mockGqlContext = {
@@ -93,7 +93,15 @@ describe('GqlThrottlerGuard', () => {
       };
       const result = guardWithAccess.getRequestResponse(mockExecutionContext);
 
-      expect(result).toEqual({ req: mockReq, res: undefined });
+      // The guard creates a mock response for federated subgraphs
+      expect(result.req).toEqual(mockReq);
+      expect(result.res).toBeDefined();
+      expect(typeof (result.res as { header: unknown }).header).toBe(
+        'function',
+      );
+      expect(typeof (result.res as { setHeader: unknown }).setHeader).toBe(
+        'function',
+      );
     });
   });
 });

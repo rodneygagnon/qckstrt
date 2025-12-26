@@ -81,6 +81,27 @@ export class UsersService {
     return user;
   }
 
+  /**
+   * Creates a passwordless user (for magic link registration)
+   * Only requires email - no password or auth provider registration
+   *
+   * @param {string} email - User's email address
+   * @returns {Promise<User>} The created user
+   */
+  async createPasswordlessUser(email: string): Promise<User> {
+    const userEntity = this.userRepo.create({ email });
+
+    try {
+      return await this.userRepo.save(userEntity);
+    } catch (error) {
+      const dbError = evaluateDBError(error);
+      this.logger.warn(
+        `userRepo error creating passwordless user (${email}): ${dbError.message}`,
+      );
+      throw dbError;
+    }
+  }
+
   findAll(): Promise<User[] | null> {
     return this.userRepo.find({});
   }

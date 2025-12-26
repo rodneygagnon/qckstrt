@@ -280,12 +280,14 @@ interface GenerateOptions {
 
 **Package**: `@qckstrt/auth-provider`
 
-**Purpose**: Abstract user authentication and management (Supabase Auth)
+**Purpose**: Abstract user authentication and management with support for passwordless authentication
 
 **Interface**:
 ```typescript
 export interface IAuthProvider {
   getName(): string;
+
+  // Password-based authentication
   registerUser(params: IRegisterUserParams): Promise<string>;
   authenticateUser(email: string, password: string): Promise<IAuthTokens>;
   confirmUser(username: string): Promise<void>;
@@ -295,6 +297,11 @@ export interface IAuthProvider {
   changePassword(accessToken: string, oldPassword: string, newPassword: string): Promise<boolean>;
   forgotPassword(usernameOrEmail: string): Promise<boolean>;
   confirmForgotPassword(usernameOrEmail: string, newPassword: string, confirmationCode: string): Promise<boolean>;
+
+  // Passwordless authentication (optional)
+  sendMagicLink?(email: string, redirectTo?: string): Promise<boolean>;
+  verifyMagicLink?(email: string, token: string): Promise<IAuthResult>;
+  registerWithMagicLink?(email: string, redirectTo?: string): Promise<boolean>;
 }
 ```
 
@@ -302,7 +309,7 @@ export interface IAuthProvider {
 
 | Provider | File | Use Case | Features |
 |----------|------|----------|----------|
-| Supabase | `packages/auth-provider/src/providers/supabase.provider.ts` | Default | JWT, OAuth, Magic Links |
+| Supabase | `packages/auth-provider/src/providers/supabase.provider.ts` | Default | JWT, OAuth, Magic Links, Passwordless |
 
 **Configuration**:
 ```bash
@@ -313,6 +320,45 @@ SUPABASE_SERVICE_ROLE_KEY=your-key
 ```
 
 **Module**: `AuthModule`
+
+#### Passwordless Authentication
+
+The authentication system supports three authentication methods:
+
+1. **Passkeys (WebAuthn/FIDO2)** - Primary method using biometric/PIN authentication
+2. **Magic Links** - Email-based passwordless login (like Medium)
+3. **Password** - Traditional password-based authentication (legacy fallback)
+
+**Passkey Service** (`apps/backend/src/apps/users/src/domains/auth/services/passkey.service.ts`):
+```typescript
+// Passkey registration and authentication using @simplewebauthn/server
+export class PasskeyService {
+  generateRegistrationOptions(userId, email, displayName): Promise<PublicKeyCredentialCreationOptionsJSON>;
+  verifyRegistration(email, response): Promise<VerifiedRegistrationResponse>;
+  saveCredential(userId, verification, friendlyName?): Promise<PasskeyCredentialEntity>;
+  generateAuthenticationOptions(email?): Promise<{ options, identifier }>;
+  verifyAuthentication(identifier, response): Promise<{ verification, user }>;
+  getUserCredentials(userId): Promise<PasskeyCredentialEntity[]>;
+  deleteCredential(credentialId, userId): Promise<boolean>;
+}
+```
+
+**Database Entities**:
+- `PasskeyCredentialEntity` - Stores WebAuthn credentials (credentialId, publicKey, counter, etc.)
+- `WebAuthnChallengeEntity` - Temporary challenge storage with 5-minute TTL
+
+**Frontend Integration**:
+```typescript
+// Auth context provides passwordless methods
+const {
+  supportsPasskeys,
+  loginWithPasskey,
+  registerPasskey,
+  sendMagicLink,
+  verifyMagicLink,
+  registerWithMagicLink,
+} = useAuth();
+```
 
 ---
 

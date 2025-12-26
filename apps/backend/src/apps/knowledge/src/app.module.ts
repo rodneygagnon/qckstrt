@@ -18,6 +18,11 @@ import depthLimit from 'graphql-depth-limit';
 import { KnowledgeModule } from './domains/knowledge.module';
 
 import configuration from 'src/config';
+import supabaseConfig from 'src/config/supabase.config';
+import storageConfig from 'src/config/storage.config';
+import authConfig from 'src/config/auth.config';
+import secretsConfig from 'src/config/secrets.config';
+import relationaldbConfig from 'src/config/relationaldb.config';
 
 import { LoggerMiddleware } from 'src/common/middleware/logger.middleware';
 import { DbModule } from 'src/db/db.module';
@@ -39,7 +44,17 @@ import { PoliciesGuard } from 'src/common/guards/policies.guard';
  */
 @Module({
   imports: [
-    ConfigModule.forRoot({ load: [configuration], isGlobal: true }),
+    ConfigModule.forRoot({
+      load: [
+        configuration,
+        supabaseConfig,
+        storageConfig,
+        authConfig,
+        secretsConfig,
+        relationaldbConfig,
+      ],
+      isGlobal: true,
+    }),
     LoggingModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -77,6 +92,7 @@ import { PoliciesGuard } from 'src/common/guards/policies.guard';
       autoSchemaFile: { path: 'knowledge-schema.gql', federation: 2 },
       plugins: [ApolloServerPluginInlineTrace()],
       validationRules: [depthLimit(10)],
+      context: ({ req, res }: { req: unknown; res: unknown }) => ({ req, res }),
     }),
     CaslModule.forRoot(),
     KnowledgeModule,

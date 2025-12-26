@@ -420,6 +420,111 @@ export class SupabaseAuthProvider implements IAuthProvider {
   }
 
   /**
+   * Send a magic link for passwordless authentication
+   * Uses Supabase's built-in OTP email functionality
+   */
+  async sendMagicLink(email: string, redirectTo?: string): Promise<boolean> {
+    try {
+      const { error } = await this.supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: redirectTo,
+          shouldCreateUser: false, // Don't create new users on login
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      this.logger.log(`Magic link sent to: ${email}`);
+      return true;
+    } catch (error) {
+      this.logger.error(
+        `Error sending magic link: ${(error as Error).message}`,
+      );
+      throw new AuthError(
+        `Failed to send magic link to ${email}`,
+        "MAGIC_LINK_ERROR",
+        error as Error,
+      );
+    }
+  }
+
+  /**
+   * Verify a magic link token and return auth tokens
+   */
+  async verifyMagicLink(email: string, token: string): Promise<IAuthResult> {
+    try {
+      const { data, error } = await this.supabase.auth.verifyOtp({
+        email,
+        token,
+        type: "email",
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data.session) {
+        throw new Error("No session returned from magic link verification");
+      }
+
+      this.logger.log(`Magic link verified for: ${email}`);
+      return {
+        accessToken: data.session.access_token,
+        idToken: data.session.access_token,
+        refreshToken: data.session.refresh_token || "",
+        expiresIn: data.session.expires_in,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error verifying magic link: ${(error as Error).message}`,
+      );
+      throw new AuthError(
+        `Failed to verify magic link for ${email}`,
+        "MAGIC_LINK_VERIFY_ERROR",
+        error as Error,
+      );
+    }
+  }
+
+  /**
+   * Register a new user with magic link (passwordless registration)
+   * Sends a verification email that will create the account on confirmation
+   */
+  async registerWithMagicLink(
+    email: string,
+    redirectTo?: string,
+  ): Promise<boolean> {
+    try {
+      const { error } = await this.supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: redirectTo,
+          shouldCreateUser: true, // Create user if they don't exist
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      this.logger.log(`Registration magic link sent to: ${email}`);
+      return true;
+    } catch (error) {
+      this.logger.error(
+        `Error sending registration magic link: ${(error as Error).message}`,
+      );
+      throw new AuthError(
+        `Failed to send registration magic link to ${email}`,
+        "REGISTER_MAGIC_LINK_ERROR",
+        error as Error,
+      );
+    }
+  }
+
+  /**
    * Helper method to find a user's ID by their username
    * Username is stored in user_metadata
    */

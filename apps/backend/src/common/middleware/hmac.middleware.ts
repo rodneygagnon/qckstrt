@@ -21,14 +21,21 @@ export class HMACMiddleware implements NestMiddleware {
     this.apiKeys =
       this.configService.get<Map<string, string>>('apiKeys') ||
       new Map<string, string>();
+    this.logger.log(
+      `Loaded API keys for clients: ${Array.from(this.apiKeys.keys()).join(', ') || 'NONE'}`,
+    );
   }
 
   private async validateRequest(
     req: Request,
-    res: Response,
+    _res: Response,
     next: NextFunction,
   ) {
-    const hmac = req.headers['proxy-authorization']?.split(' ');
+    // Use X-HMAC-Auth header (Proxy-Authorization is stripped by browsers)
+    const headerValue = req.headers['x-hmac-auth'];
+    const proxyAuth = Array.isArray(headerValue) ? headerValue[0] : headerValue;
+
+    const hmac = proxyAuth?.split(' ');
 
     if (hmac?.length === 2 && hmac[0].toLowerCase() === 'hmac') {
       const credentials = JSON.parse(hmac[1]);
@@ -45,7 +52,6 @@ export class HMACMiddleware implements NestMiddleware {
         .join('\n');
 
       let signatureHash = '';
-
       const apiKey = this.apiKeys.get(credentials.username) || '';
 
       switch (credentials.algorithm) {
@@ -71,14 +77,17 @@ export class HMACMiddleware implements NestMiddleware {
       }
     }
 
-    throw new UnauthorizedException('Invalid Proxy-Authorization', {
-      cause: new Error(),
-      description: 'HMAC Proxy-Authorization is Invalid.',
+    throw new UnauthorizedException('Invalid X-HMAC-Auth', {
+      cause: new Error('HMAC validation failed'),
+      description: 'HMAC authentication is invalid or missing.',
     });
   }
 
   use(req: Request, res: Response, next: NextFunction) {
-    this.logger.log(`Request: ${JSON.stringify(req.headers)}`);
+    // Skip HMAC validation for OPTIONS preflight requests
+    if (req.method === 'OPTIONS') {
+      return next();
+    }
 
     return this.validateRequest(req, res, next);
   }

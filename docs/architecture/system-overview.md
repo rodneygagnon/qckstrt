@@ -48,7 +48,11 @@ QCKSTRT is built on a modular, provider-based architecture with three core princ
 - **Port**: 3001
 - **Purpose**: User authentication and management
 - **Location**: `apps/backend/src/apps/users`
-- **Database**: Relational (User profiles, credentials)
+- **Database**: Relational (User profiles, credentials, passkeys)
+- **Authentication Methods**:
+  - Passkeys (WebAuthn/FIDO2) - Primary passwordless method
+  - Magic Links - Email-based passwordless login
+  - Password - Legacy fallback
 
 ### Documents Service
 - **Technology**: NestJS + Apollo Federation
@@ -185,6 +189,41 @@ interface ILLMProvider {
 
 **See**: [RAG Implementation Guide](../guides/rag-implementation.md)
 
+### Authentication Flows
+
+**Passkey Login** (Primary):
+```
+1. User clicks "Sign in with Passkey" → Frontend
+2. Frontend requests authentication options → Users Service
+3. Users Service generates challenge → WebAuthn Challenge DB
+4. User authenticates via biometric/PIN → Browser WebAuthn API
+5. Browser returns signed assertion → Frontend
+6. Frontend sends assertion → Users Service
+7. Users Service verifies signature with stored public key
+8. Returns JWT tokens → Frontend
+```
+
+**Magic Link Login**:
+```
+1. User enters email → Frontend
+2. Frontend sends magic link request → Users Service
+3. Users Service generates OTP → Supabase Auth
+4. Supabase sends email with magic link → User
+5. User clicks link → /auth/callback page
+6. Callback verifies token → Users Service
+7. Returns JWT tokens → Frontend
+```
+
+**Email-First Registration**:
+```
+1. User enters email (no password) → /register page
+2. Magic link sent to verify email → Supabase Auth
+3. User clicks link → Account created → Logged in
+4. Prompt: "Add a passkey for faster sign-in?"
+   ├── Yes → WebAuthn registration → Passkey saved
+   └── Skip → Can add later in settings
+```
+
 ## Configuration Management
 
 ### Environment-Based Configuration
@@ -199,6 +238,12 @@ LLM_MODEL=falcon
 AUTH_PROVIDER=supabase
 STORAGE_PROVIDER=supabase
 SECRETS_PROVIDER=supabase
+
+# WebAuthn/Passkeys (required for passkey authentication)
+WEBAUTHN_RP_NAME=Qckstrt
+WEBAUTHN_RP_ID=localhost
+WEBAUTHN_ORIGIN=http://localhost:3000
+FRONTEND_URL=http://localhost:3000
 ```
 
 ### Configuration Files
@@ -252,9 +297,18 @@ AWS/Cloud Infrastructure
 - LLM inference runs locally
 
 ### Authentication
-- User authentication via Supabase Auth
+- **Passwordless-first** authentication with three methods:
+  - **Passkeys (WebAuthn/FIDO2)** - Primary method using biometric/PIN
+  - **Magic Links** - Email-based passwordless login (like Medium)
+  - **Password** - Legacy fallback for compatibility
+- User authentication via Supabase Auth (GoTrue)
+- **HMAC request signing** for API authentication:
+  - Frontend signs requests with `X-HMAC-Auth` header
+  - Supports SHA-256 and SHA-512 algorithms
+  - Prevents request tampering and replay attacks
 - Service-to-service auth via API keys
 - GraphQL field-level authorization
+- Passkey credentials stored in PostgreSQL with counter verification
 
 ### Infrastructure
 - Self-hosted Supabase stack

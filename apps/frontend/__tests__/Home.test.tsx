@@ -1,6 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 
+// Mock the Header component since it requires AuthProvider
+jest.mock("@/components/Header", () => ({
+  Header: () => <header data-testid="mock-header">Mock Header</header>,
+}));
+
 import Home from "../app/page";
 
 describe("Home Page", () => {

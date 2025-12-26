@@ -18,6 +18,12 @@ import depthLimit from 'graphql-depth-limit';
 import { DocumentsModule } from './domains/documents.module';
 
 import configuration from 'src/config';
+import supabaseConfig from 'src/config/supabase.config';
+import storageConfig from 'src/config/storage.config';
+import authConfig from 'src/config/auth.config';
+import secretsConfig from 'src/config/secrets.config';
+import relationaldbConfig from 'src/config/relationaldb.config';
+import fileConfig from 'src/config/file.config';
 
 import { LoggerMiddleware } from 'src/common/middleware/logger.middleware';
 import { DbModule } from 'src/db/db.module';
@@ -42,7 +48,18 @@ import { AuditModule } from 'src/common/audit/audit.module';
  */
 @Module({
   imports: [
-    ConfigModule.forRoot({ load: [configuration], isGlobal: true }),
+    ConfigModule.forRoot({
+      load: [
+        configuration,
+        supabaseConfig,
+        storageConfig,
+        authConfig,
+        secretsConfig,
+        relationaldbConfig,
+        fileConfig,
+      ],
+      isGlobal: true,
+    }),
     LoggingModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({

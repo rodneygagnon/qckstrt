@@ -20,6 +20,7 @@ import {
   clearDemoUser,
   DemoUser,
 } from "@/lib/apollo-client";
+import { Header } from "@/components/Header";
 
 interface Notification {
   type: "success" | "error";
@@ -65,19 +66,8 @@ function Toast({
   );
 }
 
-function getInitialUser(): DemoUser | null {
-  if (typeof window === "undefined") return null;
-  return getDemoUser();
-}
-
-function getInitialEmail(): string {
-  if (typeof window === "undefined") return "demo@example.com";
-  const user = getDemoUser();
-  return user?.email || "demo@example.com";
-}
-
 export default function RAGDemo() {
-  const [user, setUser] = useState<DemoUser | null>(getInitialUser);
+  const [user, setUser] = useState<DemoUser | null>(null);
   const [documentText, setDocumentText] = useState("");
   const [documentId, setDocumentId] = useState("");
   const [query, setQuery] = useState("");
@@ -90,7 +80,16 @@ export default function RAGDemo() {
   const PAGE_SIZE = 5;
 
   // Demo user form state
-  const [email, setEmail] = useState(getInitialEmail);
+  const [email, setEmail] = useState("demo@example.com");
+
+  // Hydrate from localStorage after mount to avoid SSR mismatch
+  useEffect(() => {
+    const savedUser = getDemoUser();
+    if (savedUser) {
+      setUser(savedUser);
+      setEmail(savedUser.email);
+    }
+  }, []);
 
   const [indexDocument, { loading: indexing }] = useMutation<
     IndexDocumentData,
@@ -223,270 +222,279 @@ export default function RAGDemo() {
 
   if (!user) {
     return (
-      <main className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
-        <div className="max-w-md mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
-            RAG Demo - Login
-          </h1>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Enter an email to create a demo session. This creates a temporary
-              user for testing the RAG pipeline.
-            </p>
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >
-                  Email
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
-                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                           focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="demo@example.com"
-                />
-              </div>
-              <button
-                onClick={handleLogin}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md
-                         transition-colors"
-              >
-                Start Demo Session
-              </button>
-            </div>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
-  return (
-    <main className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
-      {notification && (
-        <Toast
-          notification={notification}
-          onClose={() => setNotification(null)}
-        />
-      )}
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            RAG Pipeline Demo
-          </h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {user.email}
-            </span>
-            <button
-              onClick={handleLogout}
-              className="text-sm text-red-600 hover:text-red-700 dark:text-red-400"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
-          <button
-            onClick={() => setActiveTab("index")}
-            className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === "index"
-                ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400"
-            }`}
-          >
-            Index Document
-          </button>
-          <button
-            onClick={() => setActiveTab("query")}
-            className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-              activeTab === "query"
-                ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400"
-            }`}
-          >
-            Query Knowledge Base
-          </button>
-        </div>
-
-        {/* Index Document Tab */}
-        {activeTab === "index" && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Index a Document
-            </h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Paste text content below to index it into the vector database.
-              This text will be chunked, embedded, and stored for semantic
-              search and RAG queries.
-            </p>
-            <div className="space-y-4">
-              <div>
-                <label
-                  htmlFor="documentId"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >
-                  Document ID (optional)
-                </label>
-                <input
-                  id="documentId"
-                  type="text"
-                  value={documentId}
-                  onChange={(e) => setDocumentId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
-                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                           focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., my-document-1"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="documentText"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                >
-                  Document Text
-                </label>
-                <textarea
-                  id="documentText"
-                  value={documentText}
-                  onChange={(e) => setDocumentText(e.target.value)}
-                  rows={12}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
-                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                           focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                           font-mono text-sm"
-                  placeholder="Paste your document text here..."
-                />
-              </div>
-              <button
-                onClick={handleIndexDocument}
-                disabled={indexing || !documentText.trim()}
-                className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white
-                         font-medium py-2 px-6 rounded-md transition-colors"
-              >
-                {indexing ? "Indexing..." : "Index Document"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Query Tab */}
-        {activeTab === "query" && (
-          <div className="space-y-6">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Header />
+        <main className="p-8">
+          <div className="max-w-md mx-auto">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">
+              RAG Demo - Login
+            </h1>
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                Ask a Question
-              </h2>
               <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Ask a question about your indexed documents. The system will
-                search for relevant context and generate an answer using the
-                LLM.
+                Enter an email to create a demo session. This creates a
+                temporary user for testing the RAG pipeline.
               </p>
               <div className="space-y-4">
                 <div>
                   <label
-                    htmlFor="query"
+                    htmlFor="email"
                     className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
                   >
-                    Your Question
+                    Email
                   </label>
                   <input
-                    id="query"
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAskQuestion()}
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
-                             bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-                             focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="e.g., What are the main topics discussed in the document?"
+                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                           focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="demo@example.com"
                   />
                 </div>
-                <div className="flex gap-3">
-                  <button
-                    onClick={handleAskQuestion}
-                    disabled={answering || !query.trim()}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white
-                             font-medium py-2 px-6 rounded-md transition-colors"
-                  >
-                    {answering ? "Thinking..." : "Ask Question (RAG)"}
-                  </button>
-                  <button
-                    onClick={() => handleSearch()}
-                    disabled={searching || !query.trim()}
-                    className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white
-                             font-medium py-2 px-6 rounded-md transition-colors"
-                  >
-                    {searching ? "Searching..." : "Search Only"}
-                  </button>
-                </div>
+                <button
+                  onClick={handleLogin}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md
+                         transition-colors"
+                >
+                  Start Demo Session
+                </button>
               </div>
             </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
-            {/* Answer Display */}
-            {answer && (
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Header />
+      <main className="p-8">
+        {notification && (
+          <Toast
+            notification={notification}
+            onClose={() => setNotification(null)}
+          />
+        )}
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              RAG Pipeline Demo
+            </h1>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                {user.email}
+              </span>
+              <button
+                onClick={handleLogout}
+                className="text-sm text-red-600 hover:text-red-700 dark:text-red-400"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6">
+            <button
+              onClick={() => setActiveTab("index")}
+              className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+                activeTab === "index"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400"
+              }`}
+            >
+              Index Document
+            </button>
+            <button
+              onClick={() => setActiveTab("query")}
+              className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
+                activeTab === "query"
+                  ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                  : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400"
+              }`}
+            >
+              Query Knowledge Base
+            </button>
+          </div>
+
+          {/* Index Document Tab */}
+          {activeTab === "index" && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                Index a Document
+              </h2>
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
+                Paste text content below to index it into the vector database.
+                This text will be chunked, embedded, and stored for semantic
+                search and RAG queries.
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="documentId"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
+                    Document ID (optional)
+                  </label>
+                  <input
+                    id="documentId"
+                    type="text"
+                    value={documentId}
+                    onChange={(e) => setDocumentId(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                           focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g., my-document-1"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="documentText"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
+                    Document Text
+                  </label>
+                  <textarea
+                    id="documentText"
+                    value={documentText}
+                    onChange={(e) => setDocumentText(e.target.value)}
+                    rows={12}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                           bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                           focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                           font-mono text-sm"
+                    placeholder="Paste your document text here..."
+                  />
+                </div>
+                <button
+                  onClick={handleIndexDocument}
+                  disabled={indexing || !documentText.trim()}
+                  className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white
+                         font-medium py-2 px-6 rounded-md transition-colors"
+                >
+                  {indexing ? "Indexing..." : "Index Document"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Query Tab */}
+          {activeTab === "query" && (
+            <div className="space-y-6">
               <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                  Answer
-                </h3>
-                <div className="prose dark:prose-invert max-w-none">
-                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                    {answer}
-                  </p>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                  Ask a Question
+                </h2>
+                <p className="text-gray-600 dark:text-gray-300 mb-4">
+                  Ask a question about your indexed documents. The system will
+                  search for relevant context and generate an answer using the
+                  LLM.
+                </p>
+                <div className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="query"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    >
+                      Your Question
+                    </label>
+                    <input
+                      id="query"
+                      type="text"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={(e) =>
+                        e.key === "Enter" && handleAskQuestion()
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md
+                             bg-white dark:bg-gray-700 text-gray-900 dark:text-white
+                             focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="e.g., What are the main topics discussed in the document?"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleAskQuestion}
+                      disabled={answering || !query.trim()}
+                      className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white
+                             font-medium py-2 px-6 rounded-md transition-colors"
+                    >
+                      {answering ? "Thinking..." : "Ask Question (RAG)"}
+                    </button>
+                    <button
+                      onClick={() => handleSearch()}
+                      disabled={searching || !query.trim()}
+                      className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white
+                             font-medium py-2 px-6 rounded-md transition-colors"
+                    >
+                      {searching ? "Searching..." : "Search Only"}
+                    </button>
+                  </div>
                 </div>
               </div>
-            )}
 
-            {/* Search Results Display */}
-            {searchResults.length > 0 && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-                  Relevant Chunks ({searchResults.length}
-                  {searchTotal > searchResults.length && ` of ${searchTotal}`})
-                </h3>
-                <div className="space-y-3">
-                  {searchResults.map((result, index) => (
-                    <div
-                      key={`${result.documentId}-${index}`}
-                      className="p-3 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600"
-                    >
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-                          {result.documentId}
-                        </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          Score: {(result.score * 100).toFixed(1)}%
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                        {result.content}
-                      </p>
-                    </div>
-                  ))}
+              {/* Answer Display */}
+              {answer && (
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                    Answer
+                  </h3>
+                  <div className="prose dark:prose-invert max-w-none">
+                    <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                      {answer}
+                    </p>
+                  </div>
                 </div>
-                {searchHasMore && (
-                  <button
-                    onClick={() => handleSearch(true)}
-                    disabled={searching}
-                    className="mt-4 w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600
+              )}
+
+              {/* Search Results Display */}
+              {searchResults.length > 0 && (
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                    Relevant Chunks ({searchResults.length}
+                    {searchTotal > searchResults.length && ` of ${searchTotal}`}
+                    )
+                  </h3>
+                  <div className="space-y-3">
+                    {searchResults.map((result, index) => (
+                      <div
+                        key={`${result.documentId}-${index}`}
+                        className="p-3 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600"
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
+                            {result.documentId}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            Score: {(result.score * 100).toFixed(1)}%
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                          {result.content}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  {searchHasMore && (
+                    <button
+                      onClick={() => handleSearch(true)}
+                      disabled={searching}
+                      className="mt-4 w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600
                              disabled:opacity-50 text-gray-700 dark:text-gray-300
                              font-medium py-2 px-4 rounded-md transition-colors"
-                  >
-                    {searching ? "Loading..." : "Load More Results"}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </main>
+                    >
+                      {searching ? "Loading..." : "Load More Results"}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
   );
 }

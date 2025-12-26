@@ -1,0 +1,522 @@
+import { gql } from "@apollo/client";
+
+// ============================================
+// Types
+// ============================================
+
+export type SupportedLanguage = "en" | "es";
+
+export interface UserProfile {
+  id: string;
+  userId: string;
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  displayName?: string;
+  preferredName?: string;
+  dateOfBirth?: string;
+  phone?: string;
+  phoneVerifiedAt?: string;
+  timezone: string;
+  locale: string;
+  preferredLanguage: SupportedLanguage;
+  avatarUrl?: string;
+  bio?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateProfileInput {
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  displayName?: string;
+  preferredName?: string;
+  dateOfBirth?: string;
+  phone?: string;
+  timezone?: string;
+  locale?: string;
+  preferredLanguage?: SupportedLanguage;
+  avatarUrl?: string;
+  bio?: string;
+}
+
+export type AddressType = "residential" | "mailing" | "business" | "voting";
+
+export interface UserAddress {
+  id: string;
+  userId: string;
+  addressType: AddressType;
+  isPrimary: boolean;
+  label?: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  latitude?: number;
+  longitude?: number;
+  formattedAddress?: string;
+  congressionalDistrict?: string;
+  stateSenatorialDistrict?: string;
+  stateAssemblyDistrict?: string;
+  county?: string;
+  municipality?: string;
+  schoolDistrict?: string;
+  precinctId?: string;
+  pollingPlace?: string;
+  isVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAddressInput {
+  addressType: AddressType;
+  isPrimary?: boolean;
+  label?: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country?: string;
+}
+
+export interface UpdateAddressInput {
+  id: string;
+  addressType?: AddressType;
+  isPrimary?: boolean;
+  label?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+}
+
+export type NotificationFrequency =
+  | "immediate"
+  | "daily_digest"
+  | "weekly_digest"
+  | "never";
+
+export interface NotificationPreferences {
+  id: string;
+  userId: string;
+  emailEnabled: boolean;
+  emailProductUpdates: boolean;
+  emailSecurityAlerts: boolean;
+  emailMarketing: boolean;
+  emailFrequency: NotificationFrequency;
+  pushEnabled: boolean;
+  pushProductUpdates: boolean;
+  pushSecurityAlerts: boolean;
+  pushMarketing: boolean;
+  smsEnabled: boolean;
+  smsSecurityAlerts: boolean;
+  smsMarketing: boolean;
+  civicElectionReminders: boolean;
+  civicVoterDeadlines: boolean;
+  civicBallotUpdates: boolean;
+  civicLocalNews: boolean;
+  civicRepresentativeUpdates: boolean;
+  civicFrequency: NotificationFrequency;
+  quietHoursEnabled: boolean;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateNotificationPreferencesInput {
+  emailEnabled?: boolean;
+  emailProductUpdates?: boolean;
+  emailSecurityAlerts?: boolean;
+  emailMarketing?: boolean;
+  emailFrequency?: NotificationFrequency;
+  pushEnabled?: boolean;
+  pushProductUpdates?: boolean;
+  pushSecurityAlerts?: boolean;
+  pushMarketing?: boolean;
+  smsEnabled?: boolean;
+  smsSecurityAlerts?: boolean;
+  smsMarketing?: boolean;
+  civicElectionReminders?: boolean;
+  civicVoterDeadlines?: boolean;
+  civicBallotUpdates?: boolean;
+  civicLocalNews?: boolean;
+  civicRepresentativeUpdates?: boolean;
+  civicFrequency?: NotificationFrequency;
+  quietHoursEnabled?: boolean;
+  quietHoursStart?: string;
+  quietHoursEnd?: string;
+}
+
+export type ConsentType =
+  | "terms_of_service"
+  | "privacy_policy"
+  | "marketing_email"
+  | "marketing_sms"
+  | "marketing_push"
+  | "data_sharing"
+  | "analytics"
+  | "personalization"
+  | "location_tracking"
+  | "voter_data_collection"
+  | "civic_notifications"
+  | "representative_contact";
+
+export type ConsentStatus = "granted" | "denied" | "withdrawn" | "pending";
+
+export interface UserConsent {
+  id: string;
+  userId: string;
+  consentType: ConsentType;
+  status: ConsentStatus;
+  documentVersion?: string;
+  documentUrl?: string;
+  grantedAt?: string;
+  deniedAt?: string;
+  withdrawnAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateConsentInput {
+  consentType: ConsentType;
+  granted: boolean;
+  documentVersion?: string;
+  documentUrl?: string;
+}
+
+// ============================================
+// Profile Queries & Mutations
+// ============================================
+
+export const GET_MY_PROFILE = gql`
+  query MyProfile {
+    myProfile {
+      id
+      userId
+      firstName
+      middleName
+      lastName
+      displayName
+      preferredName
+      dateOfBirth
+      phone
+      phoneVerifiedAt
+      timezone
+      locale
+      preferredLanguage
+      avatarUrl
+      bio
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const UPDATE_MY_PROFILE = gql`
+  mutation UpdateMyProfile($input: UpdateProfileDto!) {
+    updateMyProfile(input: $input) {
+      id
+      userId
+      firstName
+      middleName
+      lastName
+      displayName
+      preferredName
+      dateOfBirth
+      phone
+      timezone
+      locale
+      preferredLanguage
+      avatarUrl
+      bio
+      updatedAt
+    }
+  }
+`;
+
+// ============================================
+// Address Queries & Mutations
+// ============================================
+
+export const GET_MY_ADDRESSES = gql`
+  query MyAddresses {
+    myAddresses {
+      id
+      userId
+      addressType
+      isPrimary
+      label
+      addressLine1
+      addressLine2
+      city
+      state
+      postalCode
+      country
+      latitude
+      longitude
+      formattedAddress
+      congressionalDistrict
+      stateSenatorialDistrict
+      stateAssemblyDistrict
+      county
+      municipality
+      schoolDistrict
+      precinctId
+      pollingPlace
+      isVerified
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const CREATE_ADDRESS = gql`
+  mutation CreateAddress($input: CreateAddressDto!) {
+    createAddress(input: $input) {
+      id
+      addressType
+      isPrimary
+      label
+      addressLine1
+      addressLine2
+      city
+      state
+      postalCode
+      country
+      isVerified
+      createdAt
+    }
+  }
+`;
+
+export const UPDATE_ADDRESS = gql`
+  mutation UpdateAddress($input: UpdateAddressDto!) {
+    updateAddress(input: $input) {
+      id
+      addressType
+      isPrimary
+      label
+      addressLine1
+      addressLine2
+      city
+      state
+      postalCode
+      country
+      updatedAt
+    }
+  }
+`;
+
+export const DELETE_ADDRESS = gql`
+  mutation DeleteAddress($id: ID!) {
+    deleteAddress(id: $id)
+  }
+`;
+
+export const SET_PRIMARY_ADDRESS = gql`
+  mutation SetPrimaryAddress($id: ID!) {
+    setPrimaryAddress(id: $id) {
+      id
+      isPrimary
+    }
+  }
+`;
+
+// ============================================
+// Notification Preferences Queries & Mutations
+// ============================================
+
+export const GET_MY_NOTIFICATION_PREFERENCES = gql`
+  query MyNotificationPreferences {
+    myNotificationPreferences {
+      id
+      userId
+      emailEnabled
+      emailProductUpdates
+      emailSecurityAlerts
+      emailMarketing
+      emailFrequency
+      pushEnabled
+      pushProductUpdates
+      pushSecurityAlerts
+      pushMarketing
+      smsEnabled
+      smsSecurityAlerts
+      smsMarketing
+      civicElectionReminders
+      civicVoterDeadlines
+      civicBallotUpdates
+      civicLocalNews
+      civicRepresentativeUpdates
+      civicFrequency
+      quietHoursEnabled
+      quietHoursStart
+      quietHoursEnd
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const UPDATE_NOTIFICATION_PREFERENCES = gql`
+  mutation UpdateNotificationPreferences(
+    $input: UpdateNotificationPreferencesDto!
+  ) {
+    updateNotificationPreferences(input: $input) {
+      id
+      emailEnabled
+      emailProductUpdates
+      emailSecurityAlerts
+      emailMarketing
+      emailFrequency
+      pushEnabled
+      pushProductUpdates
+      pushSecurityAlerts
+      pushMarketing
+      smsEnabled
+      smsSecurityAlerts
+      smsMarketing
+      civicElectionReminders
+      civicVoterDeadlines
+      civicBallotUpdates
+      civicLocalNews
+      civicRepresentativeUpdates
+      civicFrequency
+      quietHoursEnabled
+      quietHoursStart
+      quietHoursEnd
+      updatedAt
+    }
+  }
+`;
+
+export const UNSUBSCRIBE_FROM_ALL = gql`
+  mutation UnsubscribeFromAll {
+    unsubscribeFromAll {
+      id
+      emailEnabled
+      pushEnabled
+      smsEnabled
+    }
+  }
+`;
+
+// ============================================
+// Consent Queries & Mutations
+// ============================================
+
+export const GET_MY_CONSENTS = gql`
+  query MyConsents {
+    myConsents {
+      id
+      userId
+      consentType
+      status
+      documentVersion
+      documentUrl
+      grantedAt
+      deniedAt
+      withdrawnAt
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+export const UPDATE_CONSENT = gql`
+  mutation UpdateConsent($input: UpdateConsentDto!) {
+    updateConsent(input: $input) {
+      id
+      consentType
+      status
+      grantedAt
+      deniedAt
+      updatedAt
+    }
+  }
+`;
+
+export const WITHDRAW_CONSENT = gql`
+  mutation WithdrawConsent($input: WithdrawConsentDto!) {
+    withdrawConsent(input: $input) {
+      id
+      consentType
+      status
+      withdrawnAt
+      updatedAt
+    }
+  }
+`;
+
+export const HAS_VALID_CONSENT = gql`
+  query HasValidConsent($consentType: ConsentType!) {
+    hasValidConsent(consentType: $consentType)
+  }
+`;
+
+// ============================================
+// Response Types
+// ============================================
+
+export interface MyProfileData {
+  myProfile: UserProfile | null;
+}
+
+export interface UpdateMyProfileData {
+  updateMyProfile: UserProfile;
+}
+
+export interface MyAddressesData {
+  myAddresses: UserAddress[];
+}
+
+export interface CreateAddressData {
+  createAddress: UserAddress;
+}
+
+export interface UpdateAddressData {
+  updateAddress: UserAddress;
+}
+
+export interface DeleteAddressData {
+  deleteAddress: boolean;
+}
+
+export interface SetPrimaryAddressData {
+  setPrimaryAddress: UserAddress;
+}
+
+export interface MyNotificationPreferencesData {
+  myNotificationPreferences: NotificationPreferences | null;
+}
+
+export interface UpdateNotificationPreferencesData {
+  updateNotificationPreferences: NotificationPreferences;
+}
+
+export interface UnsubscribeFromAllData {
+  unsubscribeFromAll: NotificationPreferences;
+}
+
+export interface MyConsentsData {
+  myConsents: UserConsent[];
+}
+
+export interface UpdateConsentData {
+  updateConsent: UserConsent;
+}
+
+export interface WithdrawConsentData {
+  withdrawConsent: UserConsent;
+}
+
+export interface HasValidConsentData {
+  hasValidConsent: boolean;
+}
