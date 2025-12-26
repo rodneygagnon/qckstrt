@@ -250,6 +250,7 @@ export class AuthService {
   /**
    * Generate auth tokens for a user (used after passkey authentication)
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async generateTokensForUser(_user: UserEntity): Promise<Auth> {
     // For passkey auth, we need to generate tokens without password
     // Use the auth provider's magic link verification as a workaround

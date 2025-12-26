@@ -119,6 +119,7 @@ export class ProfileService {
     }
 
     // Update only provided fields (excluding id)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id: _id, ...updateData } = updateDto;
     Object.assign(address, updateData);
 
