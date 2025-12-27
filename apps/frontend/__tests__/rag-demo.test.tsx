@@ -52,6 +52,11 @@ Object.defineProperty(window, "localStorage", {
   value: localStorageMock,
 });
 
+// Mock the Header component since it requires AuthProvider
+jest.mock("@/components/Header", () => ({
+  Header: () => <header data-testid="mock-header">Mock Header</header>,
+}));
+
 import RAGDemo from "../app/rag-demo/page";
 
 describe("RAG Demo Page", () => {
@@ -767,6 +772,417 @@ describe("RAG Demo Page", () => {
 
       expect(screen.getByText("Index a Document")).toBeInTheDocument();
       expect(screen.queryByText("Ask a Question")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Toast Notifications", () => {
+    beforeEach(() => {
+      render(<RAGDemo />);
+      const loginButton = screen.getByRole("button", {
+        name: /Start Demo Session/i,
+      });
+      fireEvent.click(loginButton);
+    });
+
+    it("should display success toast with correct content", async () => {
+      mockIndexDocument.mockResolvedValue({
+        data: { indexDocument: true },
+      });
+
+      const textArea = screen.getByPlaceholderText(
+        "Paste your document text here...",
+      );
+      fireEvent.change(textArea, {
+        target: { value: "Test document content" },
+      });
+
+      const indexButtons = screen.getAllByRole("button", {
+        name: /Index Document/i,
+      });
+      const actionButton = indexButtons.find(
+        (btn) =>
+          btn.classList.contains("bg-green-600") ||
+          btn.classList.contains("disabled:bg-gray-400"),
+      );
+      fireEvent.click(actionButton!);
+
+      await waitFor(() => {
+        const alert = screen.getByRole("alert");
+        expect(alert).toBeInTheDocument();
+        expect(alert).toHaveTextContent("✓");
+      });
+    });
+
+    it("should close toast when close button is clicked", async () => {
+      mockIndexDocument.mockResolvedValue({
+        data: { indexDocument: true },
+      });
+
+      const textArea = screen.getByPlaceholderText(
+        "Paste your document text here...",
+      );
+      fireEvent.change(textArea, {
+        target: { value: "Test document content" },
+      });
+
+      const indexButtons = screen.getAllByRole("button", {
+        name: /Index Document/i,
+      });
+      const actionButton = indexButtons.find(
+        (btn) =>
+          btn.classList.contains("bg-green-600") ||
+          btn.classList.contains("disabled:bg-gray-400"),
+      );
+      fireEvent.click(actionButton!);
+
+      await waitFor(() => {
+        expect(screen.getByRole("alert")).toBeInTheDocument();
+      });
+
+      // Click close button
+      const closeButton = screen.getByRole("button", {
+        name: /Close notification/i,
+      });
+      fireEvent.click(closeButton);
+
+      await waitFor(() => {
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      });
+    });
+
+    it("should display error toast with correct styling", async () => {
+      mockIndexDocument.mockRejectedValue(new Error("Test error"));
+
+      const textArea = screen.getByPlaceholderText(
+        "Paste your document text here...",
+      );
+      fireEvent.change(textArea, {
+        target: { value: "Test document content" },
+      });
+
+      const indexButtons = screen.getAllByRole("button", {
+        name: /Index Document/i,
+      });
+      const actionButton = indexButtons.find(
+        (btn) =>
+          btn.classList.contains("bg-green-600") ||
+          btn.classList.contains("disabled:bg-gray-400"),
+      );
+      fireEvent.click(actionButton!);
+
+      await waitFor(() => {
+        const alert = screen.getByRole("alert");
+        expect(alert).toBeInTheDocument();
+        expect(alert).toHaveTextContent("✕");
+      });
+    });
+  });
+
+  describe("Session Persistence", () => {
+    it("should restore user from localStorage on mount", async () => {
+      // Set up localStorage with saved user
+      const savedUser = {
+        id: "saved-user-id",
+        email: "saved@example.com",
+        roles: ["user"],
+        department: "demo",
+        clearance: "public",
+      };
+      localStorageMock.setItem("user", JSON.stringify(savedUser));
+
+      render(<RAGDemo />);
+
+      // Should immediately show main demo page with saved user
+      await waitFor(() => {
+        expect(screen.getByText("RAG Pipeline Demo")).toBeInTheDocument();
+        expect(screen.getByText("saved@example.com")).toBeInTheDocument();
+      });
+    });
+
+    it("should clear search state on logout", async () => {
+      render(<RAGDemo />);
+      const loginButton = screen.getByRole("button", {
+        name: /Start Demo Session/i,
+      });
+      fireEvent.click(loginButton);
+
+      // Switch to Query tab and perform a search
+      const queryTab = screen.getByText("Query Knowledge Base");
+      fireEvent.click(queryTab);
+
+      mockSearchText.mockResolvedValue({
+        data: {
+          searchText: {
+            results: [
+              { content: "Test chunk", documentId: "doc-1", score: 0.95 },
+            ],
+            total: 1,
+            hasMore: false,
+          },
+        },
+      });
+
+      const queryInput = screen.getByPlaceholderText(
+        "e.g., What are the main topics discussed in the document?",
+      );
+      fireEvent.change(queryInput, { target: { value: "test query" } });
+
+      const searchButton = screen.getByRole("button", { name: /Search Only/i });
+      fireEvent.click(searchButton);
+
+      await waitFor(() => {
+        expect(screen.getByText("Relevant Chunks (1)")).toBeInTheDocument();
+      });
+
+      // Now logout
+      const logoutButton = screen.getByRole("button", { name: /Logout/i });
+      fireEvent.click(logoutButton);
+
+      // Should show login screen
+      await waitFor(() => {
+        expect(screen.getByText("RAG Demo - Login")).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("Error Handling Edge Cases", () => {
+    beforeEach(() => {
+      render(<RAGDemo />);
+      const loginButton = screen.getByRole("button", {
+        name: /Start Demo Session/i,
+      });
+      fireEvent.click(loginButton);
+    });
+
+    it("should handle non-Error object in indexDocument error", async () => {
+      mockIndexDocument.mockRejectedValue("String error");
+
+      const textArea = screen.getByPlaceholderText(
+        "Paste your document text here...",
+      );
+      fireEvent.change(textArea, {
+        target: { value: "Test document content" },
+      });
+
+      const indexButtons = screen.getAllByRole("button", {
+        name: /Index Document/i,
+      });
+      const actionButton = indexButtons.find(
+        (btn) =>
+          btn.classList.contains("bg-green-600") ||
+          btn.classList.contains("disabled:bg-gray-400"),
+      );
+      fireEvent.click(actionButton!);
+
+      await waitFor(() => {
+        expect(screen.getByRole("alert")).toBeInTheDocument();
+        expect(screen.getByText(/Unknown error/i)).toBeInTheDocument();
+      });
+    });
+
+    it("should handle non-Error object in answerQuery error", async () => {
+      mockAnswerQuery.mockRejectedValue({ code: "UNKNOWN" });
+
+      const queryTab = screen.getByText("Query Knowledge Base");
+      fireEvent.click(queryTab);
+
+      const queryInput = screen.getByPlaceholderText(
+        "e.g., What are the main topics discussed in the document?",
+      );
+      fireEvent.change(queryInput, { target: { value: "What is QCKSTRT?" } });
+
+      const askButton = screen.getByRole("button", {
+        name: /Ask Question \(RAG\)/i,
+      });
+      fireEvent.click(askButton);
+
+      await waitFor(() => {
+        expect(screen.getByText(/Error: Unknown error/i)).toBeInTheDocument();
+      });
+    });
+
+    it("should handle search error on loadMore and preserve existing results", async () => {
+      // First search returns results with hasMore=true
+      mockSearchText
+        .mockResolvedValueOnce({
+          data: {
+            searchText: {
+              results: [
+                { content: "Chunk 1", documentId: "doc-1", score: 0.95 },
+              ],
+              total: 3,
+              hasMore: true,
+            },
+          },
+        })
+        // Load more fails
+        .mockRejectedValueOnce(new Error("Load more failed"));
+
+      const queryTab = screen.getByText("Query Knowledge Base");
+      fireEvent.click(queryTab);
+
+      const queryInput = screen.getByPlaceholderText(
+        "e.g., What are the main topics discussed in the document?",
+      );
+      fireEvent.change(queryInput, { target: { value: "What is QCKSTRT?" } });
+
+      const searchButton = screen.getByRole("button", { name: /Search Only/i });
+      fireEvent.click(searchButton);
+
+      await waitFor(() => {
+        expect(screen.getByText("Chunk 1")).toBeInTheDocument();
+      });
+
+      // Click Load More which will fail
+      const loadMoreButton = screen.getByRole("button", {
+        name: /Load More Results/i,
+      });
+      fireEvent.click(loadMoreButton);
+
+      // Original results should still be visible
+      await waitFor(() => {
+        expect(screen.getByText("Chunk 1")).toBeInTheDocument();
+      });
+    });
+
+    it("should not submit when user or documentText is empty", async () => {
+      // This tests the early return in handleIndexDocument
+      const textArea = screen.getByPlaceholderText(
+        "Paste your document text here...",
+      );
+      // Enter only whitespace
+      fireEvent.change(textArea, { target: { value: "   " } });
+
+      const indexButtons = screen.getAllByRole("button", {
+        name: /Index Document/i,
+      });
+      const actionButton = indexButtons.find(
+        (btn) =>
+          btn.classList.contains("bg-green-600") ||
+          btn.classList.contains("disabled:bg-gray-400"),
+      );
+
+      // Button should be disabled for whitespace-only input
+      expect(actionButton).toBeDisabled();
+    });
+
+    it("should not submit query when query is empty", async () => {
+      const queryTab = screen.getByText("Query Knowledge Base");
+      fireEvent.click(queryTab);
+
+      const queryInput = screen.getByPlaceholderText(
+        "e.g., What are the main topics discussed in the document?",
+      );
+      // Enter only whitespace
+      fireEvent.change(queryInput, { target: { value: "   " } });
+
+      const askButton = screen.getByRole("button", {
+        name: /Ask Question \(RAG\)/i,
+      });
+
+      // Button should be disabled for whitespace-only input
+      expect(askButton).toBeDisabled();
+    });
+
+    it("should not trigger ask question on non-Enter keys", async () => {
+      const queryTab = screen.getByText("Query Knowledge Base");
+      fireEvent.click(queryTab);
+
+      const queryInput = screen.getByPlaceholderText(
+        "e.g., What are the main topics discussed in the document?",
+      );
+      fireEvent.change(queryInput, { target: { value: "Test question" } });
+      fireEvent.keyDown(queryInput, { key: "Tab", code: "Tab" });
+
+      // Should not have called answerQuery
+      expect(mockAnswerQuery).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Search Result Edge Cases", () => {
+    beforeEach(() => {
+      render(<RAGDemo />);
+      const loginButton = screen.getByRole("button", {
+        name: /Start Demo Session/i,
+      });
+      fireEvent.click(loginButton);
+      const queryTab = screen.getByText("Query Knowledge Base");
+      fireEvent.click(queryTab);
+    });
+
+    it("should handle search with empty results array", async () => {
+      mockSearchText.mockResolvedValue({
+        data: {
+          searchText: {
+            results: [],
+            total: 0,
+            hasMore: false,
+          },
+        },
+      });
+
+      const queryInput = screen.getByPlaceholderText(
+        "e.g., What are the main topics discussed in the document?",
+      );
+      fireEvent.change(queryInput, { target: { value: "What is QCKSTRT?" } });
+
+      const searchButton = screen.getByRole("button", { name: /Search Only/i });
+      fireEvent.click(searchButton);
+
+      await waitFor(() => {
+        expect(mockSearchText).toHaveBeenCalled();
+      });
+
+      // No results should be displayed
+      expect(screen.queryByText(/Relevant Chunks/)).not.toBeInTheDocument();
+    });
+
+    it("should append results when loading more", async () => {
+      mockSearchText
+        .mockResolvedValueOnce({
+          data: {
+            searchText: {
+              results: [
+                { content: "First batch", documentId: "doc-1", score: 0.95 },
+              ],
+              total: 2,
+              hasMore: true,
+            },
+          },
+        })
+        .mockResolvedValueOnce({
+          data: {
+            searchText: {
+              results: [
+                { content: "Second batch", documentId: "doc-2", score: 0.85 },
+              ],
+              total: 2,
+              hasMore: false,
+            },
+          },
+        });
+
+      const queryInput = screen.getByPlaceholderText(
+        "e.g., What are the main topics discussed in the document?",
+      );
+      fireEvent.change(queryInput, { target: { value: "Test" } });
+
+      const searchButton = screen.getByRole("button", { name: /Search Only/i });
+      fireEvent.click(searchButton);
+
+      await waitFor(() => {
+        expect(screen.getByText("First batch")).toBeInTheDocument();
+      });
+
+      const loadMoreButton = screen.getByRole("button", {
+        name: /Load More Results/i,
+      });
+      fireEvent.click(loadMoreButton);
+
+      await waitFor(() => {
+        expect(screen.getByText("First batch")).toBeInTheDocument();
+        expect(screen.getByText("Second batch")).toBeInTheDocument();
+      });
     });
   });
 });

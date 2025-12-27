@@ -1,0 +1,24 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type SearchResult {
+  content: String!
+  documentId: String!
+  score: Float!
+}
+
+type PaginatedSearchResults {
+  results: [SearchResult!]!
+  total: Int!
+  hasMore: Boolean!
+}
+
+type Query {
+  searchText(userId: ID!, query: String!, skip: Int! = 0, take: Int! = 10): PaginatedSearchResults!
+}
+
+type Mutation {
+  answerQuery(userId: ID!, query: String!): String!
+  indexDocument(userId: ID!, documentId: String!, text: String!): Boolean!
+}

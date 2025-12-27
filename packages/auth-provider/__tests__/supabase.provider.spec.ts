@@ -9,6 +9,7 @@ const mockAuth = {
   resetPasswordForEmail: jest.fn(),
   updateUser: jest.fn(),
   verifyOtp: jest.fn(),
+  signInWithOtp: jest.fn(),
   admin: {
     createUser: jest.fn(),
     deleteUser: jest.fn(),
@@ -558,6 +559,345 @@ describe("SupabaseAuthProvider", () => {
           "123456",
         ),
       ).rejects.toThrow(AuthError);
+    });
+
+    it("should confirm forgot password with username successfully", async () => {
+      mockAuth.admin.listUsers.mockResolvedValue({
+        data: {
+          users: [
+            {
+              id: "user-123",
+              email: "test@example.com",
+              user_metadata: { username: "testuser" },
+            },
+          ],
+        },
+        error: null,
+      });
+      mockAuth.verifyOtp.mockResolvedValue({
+        data: {
+          session: { access_token: "temp-token" },
+        },
+        error: null,
+      });
+      mockAuth.updateUser.mockResolvedValue({
+        data: { user: { id: "user-123" } },
+        error: null,
+      });
+
+      const result = await provider.confirmForgotPassword(
+        "testuser",
+        "NewPass123!",
+        "123456",
+      );
+
+      expect(result).toBe(true);
+      expect(mockAuth.verifyOtp).toHaveBeenCalledWith({
+        email: "test@example.com",
+        token: "123456",
+        type: "recovery",
+      });
+    });
+
+    it("should throw AuthError when user not found by username", async () => {
+      mockAuth.admin.listUsers.mockResolvedValue({
+        data: { users: [] },
+        error: null,
+      });
+
+      await expect(
+        provider.confirmForgotPassword("unknownuser", "NewPass123!", "123456"),
+      ).rejects.toThrow(AuthError);
+    });
+  });
+
+  describe("sendMagicLink", () => {
+    it("should send magic link successfully", async () => {
+      mockAuth.signInWithOtp.mockResolvedValue({
+        data: {},
+        error: null,
+      });
+
+      const result = await provider.sendMagicLink("test@example.com");
+
+      expect(result).toBe(true);
+      expect(mockAuth.signInWithOtp).toHaveBeenCalledWith({
+        email: "test@example.com",
+        options: {
+          emailRedirectTo: undefined,
+          shouldCreateUser: false,
+        },
+      });
+    });
+
+    it("should send magic link with redirectTo successfully", async () => {
+      mockAuth.signInWithOtp.mockResolvedValue({
+        data: {},
+        error: null,
+      });
+
+      const result = await provider.sendMagicLink(
+        "test@example.com",
+        "http://localhost:3000/callback",
+      );
+
+      expect(result).toBe(true);
+      expect(mockAuth.signInWithOtp).toHaveBeenCalledWith({
+        email: "test@example.com",
+        options: {
+          emailRedirectTo: "http://localhost:3000/callback",
+          shouldCreateUser: false,
+        },
+      });
+    });
+
+    it("should throw AuthError on failure", async () => {
+      mockAuth.signInWithOtp.mockResolvedValue({
+        data: null,
+        error: { message: "Failed to send OTP" },
+      });
+
+      await expect(provider.sendMagicLink("test@example.com")).rejects.toThrow(
+        AuthError,
+      );
+    });
+  });
+
+  describe("verifyMagicLink", () => {
+    it("should verify magic link successfully", async () => {
+      mockAuth.verifyOtp.mockResolvedValue({
+        data: {
+          session: {
+            access_token: "access-token",
+            refresh_token: "refresh-token",
+            expires_in: 3600,
+          },
+        },
+        error: null,
+      });
+
+      const result = await provider.verifyMagicLink(
+        "test@example.com",
+        "123456",
+      );
+
+      expect(result).toEqual({
+        accessToken: "access-token",
+        idToken: "access-token",
+        refreshToken: "refresh-token",
+        expiresIn: 3600,
+      });
+      expect(mockAuth.verifyOtp).toHaveBeenCalledWith({
+        email: "test@example.com",
+        token: "123456",
+        type: "email",
+      });
+    });
+
+    it("should handle missing refresh token", async () => {
+      mockAuth.verifyOtp.mockResolvedValue({
+        data: {
+          session: {
+            access_token: "access-token",
+            expires_in: 3600,
+          },
+        },
+        error: null,
+      });
+
+      const result = await provider.verifyMagicLink(
+        "test@example.com",
+        "123456",
+      );
+
+      expect(result.refreshToken).toBe("");
+    });
+
+    it("should throw AuthError on verification failure", async () => {
+      mockAuth.verifyOtp.mockResolvedValue({
+        data: null,
+        error: { message: "Invalid OTP" },
+      });
+
+      await expect(
+        provider.verifyMagicLink("test@example.com", "bad"),
+      ).rejects.toThrow(AuthError);
+    });
+
+    it("should throw AuthError when no session returned", async () => {
+      mockAuth.verifyOtp.mockResolvedValue({
+        data: { session: null },
+        error: null,
+      });
+
+      await expect(
+        provider.verifyMagicLink("test@example.com", "123456"),
+      ).rejects.toThrow(AuthError);
+    });
+  });
+
+  describe("registerWithMagicLink", () => {
+    it("should send registration magic link successfully", async () => {
+      mockAuth.signInWithOtp.mockResolvedValue({
+        data: {},
+        error: null,
+      });
+
+      const result = await provider.registerWithMagicLink("test@example.com");
+
+      expect(result).toBe(true);
+      expect(mockAuth.signInWithOtp).toHaveBeenCalledWith({
+        email: "test@example.com",
+        options: {
+          emailRedirectTo: undefined,
+          shouldCreateUser: true,
+        },
+      });
+    });
+
+    it("should send registration magic link with redirectTo successfully", async () => {
+      mockAuth.signInWithOtp.mockResolvedValue({
+        data: {},
+        error: null,
+      });
+
+      const result = await provider.registerWithMagicLink(
+        "test@example.com",
+        "http://localhost:3000/callback",
+      );
+
+      expect(result).toBe(true);
+      expect(mockAuth.signInWithOtp).toHaveBeenCalledWith({
+        email: "test@example.com",
+        options: {
+          emailRedirectTo: "http://localhost:3000/callback",
+          shouldCreateUser: true,
+        },
+      });
+    });
+
+    it("should throw AuthError on failure", async () => {
+      mockAuth.signInWithOtp.mockResolvedValue({
+        data: null,
+        error: { message: "Failed to send registration OTP" },
+      });
+
+      await expect(
+        provider.registerWithMagicLink("test@example.com"),
+      ).rejects.toThrow(AuthError);
+    });
+  });
+
+  describe("addToGroup edge cases", () => {
+    it("should throw AuthError when user not found", async () => {
+      mockAuth.admin.listUsers.mockResolvedValue({
+        data: { users: [] },
+        error: null,
+      });
+
+      await expect(provider.addToGroup("unknownuser", "admin")).rejects.toThrow(
+        AuthError,
+      );
+    });
+
+    it("should throw AuthError on update failure", async () => {
+      mockAuth.admin.listUsers.mockResolvedValue({
+        data: {
+          users: [{ id: "user-123", user_metadata: { username: "testuser" } }],
+        },
+        error: null,
+      });
+      mockAuth.admin.getUserById.mockResolvedValue({
+        data: {
+          user: { id: "user-123", app_metadata: { roles: [] } },
+        },
+        error: null,
+      });
+      mockAuth.admin.updateUserById.mockResolvedValue({
+        data: null,
+        error: { message: "Update failed" },
+      });
+
+      await expect(provider.addToGroup("testuser", "admin")).rejects.toThrow(
+        AuthError,
+      );
+    });
+  });
+
+  describe("removeFromGroup edge cases", () => {
+    it("should throw AuthError when user not found", async () => {
+      mockAuth.admin.listUsers.mockResolvedValue({
+        data: { users: [] },
+        error: null,
+      });
+
+      await expect(
+        provider.removeFromGroup("unknownuser", "admin"),
+      ).rejects.toThrow(AuthError);
+    });
+
+    it("should throw AuthError on update failure", async () => {
+      mockAuth.admin.listUsers.mockResolvedValue({
+        data: {
+          users: [{ id: "user-123", user_metadata: { username: "testuser" } }],
+        },
+        error: null,
+      });
+      mockAuth.admin.getUserById.mockResolvedValue({
+        data: {
+          user: { id: "user-123", app_metadata: { roles: ["admin"] } },
+        },
+        error: null,
+      });
+      mockAuth.admin.updateUserById.mockResolvedValue({
+        data: null,
+        error: { message: "Update failed" },
+      });
+
+      await expect(
+        provider.removeFromGroup("testuser", "admin"),
+      ).rejects.toThrow(AuthError);
+    });
+  });
+
+  describe("getUserIdByUsername edge cases", () => {
+    it("should find user by email when username not in metadata", async () => {
+      mockAuth.admin.listUsers.mockResolvedValue({
+        data: {
+          users: [{ id: "user-123", email: "test@example.com" }],
+        },
+        error: null,
+      });
+      mockAuth.admin.updateUserById.mockResolvedValue({
+        data: { user: { id: "user-123" } },
+        error: null,
+      });
+
+      await expect(
+        provider.confirmUser("test@example.com"),
+      ).resolves.toBeUndefined();
+    });
+
+    it("should handle listUsers error gracefully", async () => {
+      mockAuth.admin.listUsers.mockResolvedValue({
+        data: null,
+        error: { message: "List users failed" },
+      });
+
+      await expect(provider.confirmUser("testuser")).rejects.toThrow(AuthError);
+    });
+  });
+
+  describe("getEmailByUsername edge cases", () => {
+    it("should handle listUsers error gracefully in forgotPassword", async () => {
+      mockAuth.admin.listUsers.mockResolvedValue({
+        data: null,
+        error: { message: "List users failed" },
+      });
+
+      await expect(provider.forgotPassword("testuser")).rejects.toThrow(
+        AuthError,
+      );
     });
   });
 });

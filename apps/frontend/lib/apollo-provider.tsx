@@ -2,9 +2,18 @@
 
 import { ApolloProvider as BaseApolloProvider } from "@apollo/client/react";
 import { apolloClient } from "./apollo-client";
+import { AuthProvider } from "./auth-context";
+import { I18nProvider } from "./i18n/context";
+import "@/lib/i18n";
 
-export function ApolloProvider({ children }: { children: React.ReactNode }) {
+export function ApolloProvider({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    <BaseApolloProvider client={apolloClient}>{children}</BaseApolloProvider>
+    <BaseApolloProvider client={apolloClient}>
+      <AuthProvider>
+        <I18nProvider>{children}</I18nProvider>
+      </AuthProvider>
+    </BaseApolloProvider>
   );
 }

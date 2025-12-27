@@ -92,10 +92,11 @@ export class KnowledgeService {
       );
 
       // Step 3: Generate answer with LLM
+      // Lower temperature (0.3) for more factual, consistent responses
       const result = await this.llm.generate(prompt, {
         maxTokens: 500,
-        temperature: 0.7,
-        topP: 0.95,
+        temperature: 0.3,
+        topP: 0.9,
       });
 
       this.logger.log(
@@ -113,7 +114,14 @@ export class KnowledgeService {
    * Build RAG prompt with context and query
    */
   private buildRAGPrompt(context: string, query: string): string {
-    return `You are a helpful assistant. Answer the question based on the context provided below.
+    return `You are a helpful assistant that answers questions based only on the provided context.
+
+Instructions:
+- Answer the question using ONLY information from the context below
+- Be concise and direct - avoid unnecessary repetition
+- If listing items, list each item exactly once
+- If the context doesn't contain enough information, say so
+- Do not make up information not present in the context
 
 Context:
 ${context}

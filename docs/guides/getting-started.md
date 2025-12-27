@@ -4,7 +4,7 @@ This guide will get you up and running with QCKSTRT in under 10 minutes.
 
 ## Prerequisites
 
-- **Node.js** 18+ and npm/pnpm
+- **Node.js** 20+ and pnpm
 - **Docker** and Docker Compose
 - **Git**
 
@@ -18,8 +18,6 @@ git clone https://github.com/your-org/qckstrt.git
 cd qckstrt
 
 # Install dependencies
-npm install
-# or
 pnpm install
 ```
 
@@ -72,14 +70,14 @@ cp apps/backend/.env.example apps/backend/.env
 ### 5. Start the Application
 
 ```bash
-# Backend services
+# Backend services (in one terminal)
 cd apps/backend
-npm run start:dev
-# This starts all microservices (API Gateway, Users, Documents, Knowledge)
+pnpm start
+# This starts all microservices concurrently (API Gateway, Users, Documents, Knowledge)
 
 # Frontend (in another terminal)
 cd apps/frontend
-npm run dev
+pnpm dev
 ```
 
 ### 6. Verify It's Working
@@ -205,15 +203,55 @@ QCKSTRT comes with sensible defaults for local development:
 - **Setup**: Automatic via docker-compose
 
 ### Auth/Storage/Secrets: Supabase
-- **Auth**: Supabase Auth (GoTrue)
+- **Auth**: Supabase Auth (GoTrue) with passwordless support
+  - **Passkeys** (WebAuthn/FIDO2) - Primary passwordless method
+  - **Magic Links** - Email-based passwordless login
+  - **Password** - Legacy fallback
 - **Storage**: Supabase Storage
 - **Secrets**: Supabase Vault
 - **API**: http://localhost:8000
 - **Studio**: http://localhost:3100
 
+### WebAuthn Configuration (Passkeys)
+```bash
+# Required for passkey authentication
+WEBAUTHN_RP_NAME=Qckstrt
+WEBAUTHN_RP_ID=localhost
+WEBAUTHN_ORIGIN=http://localhost:3000
+FRONTEND_URL=http://localhost:3000
+```
+
 ---
 
 ## Common Tasks
+
+### Register a New User (Passwordless)
+
+QCKSTRT uses email-first passwordless registration:
+
+1. Open http://localhost:3000/register
+2. Enter your email address (no password needed)
+3. Click "Send Magic Link"
+4. Check your email and click the magic link
+5. After verification, you'll be prompted to add a passkey
+6. Use your fingerprint/face/PIN to create a passkey for faster future sign-ins
+
+### Sign In
+
+Three authentication methods are available:
+
+**1. Passkey (Primary - Recommended)**
+- Click "Sign in with Passkey"
+- Authenticate with your fingerprint, face, or device PIN
+- Instant sign-in without typing
+
+**2. Magic Link**
+- Enter your email
+- Click "Send Magic Link"
+- Check email and click link to sign in
+
+**3. Password (Legacy)**
+- Use traditional email/password combination
 
 ### Index a Document
 
@@ -389,19 +427,21 @@ Now that you have QCKSTRT running:
 ```bash
 cd apps/backend
 
-# Start in watch mode (auto-restart on changes)
-npm run start:dev
+# Start all microservices concurrently (with watch mode)
+pnpm start
 
-# Run specific service
-npm run start:dev -- api        # API Gateway only
-npm run start:dev -- knowledge  # Knowledge service only
+# Run specific service only
+pnpm start:api        # API Gateway only (port 3000)
+pnpm start:users      # Users service only (port 3001)
+pnpm start:documents  # Documents service only (port 3002)
+pnpm start:knowledge  # Knowledge service only (port 3003)
 
 # Build for production
-npm run build
+pnpm build
 
 # Run tests
-npm run test
-npm run test:watch
+pnpm test
+pnpm test:watch
 ```
 
 ### Frontend Development
@@ -410,13 +450,13 @@ npm run test:watch
 cd apps/frontend
 
 # Start dev server with HMR
-npm run dev
+pnpm dev
 
 # Build for production
-npm run build
+pnpm build
 
-# Preview production build
-npm run preview
+# Run tests
+pnpm test
 ```
 
 ### Docker Services
@@ -449,9 +489,16 @@ For production deployment, see:
 **Key Changes for Production**:
 1. Use managed PostgreSQL with pgvector (Supabase Cloud or self-hosted)
 2. Use Ollama with GPU instances for better performance
-3. Enable SSL/TLS for all connections
-4. Set up monitoring and logging
-5. Configure backups
+3. Enable SSL/TLS for all connections (required for WebAuthn)
+4. Configure WebAuthn for your production domain:
+   ```bash
+   WEBAUTHN_RP_NAME=Your App Name
+   WEBAUTHN_RP_ID=yourdomain.com
+   WEBAUTHN_ORIGIN=https://yourdomain.com
+   ```
+5. Configure SMTP for magic link emails
+6. Set up monitoring and logging
+7. Configure backups
 
 ---
 

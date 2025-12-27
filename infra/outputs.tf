@@ -56,11 +56,6 @@ output "supabase_api_url" {
   value       = var.domain_name != "" ? "https://${var.app_subdomain}.${var.domain_name}" : "http://${aws_eip.app_server.public_ip}"
 }
 
-output "chromadb_url" {
-  description = "ChromaDB URL"
-  value       = var.domain_name != "" ? "https://${var.app_subdomain}.${var.domain_name}/chromadb" : "http://${aws_eip.app_server.public_ip}:8001"
-}
-
 output "vllm_api_url" {
   description = "vLLM API URL (OpenAI-compatible)"
   value       = var.domain_name != "" ? "https://${var.gpu_subdomain}.${var.domain_name}/v1" : "http://${aws_eip.gpu_server.public_ip}:8000"
@@ -111,7 +106,7 @@ output "backend_env_vars" {
   description = "Environment variables for backend configuration"
   value = {
     SUPABASE_URL          = var.domain_name != "" ? "https://${var.app_subdomain}.${var.domain_name}" : "http://${aws_eip.app_server.public_ip}"
-    VECTOR_DB_CHROMA_URL  = var.domain_name != "" ? "https://${var.app_subdomain}.${var.domain_name}/chromadb" : "http://${aws_eip.app_server.public_ip}:8001"
+    VECTOR_DB_PROVIDER    = "pgvector"
     LLM_URL               = var.domain_name != "" ? "https://${var.gpu_subdomain}.${var.domain_name}/v1" : "http://${aws_eip.gpu_server.public_ip}:8000"
     EMBEDDINGS_PROVIDER   = "ollama"
     EMBEDDINGS_OLLAMA_URL = var.domain_name != "" ? "https://${var.gpu_subdomain}.${var.domain_name}/embeddings" : "http://${aws_eip.gpu_server.public_ip}:8001"

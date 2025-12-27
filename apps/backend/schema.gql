@@ -2,13 +2,32 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
-type User {
-  id: ID!
-  email: String!
-  firstName: String
-  lastName: String
-  created: DateTime!
-  updated: DateTime!
+type Auth {
+  accessToken: String!
+  idToken: String!
+  refreshToken: String!
+}
+
+type PasskeyRegistrationOptions {
+  options: JSON!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+type PasskeyAuthenticationOptions {
+  options: JSON!
+  identifier: String!
+}
+
+type PasskeyCredential {
+  id: String!
+  friendlyName: String
+  deviceType: String
+  createdAt: DateTime!
+  lastUsedAt: DateTime!
 }
 
 """
@@ -16,16 +35,160 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
-type Auth {
-  accessToken: String!
-  idToken: String!
-  refreshToken: String!
+type User {
+  id: ID!
+  email: String!
+  firstName: String
+  lastName: String
+  created: DateTime
+  updated: DateTime
+}
+
+type UserProfileEntity {
+  id: ID!
+  firstName: String
+  middleName: String
+  lastName: String
+  displayName: String
+  preferredName: String
+  dateOfBirth: DateTime
+  phone: String
+  phoneVerifiedAt: DateTime
+  timezone: String!
+  locale: String!
+  preferredLanguage: String!
+  avatarUrl: String
+  bio: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type UserAddressEntity {
+  id: ID!
+  addressType: AddressType!
+  isPrimary: Boolean!
+  label: String
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  state: String!
+  postalCode: String!
+  country: String!
+  latitude: Float
+  longitude: Float
+  formattedAddress: String
+  placeId: String
+  congressionalDistrict: String
+  stateSenatorialDistrict: String
+  stateAssemblyDistrict: String
+  county: String
+  municipality: String
+  schoolDistrict: String
+  precinctId: String
+  pollingPlace: String
+  isVerified: Boolean!
+  verificationMethod: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""The type of address"""
+enum AddressType {
+  RESIDENTIAL
+  MAILING
+  BUSINESS
+  VOTING
+}
+
+type NotificationPreferenceEntity {
+  id: ID!
+  emailEnabled: Boolean!
+  emailProductUpdates: Boolean!
+  emailSecurityAlerts: Boolean!
+  emailMarketing: Boolean!
+  emailFrequency: NotificationFrequency!
+  pushEnabled: Boolean!
+  pushProductUpdates: Boolean!
+  pushSecurityAlerts: Boolean!
+  pushMarketing: Boolean!
+  smsEnabled: Boolean!
+  smsSecurityAlerts: Boolean!
+  smsMarketing: Boolean!
+  civicElectionReminders: Boolean!
+  civicVoterDeadlines: Boolean!
+  civicBallotUpdates: Boolean!
+  civicLocalNews: Boolean!
+  civicRepresentativeUpdates: Boolean!
+  civicFrequency: NotificationFrequency!
+  quietHoursEnabled: Boolean!
+  quietHoursStart: String
+  quietHoursEnd: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""How often to receive notifications"""
+enum NotificationFrequency {
+  IMMEDIATE
+  DAILY_DIGEST
+  WEEKLY_DIGEST
+  NEVER
+}
+
+type UserConsentEntity {
+  id: ID!
+  consentType: ConsentType!
+  status: ConsentStatus!
+  documentVersion: String
+  documentUrl: String
+  userAgent: String
+  collectionMethod: String
+  collectionContext: String
+  grantedAt: DateTime
+  deniedAt: DateTime
+  withdrawnAt: DateTime
+  expiresAt: DateTime
+  consentText: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""Type of consent"""
+enum ConsentType {
+  TERMS_OF_SERVICE
+  PRIVACY_POLICY
+  MARKETING_EMAIL
+  MARKETING_SMS
+  MARKETING_PUSH
+  DATA_SHARING
+  ANALYTICS
+  PERSONALIZATION
+  LOCATION_TRACKING
+  VOTER_DATA_COLLECTION
+  CIVIC_NOTIFICATIONS
+  REPRESENTATIVE_CONTACT
+}
+
+"""Status of consent"""
+enum ConsentStatus {
+  GRANTED
+  DENIED
+  WITHDRAWN
+  PENDING
 }
 
 type Query {
   getUsers: [User!]!
   getUser(id: ID!): User!
   findUser(email: String!): User!
+  myPasskeys: [PasskeyCredential!]!
+  myProfile: UserProfileEntity
+  myAddresses: [UserAddressEntity!]!
+  myAddress(id: ID!): UserAddressEntity
+  myNotificationPreferences: NotificationPreferenceEntity
+  myConsents: [UserConsentEntity!]!
+  myConsent(consentType: ConsentType!): UserConsentEntity
+  hasValidConsent(consentType: ConsentType!): Boolean!
 }
 
 type Mutation {
@@ -40,6 +203,24 @@ type Mutation {
   confirmUser(id: ID!): Boolean!
   addAdminPermission(id: ID!): Boolean!
   removeAdminPermission(id: ID!): Boolean!
+  generatePasskeyRegistrationOptions(input: GeneratePasskeyRegistrationOptionsDto!): PasskeyRegistrationOptions!
+  verifyPasskeyRegistration(input: VerifyPasskeyRegistrationDto!): Boolean!
+  generatePasskeyAuthenticationOptions(input: GeneratePasskeyAuthenticationOptionsDto): PasskeyAuthenticationOptions!
+  verifyPasskeyAuthentication(input: VerifyPasskeyAuthenticationDto!): Auth!
+  deletePasskey(credentialId: String!): Boolean!
+  sendMagicLink(input: SendMagicLinkDto!): Boolean!
+  verifyMagicLink(input: VerifyMagicLinkDto!): Auth!
+  registerWithMagicLink(input: RegisterWithMagicLinkDto!): Boolean!
+  updateMyProfile(input: UpdateProfileDto!): UserProfileEntity!
+  createAddress(input: CreateAddressDto!): UserAddressEntity!
+  updateAddress(input: UpdateAddressDto!): UserAddressEntity!
+  deleteAddress(id: ID!): Boolean!
+  setPrimaryAddress(id: ID!): UserAddressEntity!
+  updateNotificationPreferences(input: UpdateNotificationPreferencesDto!): NotificationPreferenceEntity!
+  unsubscribeFromAll: NotificationPreferenceEntity!
+  updateConsent(input: UpdateConsentDto!): UserConsentEntity!
+  bulkUpdateConsents(input: BulkUpdateConsentsDto!): [UserConsentEntity!]!
+  withdrawConsent(input: WithdrawConsentDto!): UserConsentEntity!
 }
 
 input CreateUserDto {
@@ -86,4 +267,117 @@ input ConfirmForgotPasswordDto {
   email: String!
   confirmationCode: String!
   password: String!
+}
+
+input GeneratePasskeyRegistrationOptionsDto {
+  email: String!
+}
+
+input VerifyPasskeyRegistrationDto {
+  email: String!
+  response: JSON!
+  friendlyName: String
+}
+
+input GeneratePasskeyAuthenticationOptionsDto {
+  email: String
+}
+
+input VerifyPasskeyAuthenticationDto {
+  identifier: String!
+  response: JSON!
+}
+
+input SendMagicLinkDto {
+  email: String!
+  redirectTo: String
+}
+
+input VerifyMagicLinkDto {
+  email: String!
+  token: String!
+}
+
+input RegisterWithMagicLinkDto {
+  email: String!
+  redirectTo: String
+}
+
+input UpdateProfileDto {
+  firstName: String
+  middleName: String
+  lastName: String
+  displayName: String
+  preferredName: String
+  dateOfBirth: String
+  phone: String
+  timezone: String
+  locale: String
+  preferredLanguage: String
+  avatarUrl: String
+  bio: String
+}
+
+input CreateAddressDto {
+  addressType: String!
+  isPrimary: Boolean = false
+  label: String
+  addressLine1: String!
+  addressLine2: String
+  city: String!
+  state: String!
+  postalCode: String!
+  country: String = "US"
+}
+
+input UpdateAddressDto {
+  id: ID!
+  addressType: String
+  isPrimary: Boolean
+  label: String
+  addressLine1: String
+  addressLine2: String
+  city: String
+  state: String
+  postalCode: String
+  country: String
+}
+
+input UpdateNotificationPreferencesDto {
+  emailEnabled: Boolean
+  emailProductUpdates: Boolean
+  emailSecurityAlerts: Boolean
+  emailMarketing: Boolean
+  emailFrequency: NotificationFrequency
+  pushEnabled: Boolean
+  pushProductUpdates: Boolean
+  pushSecurityAlerts: Boolean
+  pushMarketing: Boolean
+  smsEnabled: Boolean
+  smsSecurityAlerts: Boolean
+  smsMarketing: Boolean
+  civicElectionReminders: Boolean
+  civicVoterDeadlines: Boolean
+  civicBallotUpdates: Boolean
+  civicLocalNews: Boolean
+  civicRepresentativeUpdates: Boolean
+  civicFrequency: NotificationFrequency
+  quietHoursEnabled: Boolean
+  quietHoursStart: String
+  quietHoursEnd: String
+}
+
+input UpdateConsentDto {
+  consentType: ConsentType!
+  granted: Boolean!
+  documentVersion: String
+  documentUrl: String
+}
+
+input BulkUpdateConsentsDto {
+  consents: [UpdateConsentDto!]!
+}
+
+input WithdrawConsentDto {
+  consentType: ConsentType!
 }

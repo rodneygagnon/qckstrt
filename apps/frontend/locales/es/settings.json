@@ -1,0 +1,276 @@
+{
+  "nav": {
+    "settings": "Configuracion",
+    "profile": "Perfil",
+    "addresses": "Direcciones",
+    "notifications": "Notificaciones",
+    "privacy": "Privacidad",
+    "security": "Seguridad"
+  },
+  "profile": {
+    "title": "Configuracion del Perfil",
+    "subtitle": "Administra tu informacion personal y preferencias",
+    "firstName": "Nombre",
+    "firstNamePlaceholder": "Juan",
+    "lastName": "Apellido",
+    "lastNamePlaceholder": "Garcia",
+    "displayName": "Nombre para Mostrar",
+    "displayNameHint": "Asi aparecera tu nombre en toda la aplicacion",
+    "displayNamePlaceholder": "Como quieres que te llamen",
+    "phone": "Numero de Telefono",
+    "phonePlaceholder": "+1 (555) 123-4567",
+    "timezone": "Zona Horaria",
+    "language": "Idioma",
+    "languageHint": "Elige tu idioma preferido para la interfaz",
+    "bio": "Biografia",
+    "bioHint": "Breve descripcion para tu perfil",
+    "bioPlaceholder": "Cuentanos un poco sobre ti...",
+    "saveSuccess": "Perfil guardado exitosamente!",
+    "loadError": "Error al cargar el perfil. Por favor, intentalo de nuevo."
+  },
+  "timezones": {
+    "pacific": "Hora del Pacifico (PT)",
+    "mountain": "Hora de Montana (MT)",
+    "central": "Hora Central (CT)",
+    "eastern": "Hora del Este (ET)",
+    "alaska": "Hora de Alaska (AKT)",
+    "hawaii": "Hora de Hawai (HT)",
+    "utc": "UTC"
+  },
+  "languages": {
+    "en": "English",
+    "es": "Espanol"
+  },
+  "addresses": {
+    "title": "Direcciones",
+    "subtitle": "Administra tus direcciones para propositos civicos y de correspondencia",
+    "addAddress": "Agregar Direccion",
+    "editAddress": "Editar Direccion",
+    "addNewAddress": "Agregar Nueva Direccion",
+    "updateAddress": "Actualizar Direccion",
+    "noAddresses": "No hay direcciones agregadas",
+    "noAddressesHint": "Agrega una direccion para comenzar",
+    "addressType": "Tipo de Direccion",
+    "types": {
+      "residential": "Residencial",
+      "mailing": "Correspondencia",
+      "business": "Comercial",
+      "voting": "Electoral"
+    },
+    "label": "Etiqueta (Opcional)",
+    "labelPlaceholder": "ej., Casa, Trabajo",
+    "streetAddress": "Direccion",
+    "streetAddressPlaceholder": "123 Calle Principal",
+    "aptSuite": "Apt, Suite, Unidad (Opcional)",
+    "aptSuitePlaceholder": "Apt 4B",
+    "city": "Ciudad",
+    "cityPlaceholder": "San Francisco",
+    "state": "Estado",
+    "selectState": "Seleccionar estado",
+    "zipCode": "Codigo Postal",
+    "zipCodePlaceholder": "94102",
+    "setPrimary": "Establecer como Principal",
+    "congressionalDistrict": "Distrito del Congreso",
+    "deleteConfirm": "Estas seguro de que quieres eliminar esta direccion?",
+    "requiredFields": "Por favor, completa todos los campos requeridos",
+    "saveError": "Error al guardar la direccion"
+  },
+  "notifications": {
+    "title": "Preferencias de Notificaciones",
+    "subtitle": "Elige como y cuando quieres ser notificado",
+    "unsubscribeAll": "Cancelar todas las suscripciones",
+    "unsubscribeConfirm": "Estas seguro de que quieres cancelar todas las notificaciones?",
+    "saveSuccess": "Preferencias guardadas exitosamente!",
+    "loadError": "Error al cargar las preferencias. Por favor, intentalo de nuevo.",
+    "email": {
+      "title": "Notificaciones por Email",
+      "productUpdates": "Actualizaciones del producto",
+      "productUpdatesDesc": "Nuevas funciones y mejoras",
+      "securityAlerts": "Alertas de seguridad",
+      "securityAlertsDesc": "Intentos de inicio de sesion y eventos de seguridad",
+      "marketing": "Marketing",
+      "marketingDesc": "Consejos, ofertas y boletines",
+      "frequency": "Frecuencia de emails"
+    },
+    "push": {
+      "title": "Notificaciones Push",
+      "productUpdates": "Actualizaciones del producto",
+      "productUpdatesDesc": "Nuevas funciones y mejoras",
+      "securityAlerts": "Alertas de seguridad",
+      "securityAlertsDesc": "Intentos de inicio de sesion y eventos de seguridad",
+      "marketing": "Marketing",
+      "marketingDesc": "Consejos, ofertas y boletines"
+    },
+    "sms": {
+      "title": "Notificaciones SMS",
+      "securityAlerts": "Alertas de seguridad",
+      "securityAlertsDesc": "Notificaciones de seguridad criticas por mensaje de texto",
+      "marketing": "Marketing",
+      "marketingDesc": "Mensajes promocionales y actualizaciones"
+    },
+    "civic": {
+      "title": "Notificaciones Civicas",
+      "electionReminders": "Recordatorios de elecciones",
+      "electionRemindersDesc": "Proximas elecciones en tu area",
+      "voterDeadlines": "Fechas limite de votacion",
+      "voterDeadlinesDesc": "Fechas de registro y papeletas",
+      "ballotUpdates": "Actualizaciones de papeletas",
+      "ballotUpdatesDesc": "Cambios en tu papeleta",
+      "localNews": "Noticias locales",
+      "localNewsDesc": "Noticias de tu comunidad",
+      "representativeUpdates": "Actualizaciones de representantes",
+      "representativeUpdatesDesc": "Actualizaciones de tus funcionarios electos",
+      "frequency": "Frecuencia de actualizaciones civicas"
+    },
+    "frequency": {
+      "immediate": "Inmediatamente",
+      "daily_digest": "Resumen diario",
+      "weekly_digest": "Resumen semanal",
+      "never": "Nunca"
+    },
+    "quietHours": {
+      "title": "Horas de Silencio",
+      "subtitle": "Pausar notificaciones durante horarios especificos",
+      "from": "Desde",
+      "to": "Hasta"
+    }
+  },
+  "privacy": {
+    "title": "Privacidad y Consentimiento",
+    "subtitle": "Administra tu configuracion de privacidad y preferencias de consentimiento de datos",
+    "loadError": "Error al cargar las preferencias de consentimiento. Por favor, intentalo de nuevo.",
+    "rightsTitle": "Tus Derechos de Privacidad",
+    "rightsDescription": "Bajo GDPR y CCPA, tienes derecho a controlar como se recopilan y utilizan tus datos personales. Puedes retirar el consentimiento en cualquier momento para el procesamiento de datos no esenciales. Los consentimientos requeridos son necesarios para el funcionamiento basico de nuestros servicios.",
+    "status": {
+      "grantedOn": "Concedido el",
+      "updatedOn": "Actualizado el"
+    },
+    "groups": {
+      "legal": {
+        "title": "Acuerdos Legales",
+        "description": "Acuerdos requeridos para usar nuestros servicios"
+      },
+      "marketing": {
+        "title": "Comunicaciones de Marketing",
+        "description": "Elige como te gustaria recibir contenido de marketing"
+      },
+      "data": {
+        "title": "Datos y Analisis",
+        "description": "Controla como se utilizan tus datos para mejorar nuestros servicios"
+      },
+      "civic": {
+        "title": "Participacion Civica",
+        "description": "Permisos relacionados con funciones civicas e informacion electoral"
+      }
+    },
+    "consents": {
+      "terms_of_service": {
+        "title": "Terminos de Servicio",
+        "description": "Acuerdo con nuestros terminos y condiciones para usar la plataforma"
+      },
+      "privacy_policy": {
+        "title": "Politica de Privacidad",
+        "description": "Reconocimiento de como recopilamos, usamos y protegemos tus datos"
+      },
+      "marketing_email": {
+        "title": "Marketing por Email",
+        "description": "Recibir emails promocionales, boletines y ofertas especiales"
+      },
+      "marketing_sms": {
+        "title": "Marketing por SMS",
+        "description": "Recibir mensajes de texto promocionales y alertas"
+      },
+      "marketing_push": {
+        "title": "Notificaciones Push",
+        "description": "Recibir notificaciones push promocionales en tus dispositivos"
+      },
+      "analytics": {
+        "title": "Analisis",
+        "description": "Permitirnos recopilar datos de uso para mejorar nuestra plataforma"
+      },
+      "personalization": {
+        "title": "Personalizacion",
+        "description": "Habilitar contenido personalizado y recomendaciones basadas en tu actividad"
+      },
+      "data_sharing": {
+        "title": "Compartir Datos",
+        "description": "Permitir compartir datos anonimizados con socios de confianza para investigacion"
+      },
+      "location_tracking": {
+        "title": "Rastreo de Ubicacion",
+        "description": "Permitir la recopilacion de datos de ubicacion para funciones basadas en ubicacion"
+      },
+      "voter_data_collection": {
+        "title": "Recopilacion de Datos Electorales",
+        "description": "Permitir la recopilacion de datos relacionados con votacion para proporcionar informacion civica"
+      },
+      "civic_notifications": {
+        "title": "Notificaciones Civicas",
+        "description": "Recibir notificaciones sobre elecciones, fechas limite y actualizaciones civicas"
+      },
+      "representative_contact": {
+        "title": "Contacto con Representantes",
+        "description": "Permitirnos facilitar el contacto con tus representantes electos"
+      }
+    },
+    "dataManagement": {
+      "title": "Gestion de Datos",
+      "exportTitle": "Exportar tus Datos",
+      "exportDesc": "Descarga una copia de todos tus datos personales en formato JSON",
+      "exportButton": "Solicitar Exportacion",
+      "deleteTitle": "Eliminar Cuenta",
+      "deleteDesc": "Eliminar permanentemente tu cuenta y todos los datos asociados. Esta accion no se puede deshacer.",
+      "deleteButton": "Eliminar Cuenta"
+    }
+  },
+  "security": {
+    "title": "Seguridad",
+    "subtitle": "Administra tus passkeys y sesiones activas",
+    "passkeys": {
+      "title": "Passkeys",
+      "description": "Inicio de sesion seguro y sin contrasena usando biometria o llaves de seguridad",
+      "addButton": "Agregar Passkey",
+      "adding": "Agregando...",
+      "empty": "No hay passkeys agregados",
+      "emptyHint": "Agrega un passkey para un inicio de sesion mas rapido y seguro",
+      "lastUsed": "Ultimo uso {{time}}",
+      "whyTitle": "Por que usar passkeys?",
+      "benefit1": "Resistente al phishing - no puede ser robado ni adivinado",
+      "benefit2": "No hay contrasenas que recordar",
+      "benefit3": "Usa Face ID, Touch ID o llaves de seguridad",
+      "benefit4": "Funciona en todos tus dispositivos",
+      "registrationPending": "El registro de passkey estara disponible una vez que se complete la implementacion del backend."
+    },
+    "sessions": {
+      "title": "Sesiones Activas",
+      "description": "Dispositivos actualmente conectados a tu cuenta",
+      "signOutAll": "Cerrar sesion en todos los otros dispositivos",
+      "revoke": "Revocar",
+      "revokeConfirm": "Estas seguro de que quieres revocar esta sesion?",
+      "revokePending": "La revocacion de sesion estara disponible pronto.",
+      "revokeAllConfirm": "Estas seguro de que quieres cerrar sesion en todos los otros dispositivos?",
+      "revokeAllPending": "Esta funcion estara disponible pronto."
+    },
+    "twoFactor": {
+      "title": "Autenticacion de Dos Factores",
+      "description": "Agrega una capa extra de seguridad a tu cuenta",
+      "authenticator": {
+        "title": "Aplicacion de Autenticacion",
+        "description": "Usa una aplicacion como Google Authenticator o Authy",
+        "setupButton": "Configurar"
+      },
+      "recovery": {
+        "title": "Codigos de Recuperacion",
+        "description": "Codigos de respaldo para cuando no puedas acceder a tu autenticador",
+        "generateButton": "Generar"
+      }
+    },
+    "password": {
+      "title": "Contrasena",
+      "description": "Autenticacion con contrasena heredada (opcional cuando usas passkeys)",
+      "changeTitle": "Cambiar Contrasena",
+      "changeDescription": "Actualiza tu contrasena si aun usas inicio de sesion basado en contrasena",
+      "changeButton": "Cambiar"
+    }
+  }
+}

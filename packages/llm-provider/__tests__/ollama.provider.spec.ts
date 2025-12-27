@@ -102,6 +102,20 @@ describe("OllamaLLMProvider", () => {
 
       await expect(provider.generate("Test prompt")).rejects.toThrow(LLMError);
     });
+
+    it("should throw LLMError with timeout message on AbortError", async () => {
+      const abortError = new Error("The operation was aborted");
+      abortError.name = "AbortError";
+      mockFetch.mockRejectedValueOnce(abortError);
+
+      try {
+        await provider.generate("Test prompt");
+        fail("Expected LLMError to be thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(LLMError);
+        expect((error as LLMError).originalError.message).toMatch(/timed out/i);
+      }
+    });
   });
 
   describe("chat", () => {

@@ -9,7 +9,8 @@ The frontend uses a comprehensive testing approach:
 | Test Type | Framework | Purpose |
 |-----------|-----------|---------|
 | **Unit Tests** | Jest + Testing Library | Component logic, utilities |
-| **E2E Tests** | Cypress | Full user flows |
+| **Accessibility Tests** | jest-axe + @axe-core/playwright | WCAG 2.2 AA compliance |
+| **E2E Tests** | Playwright | Full user flows |
 
 ## Test Structure
 
@@ -451,8 +452,103 @@ DEBUG=cypress:* pnpm cypress:open
 # Check cypress/screenshots/ after failures
 ```
 
+## Accessibility Testing
+
+The frontend includes automated WCAG 2.2 AA accessibility testing using `jest-axe` for unit tests and `@axe-core/playwright` for E2E tests.
+
+### Running Accessibility Tests
+
+```bash
+# Run Jest accessibility tests only
+pnpm test:a11y
+
+# Run Playwright accessibility tests
+pnpm e2e:a11y
+```
+
+### Jest Accessibility Tests
+
+Accessibility tests are located in `__tests__/accessibility/`:
+
+```typescript
+// __tests__/accessibility/settings.a11y.test.tsx
+import { render } from "@testing-library/react";
+import { axe, toHaveNoViolations } from "jest-axe";
+import ProfileSettingsPage from "@/app/settings/page";
+
+expect.extend(toHaveNoViolations);
+
+describe("Profile Settings Accessibility", () => {
+  it("should have no accessibility violations", async () => {
+    const { container } = render(<ProfileSettingsPage />);
+    const results = await axe(container);
+    expect(results).toHaveNoViolations();
+  });
+});
+```
+
+### Playwright Accessibility Tests
+
+E2E accessibility tests use `@axe-core/playwright`:
+
+```typescript
+// e2e/accessibility.spec.ts
+import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
+
+test("page should have no WCAG 2.2 AA violations", async ({ page }) => {
+  await page.goto("/");
+
+  const accessibilityScanResults = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
+    .analyze();
+
+  expect(accessibilityScanResults.violations).toEqual([]);
+});
+```
+
+### What Gets Tested
+
+The accessibility tests verify:
+
+| Check | WCAG Criterion |
+|-------|----------------|
+| Decorative icons have `aria-hidden="true"` | 1.1.1 Non-text Content |
+| Icon-only buttons have `aria-label` | 4.1.2 Name, Role, Value |
+| Form fields have associated labels | 1.3.1 Info and Relationships |
+| Color contrast meets requirements | 1.4.3 Contrast (Minimum) |
+| HTML `lang` attribute is set | 3.1.1 Language of Page |
+| Focus is visible on interactive elements | 2.4.7 Focus Visible |
+
+### Adding Accessibility Tests
+
+When adding new components, include accessibility tests:
+
+1. **Check for axe violations** - Use `jest-axe` to scan the rendered component
+2. **Verify ARIA attributes** - Ensure decorative elements have `aria-hidden`
+3. **Test keyboard navigation** - Verify focusable elements are accessible
+4. **Check accessible names** - Buttons and links should have clear labels
+
+### Accessibility Test Utilities
+
+A utility file is available at `__tests__/utils/a11y-utils.tsx`:
+
+```typescript
+import { configureAxe, toHaveNoViolations } from "jest-axe";
+
+// Configure axe with WCAG 2.2 AA rules
+export const axe = configureAxe({
+  rules: {
+    "color-contrast": { enabled: true },
+    "button-name": { enabled: true },
+    "image-alt": { enabled: true },
+    // ... more rules
+  },
+});
+```
+
 ## Related Documentation
 
-- [Frontend Architecture](../architecture/frontend-architecture.md)
+- [Frontend Architecture](../architecture/frontend-architecture.md) - Includes accessibility patterns
 - [RAG Demo Guide](frontend-rag-demo.md)
 - [Getting Started](getting-started.md)

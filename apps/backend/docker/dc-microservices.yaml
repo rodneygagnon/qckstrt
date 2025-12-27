@@ -34,7 +34,6 @@ x-vectors-config: &vectors-env
   VERSION: ${VECTORS_VERSION}
   DESCRIPTION: ${VECTORS_DESCRIPTION}
   PORT: 8080
-  CHROMA_URL: http://chromadb:8000
 
 networks:
   backend:
@@ -124,7 +123,8 @@ services:
       - "${VECTORS_PORT}:8080"
     restart: always
     depends_on:
-      - chromadb
+      postgres:
+        condition: service_healthy
 
   postgres:
     image: postgres:16-alpine
@@ -147,24 +147,6 @@ services:
       timeout: 5s
       retries: 5
 
-  chromadb:
-    image: chromadb/chroma:latest
-    container_name: qckstrt-chromadb
-    platform: "linux/amd64"
-    ports:
-      - "8000:8000"
-    volumes:
-      - chroma-data:/chroma/chroma
-    environment:
-      - IS_PERSISTENT=TRUE
-      - PERSIST_DIRECTORY=/chroma/chroma
-      - ANONYMIZED_TELEMETRY=FALSE
-    networks:
-      - backend
-    restart: unless-stopped
-
 volumes:
   postgres-data:
     name: qckstrt-postgres-data
-  chroma-data:
-    name: qckstrt-chroma-data

@@ -146,6 +146,274 @@ export class Document {
 }
 ```
 
+### User Profile Data Model
+
+The platform includes a comprehensive user profile system designed for civic applications, with support for GDPR/CCPA compliance. All profile tables have a foreign key to the `users` table with `ON DELETE CASCADE`.
+
+#### UserProfileEntity
+Extended user profile data (1:1 with users).
+
+```typescript
+@Entity('user_profiles')
+export class UserProfileEntity {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column({ unique: true }) userId: string;
+
+  // Personal Information
+  firstName?: string;
+  middleName?: string;
+  lastName?: string;
+  displayName?: string;
+  preferredName?: string;
+  dateOfBirth?: Date;
+
+  // Contact
+  phone?: string;
+  phoneVerifiedAt?: Date;
+
+  // Preferences
+  timezone: string;  // Default: 'America/Los_Angeles'
+  locale: string;    // Default: 'en-US'
+
+  // Profile
+  avatarUrl?: string;
+  bio?: string;
+}
+```
+
+#### UserLoginEntity
+Login metadata and security tracking (1:1 with users).
+
+```typescript
+@Entity('user_logins')
+export class UserLoginEntity {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column({ unique: true }) userId: string;
+
+  passwordHash?: string;        // Optional legacy support
+  lastLoginAt?: Date;
+  loginCount: number;           // Default: 0
+  failedLoginAttempts: number;  // Default: 0
+  lockedUntil?: Date;
+}
+```
+
+#### UserSessionEntity
+Active session tracking with device info (many:1 with users).
+
+```typescript
+@Entity('user_sessions')
+export class UserSessionEntity {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column() userId: string;
+
+  // Session tokens
+  sessionToken: string;   // Unique
+  refreshToken?: string;
+
+  // Device information
+  deviceType?: string;    // 'desktop', 'mobile', 'tablet'
+  deviceName?: string;    // 'MacBook Pro', 'iPhone 15'
+  browser?: string;       // 'Chrome 120'
+  operatingSystem?: string;
+
+  // Location
+  ipAddress?: string;     // INET type
+  city?: string;
+  region?: string;
+  country?: string;       // ISO 3166-1 alpha-2
+
+  // Status
+  isActive: boolean;
+  lastActivityAt?: Date;
+  expiresAt: Date;
+  revokedAt?: Date;
+  revokedReason?: string; // 'user_logout', 'password_change', etc.
+}
+```
+
+#### UserAddressEntity
+User addresses with geocoding and civic boundary data (many:1 with users). **Critical for civic verticals.**
+
+```typescript
+@Entity('user_addresses')
+export class UserAddressEntity {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column() userId: string;
+
+  // Classification
+  addressType: AddressType;  // 'residential', 'mailing', 'business', 'voting'
+  isPrimary: boolean;
+  label?: string;            // 'Home', 'Work'
+
+  // Standard address
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;  // Default: 'US'
+
+  // Geocoding data
+  latitude?: number;
+  longitude?: number;
+  formattedAddress?: string;
+  placeId?: string;           // Google Places ID
+  geocodedAt?: Date;
+
+  // Civic boundary data (for civic applications)
+  congressionalDistrict?: string;      // e.g., 'CA-12'
+  stateSenatorialDistrict?: string;
+  stateAssemblyDistrict?: string;
+  county?: string;
+  municipality?: string;
+  schoolDistrict?: string;
+  precinctId?: string;
+  pollingPlace?: string;
+  civicDataUpdatedAt?: Date;
+
+  // Verification
+  isVerified: boolean;
+  verifiedAt?: Date;
+  verificationMethod?: string;  // 'usps', 'geocoding', 'manual'
+}
+```
+
+#### NotificationPreferenceEntity
+Email, push, SMS, and civic notification settings (1:1 with users).
+
+```typescript
+@Entity('notification_preferences')
+export class NotificationPreferenceEntity {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column({ unique: true }) userId: string;
+
+  // Email notifications
+  emailEnabled: boolean;
+  emailProductUpdates: boolean;
+  emailSecurityAlerts: boolean;
+  emailMarketing: boolean;
+  emailFrequency: NotificationFrequency;
+
+  // Push notifications
+  pushEnabled: boolean;
+  pushProductUpdates: boolean;
+  pushSecurityAlerts: boolean;
+  pushMarketing: boolean;
+
+  // SMS notifications
+  smsEnabled: boolean;
+  smsSecurityAlerts: boolean;
+  smsMarketing: boolean;
+
+  // Civic-specific notifications
+  civicElectionReminders: boolean;
+  civicVoterDeadlines: boolean;
+  civicBallotUpdates: boolean;
+  civicLocalNews: boolean;
+  civicRepresentativeUpdates: boolean;
+  civicFrequency: NotificationFrequency;
+
+  // Quiet hours
+  quietHoursEnabled: boolean;
+  quietHoursStart?: string;  // 'HH:MM' format
+  quietHoursEnd?: string;
+}
+```
+
+#### UserConsentEntity
+GDPR/CCPA consent tracking (many:1 with users).
+
+```typescript
+@Entity('user_consents')
+export class UserConsentEntity {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column() userId: string;
+
+  consentType: ConsentType;   // terms_of_service, privacy_policy, marketing_*, etc.
+  status: ConsentStatus;      // 'granted', 'denied', 'withdrawn', 'pending'
+
+  // Version tracking
+  documentVersion?: string;   // e.g., '2.1.0'
+  documentUrl?: string;
+
+  // Collection metadata (for audit trail)
+  ipAddress?: string;
+  userAgent?: string;
+  collectionMethod?: string;  // 'signup_form', 'settings_page', 'api'
+
+  // Lifecycle timestamps
+  grantedAt?: Date;
+  deniedAt?: Date;
+  withdrawnAt?: Date;
+  expiresAt?: Date;
+
+  // Audit
+  consentText?: string;       // Actual text user agreed to
+
+  // Unique: one consent record per type per user
+  CONSTRAINT UQ_user_consents_userId_consentType UNIQUE (userId, consentType)
+}
+```
+
+#### PasskeyCredentialEntity
+WebAuthn passkey credentials for passwordless authentication (many:1 with users).
+
+```typescript
+@Entity('passkey_credentials')
+export class PasskeyCredentialEntity {
+  @PrimaryGeneratedColumn('uuid') id: string;
+  @Column() userId: string;
+
+  // WebAuthn credential ID (base64url encoded)
+  credentialId: string;  // Unique
+
+  // Public key in COSE format (base64url encoded)
+  publicKey: string;
+
+  // Signature counter for replay attack prevention
+  counter: number;  // Default: 0
+
+  // AAGUID of the authenticator
+  aaguid?: string;
+
+  // Device/authenticator type
+  deviceType?: string;  // 'platform', 'cross-platform'
+
+  // Whether the credential is backed up (synced passkey)
+  backedUp: boolean;  // Default: false
+
+  // Human-readable name for the passkey
+  friendlyName?: string;  // e.g., 'MacBook Pro Touch ID'
+
+  // Transports supported
+  transports?: string[];  // ['usb', 'ble', 'nfc', 'internal']
+
+  createdAt: Date;
+  lastUsedAt: Date;
+}
+```
+
+#### WebAuthnChallengeEntity
+Temporary storage for WebAuthn challenges (registration/authentication).
+
+```typescript
+@Entity('webauthn_challenges')
+export class WebAuthnChallengeEntity {
+  // Email address or anonymous session identifier
+  @PrimaryColumn() identifier: string;
+
+  // The cryptographic challenge (base64url encoded)
+  challenge: string;
+
+  // Type of WebAuthn operation
+  type: 'registration' | 'authentication';
+
+  createdAt: Date;
+  expiresAt: Date;  // Challenges expire after 5 minutes
+}
+```
+
 ### Vector Records
 
 #### pgvector Table

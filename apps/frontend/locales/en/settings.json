@@ -1,0 +1,276 @@
+{
+  "nav": {
+    "settings": "Settings",
+    "profile": "Profile",
+    "addresses": "Addresses",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "security": "Security"
+  },
+  "profile": {
+    "title": "Profile Settings",
+    "subtitle": "Manage your personal information and preferences",
+    "firstName": "First Name",
+    "firstNamePlaceholder": "John",
+    "lastName": "Last Name",
+    "lastNamePlaceholder": "Doe",
+    "displayName": "Display Name",
+    "displayNameHint": "This is how your name will appear throughout the app",
+    "displayNamePlaceholder": "How you want to be addressed",
+    "phone": "Phone Number",
+    "phonePlaceholder": "+1 (555) 123-4567",
+    "timezone": "Timezone",
+    "language": "Language",
+    "languageHint": "Choose your preferred language for the interface",
+    "bio": "Bio",
+    "bioHint": "Brief description for your profile",
+    "bioPlaceholder": "Tell us a little about yourself...",
+    "saveSuccess": "Profile saved successfully!",
+    "loadError": "Failed to load profile. Please try again."
+  },
+  "timezones": {
+    "pacific": "Pacific Time (PT)",
+    "mountain": "Mountain Time (MT)",
+    "central": "Central Time (CT)",
+    "eastern": "Eastern Time (ET)",
+    "alaska": "Alaska Time (AKT)",
+    "hawaii": "Hawaii Time (HT)",
+    "utc": "UTC"
+  },
+  "languages": {
+    "en": "English",
+    "es": "Espanol"
+  },
+  "addresses": {
+    "title": "Addresses",
+    "subtitle": "Manage your addresses for civic and mailing purposes",
+    "addAddress": "Add Address",
+    "editAddress": "Edit Address",
+    "addNewAddress": "Add New Address",
+    "updateAddress": "Update Address",
+    "noAddresses": "No addresses added yet",
+    "noAddressesHint": "Add an address to get started",
+    "addressType": "Address Type",
+    "types": {
+      "residential": "Residential",
+      "mailing": "Mailing",
+      "business": "Business",
+      "voting": "Voting"
+    },
+    "label": "Label (Optional)",
+    "labelPlaceholder": "e.g., Home, Work",
+    "streetAddress": "Street Address",
+    "streetAddressPlaceholder": "123 Main Street",
+    "aptSuite": "Apt, Suite, Unit (Optional)",
+    "aptSuitePlaceholder": "Apt 4B",
+    "city": "City",
+    "cityPlaceholder": "San Francisco",
+    "state": "State",
+    "selectState": "Select state",
+    "zipCode": "ZIP Code",
+    "zipCodePlaceholder": "94102",
+    "setPrimary": "Set Primary",
+    "congressionalDistrict": "Congressional District",
+    "deleteConfirm": "Are you sure you want to delete this address?",
+    "requiredFields": "Please fill in all required fields",
+    "saveError": "Failed to save address"
+  },
+  "notifications": {
+    "title": "Notification Preferences",
+    "subtitle": "Choose how and when you want to be notified",
+    "unsubscribeAll": "Unsubscribe from all",
+    "unsubscribeConfirm": "Are you sure you want to unsubscribe from all notifications?",
+    "saveSuccess": "Preferences saved successfully!",
+    "loadError": "Failed to load preferences. Please try again.",
+    "email": {
+      "title": "Email Notifications",
+      "productUpdates": "Product updates",
+      "productUpdatesDesc": "New features and improvements",
+      "securityAlerts": "Security alerts",
+      "securityAlertsDesc": "Login attempts and security events",
+      "marketing": "Marketing",
+      "marketingDesc": "Tips, offers, and newsletters",
+      "frequency": "Email frequency"
+    },
+    "push": {
+      "title": "Push Notifications",
+      "productUpdates": "Product updates",
+      "productUpdatesDesc": "New features and improvements",
+      "securityAlerts": "Security alerts",
+      "securityAlertsDesc": "Login attempts and security events",
+      "marketing": "Marketing",
+      "marketingDesc": "Tips, offers, and newsletters"
+    },
+    "sms": {
+      "title": "SMS Notifications",
+      "securityAlerts": "Security alerts",
+      "securityAlertsDesc": "Critical security notifications via text",
+      "marketing": "Marketing",
+      "marketingDesc": "Promotional messages and updates"
+    },
+    "civic": {
+      "title": "Civic Notifications",
+      "electionReminders": "Election reminders",
+      "electionRemindersDesc": "Upcoming elections in your area",
+      "voterDeadlines": "Voter deadlines",
+      "voterDeadlinesDesc": "Registration and ballot deadlines",
+      "ballotUpdates": "Ballot updates",
+      "ballotUpdatesDesc": "Changes to your ballot",
+      "localNews": "Local news",
+      "localNewsDesc": "News from your community",
+      "representativeUpdates": "Representative updates",
+      "representativeUpdatesDesc": "Updates from your elected officials",
+      "frequency": "Civic update frequency"
+    },
+    "frequency": {
+      "immediate": "Immediately",
+      "daily_digest": "Daily digest",
+      "weekly_digest": "Weekly digest",
+      "never": "Never"
+    },
+    "quietHours": {
+      "title": "Quiet Hours",
+      "subtitle": "Pause notifications during specific times",
+      "from": "From",
+      "to": "To"
+    }
+  },
+  "privacy": {
+    "title": "Privacy & Consent",
+    "subtitle": "Manage your privacy settings and data consent preferences",
+    "loadError": "Failed to load consent preferences. Please try again.",
+    "rightsTitle": "Your Privacy Rights",
+    "rightsDescription": "Under GDPR and CCPA, you have the right to control how your personal data is collected and used. You can withdraw consent at any time for non-essential data processing. Required consents are necessary for the basic operation of our services.",
+    "status": {
+      "grantedOn": "Granted on",
+      "updatedOn": "Updated on"
+    },
+    "groups": {
+      "legal": {
+        "title": "Legal Agreements",
+        "description": "Required agreements for using our services"
+      },
+      "marketing": {
+        "title": "Marketing Communications",
+        "description": "Choose how you'd like to receive marketing content"
+      },
+      "data": {
+        "title": "Data & Analytics",
+        "description": "Control how your data is used to improve our services"
+      },
+      "civic": {
+        "title": "Civic Engagement",
+        "description": "Permissions related to civic features and voter information"
+      }
+    },
+    "consents": {
+      "terms_of_service": {
+        "title": "Terms of Service",
+        "description": "Agreement to our terms and conditions for using the platform"
+      },
+      "privacy_policy": {
+        "title": "Privacy Policy",
+        "description": "Acknowledgment of how we collect, use, and protect your data"
+      },
+      "marketing_email": {
+        "title": "Email Marketing",
+        "description": "Receive promotional emails, newsletters, and special offers"
+      },
+      "marketing_sms": {
+        "title": "SMS Marketing",
+        "description": "Receive promotional text messages and alerts"
+      },
+      "marketing_push": {
+        "title": "Push Notifications",
+        "description": "Receive promotional push notifications on your devices"
+      },
+      "analytics": {
+        "title": "Analytics",
+        "description": "Allow us to collect usage data to improve our platform"
+      },
+      "personalization": {
+        "title": "Personalization",
+        "description": "Enable personalized content and recommendations based on your activity"
+      },
+      "data_sharing": {
+        "title": "Data Sharing",
+        "description": "Allow sharing anonymized data with trusted partners for research"
+      },
+      "location_tracking": {
+        "title": "Location Tracking",
+        "description": "Allow location data collection for location-based features"
+      },
+      "voter_data_collection": {
+        "title": "Voter Data Collection",
+        "description": "Allow collection of voting-related data to provide civic information"
+      },
+      "civic_notifications": {
+        "title": "Civic Notifications",
+        "description": "Receive notifications about elections, deadlines, and civic updates"
+      },
+      "representative_contact": {
+        "title": "Representative Contact",
+        "description": "Allow us to facilitate contact with your elected representatives"
+      }
+    },
+    "dataManagement": {
+      "title": "Data Management",
+      "exportTitle": "Export Your Data",
+      "exportDesc": "Download a copy of all your personal data in JSON format",
+      "exportButton": "Request Export",
+      "deleteTitle": "Delete Account",
+      "deleteDesc": "Permanently delete your account and all associated data. This action cannot be undone.",
+      "deleteButton": "Delete Account"
+    }
+  },
+  "security": {
+    "title": "Security",
+    "subtitle": "Manage your passkeys and active sessions",
+    "passkeys": {
+      "title": "Passkeys",
+      "description": "Secure, passwordless login using biometrics or security keys",
+      "addButton": "Add Passkey",
+      "adding": "Adding...",
+      "empty": "No passkeys added yet",
+      "emptyHint": "Add a passkey for faster, more secure sign-in",
+      "lastUsed": "Last used {{time}}",
+      "whyTitle": "Why use passkeys?",
+      "benefit1": "Phishing-resistant - cannot be stolen or guessed",
+      "benefit2": "No passwords to remember",
+      "benefit3": "Use Face ID, Touch ID, or security keys",
+      "benefit4": "Works across all your devices",
+      "registrationPending": "Passkey registration will be available once the backend implementation is complete."
+    },
+    "sessions": {
+      "title": "Active Sessions",
+      "description": "Devices currently signed in to your account",
+      "signOutAll": "Sign out all other devices",
+      "revoke": "Revoke",
+      "revokeConfirm": "Are you sure you want to revoke this session?",
+      "revokePending": "Session revocation will be available soon.",
+      "revokeAllConfirm": "Are you sure you want to sign out of all other devices?",
+      "revokeAllPending": "This feature will be available soon."
+    },
+    "twoFactor": {
+      "title": "Two-Factor Authentication",
+      "description": "Add an extra layer of security to your account",
+      "authenticator": {
+        "title": "Authenticator App",
+        "description": "Use an app like Google Authenticator or Authy",
+        "setupButton": "Set Up"
+      },
+      "recovery": {
+        "title": "Recovery Codes",
+        "description": "Backup codes for when you cannot access your authenticator",
+        "generateButton": "Generate"
+      }
+    },
+    "password": {
+      "title": "Password",
+      "description": "Legacy password authentication (optional when using passkeys)",
+      "changeTitle": "Change Password",
+      "changeDescription": "Update your password if you still use password-based login",
+      "changeButton": "Change"
+    }
+  }
+}

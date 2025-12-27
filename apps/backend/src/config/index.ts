@@ -58,7 +58,7 @@ export interface IAppConfig {
   ai: IAIConfig;
 }
 
-export default async (): Promise<IAppConfig> => {
+export default async (): Promise<Partial<IAppConfig>> => {
   const configService = new ConfigService();
 
   const project = configService.get('PROJECT');
@@ -66,8 +66,8 @@ export default async (): Promise<IAppConfig> => {
   const version = configService.get('VERSION');
   const description = configService.get('DESCRIPTION');
   const port = configService.get('PORT');
-
   const region = configService.get('AWS_REGION');
+  const nodeEnv = configService.get('NODE_ENV') || 'dev';
 
   if (
     !project ||
@@ -82,25 +82,57 @@ export default async (): Promise<IAppConfig> => {
     );
   }
 
-  const secrets = JSON.parse(
-    await getSecrets(configService.get('AWS_SECRETS') || ''),
-  );
-
-  if (!secrets) {
-    throw new Error('Failed to access secrets');
-  }
-
-  return {
+  const baseConfig: Partial<IAppConfig> = {
     project,
     application,
     version,
     description,
     port,
     region,
-    apiKeys: new Map<string, string>(Object.entries(secrets.apiKeys)),
-    auth: secrets.auth as IAuthConfig,
-    db: secrets.db as IDBConfig,
-    file: secrets.file as IFileConfig,
-    ai: secrets.ai as IAIConfig,
   };
+
+  // In dev mode, skip Vault and use environment variables directly
+  if (nodeEnv === 'dev' || nodeEnv === 'development') {
+    // Load API keys from environment variable in dev mode
+    const apiKeysJson = configService.get('API_KEYS');
+    if (apiKeysJson) {
+      try {
+        const apiKeysObj = JSON.parse(apiKeysJson);
+        return {
+          ...baseConfig,
+          apiKeys: new Map<string, string>(Object.entries(apiKeysObj)),
+        };
+      } catch {
+        console.warn('Failed to parse API_KEYS environment variable');
+      }
+    }
+    return baseConfig;
+  }
+
+  // In production, load secrets from Vault
+  const awsSecrets = configService.get('AWS_SECRETS');
+  if (awsSecrets) {
+    try {
+      const secrets = JSON.parse(await getSecrets(awsSecrets));
+
+      if (secrets) {
+        return {
+          ...baseConfig,
+          apiKeys: new Map<string, string>(
+            Object.entries(secrets.apiKeys || {}),
+          ),
+          auth: secrets.auth as IAuthConfig,
+          db: secrets.db as IDBConfig,
+          file: secrets.file as IFileConfig,
+          ai: secrets.ai as IAIConfig,
+        };
+      }
+    } catch (error) {
+      console.warn(
+        `Failed to load secrets from Vault: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  return baseConfig;
 };

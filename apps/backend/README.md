@@ -36,16 +36,50 @@ pnpm test
 | Service | Port | Purpose |
 |---------|------|---------|
 | API Gateway | 3000 | GraphQL Federation gateway |
-| Users | 3001 | User management |
+| Users | 3001 | User management, authentication (Passkeys, Magic Links, Password), profiles, consents |
 | Documents | 3002 | Document storage |
 | Knowledge | 3003 | RAG/semantic search |
 | Files | 3004 | File processing |
+
+## User Profile GraphQL API
+
+The Users service includes a comprehensive profile management API:
+
+### Profile Management
+- `myProfile` / `updateMyProfile` - Extended user profile data (name, phone, timezone, bio)
+
+### Address Management
+- `myAddresses` / `createAddress` / `updateAddress` / `deleteAddress`
+- `setPrimaryAddress` - Set default address
+- Includes civic boundary data (congressional district, state senate/assembly, county, precinct)
+
+### Notification Preferences
+- `myNotificationPreferences` / `updateNotificationPreferences`
+- `unsubscribeFromAll` - One-click unsubscribe
+- Supports email, push, SMS, and civic-specific notifications
+
+### Consent Management (GDPR/CCPA)
+- `myConsents` / `updateConsent` / `withdrawConsent`
+- `bulkUpdateConsents` - Update multiple consents at once
+- `hasValidConsent` - Check if specific consent is valid
+- Full audit trail with IP, user agent, timestamps
 
 ## Configuration
 
 Edit `.env` file for local development:
 
 ```bash
+# Authentication (Supabase Auth with Passwordless)
+AUTH_PROVIDER=supabase
+SUPABASE_URL=http://localhost:8000
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# WebAuthn/Passkeys
+WEBAUTHN_RP_NAME=Qckstrt
+WEBAUTHN_RP_ID=localhost
+WEBAUTHN_ORIGIN=http://localhost:3000
+FRONTEND_URL=http://localhost:3000
+
 # Embeddings
 EMBEDDINGS_PROVIDER=xenova
 

@@ -35,6 +35,13 @@ function getCorsConfig(configService: ConfigService): CorsOptions {
   return {
     origin: true,
     methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-HMAC-Auth',
+      'X-Requested-With',
+      'user',
+    ],
     credentials: true,
   };
 }
@@ -56,14 +63,23 @@ function setupSwagger(
   SwaggerModule.setup('docs', app, document);
 }
 
+interface BootstrapOptions {
+  portEnvVar?: string;
+}
+
 export default async function bootstrap(
   AppModule: Type<unknown>,
+  options: BootstrapOptions = {},
 ): Promise<Handler> {
   const startTime = Date.now();
 
   const app = await NestFactory.create(AppModule);
   const configService = app.get<ConfigService>(ConfigService);
-  const port = configService.get('port');
+
+  // Use service-specific port env var if provided, otherwise fall back to 'port' from config
+  const port = options.portEnvVar
+    ? configService.get(options.portEnvVar) || configService.get('port')
+    : configService.get('port');
   const appName = configService.get('application');
   const appDescription = configService.get('description');
   const appVersion = configService.get('version');

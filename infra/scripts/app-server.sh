@@ -8,7 +8,6 @@
 # - Self-hosted Supabase stack (PostgreSQL, Auth, Storage, Realtime)
 # - pgvector extension for vector storage
 # - Redis for caching
-# - ChromaDB for vector storage
 #
 # Features:
 # - Retry logic for network operations
@@ -304,9 +303,7 @@ services:
       GOTRUE_SITE_URL: http://localhost
       GOTRUE_URI_ALLOW_LIST: "*"
       GOTRUE_DISABLE_SIGNUP: "false"
-      GOTRUE_JWT_ADMIN_ROLES: service_role
       GOTRUE_JWT_AUD: authenticated
-      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
       GOTRUE_JWT_EXP: 3600
       GOTRUE_JWT_SECRET: $${JWT_SECRET}
       GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
@@ -423,29 +420,10 @@ services:
       timeout: 5s
       retries: 5
 
-  # ChromaDB (vector database)
-  chromadb:
-    image: chromadb/chroma:latest
-    container_name: chromadb
-    restart: unless-stopped
-    ports:
-      - "8001:8000"
-    volumes:
-      - chroma-data:/chroma/chroma
-    environment:
-      ANONYMIZED_TELEMETRY: "false"
-      ALLOW_RESET: "true"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
 volumes:
   postgres-data:
   storage-data:
   redis-data:
-  chroma-data:
 DOCKEREOF
 
 # Create Kong configuration
@@ -623,11 +601,6 @@ wait_for_healthy "Redis" "docker exec redis redis-cli ping" 60 5 || {
     log_error "Redis health check failed"
 }
 
-# Wait for ChromaDB
-wait_for_healthy "ChromaDB" "curl -sf http://localhost:8001/api/v1/heartbeat" 120 5 || {
-    log_error "ChromaDB health check failed"
-}
-
 # Wait for Kong/API
 wait_for_healthy "Kong API Gateway" "curl -sf http://localhost:80/rest/v1/" 120 5 || {
     log_error "Kong health check failed - API may still be starting"
@@ -701,17 +674,6 @@ server {
         proxy_read_timeout 86400;
         proxy_buffering off;
     }
-
-    # ChromaDB endpoint
-    location /chromadb/ {
-        proxy_pass http://127.0.0.1:8001/;
-        proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_read_timeout 120;
-    }
 }
 NGINXEOF
 
@@ -773,14 +735,12 @@ log ""
 if [ -n "$DOMAIN_NAME" ] && [ "$DOMAIN_NAME" != "" ]; then
     log "Supabase Studio: http://$PUBLIC_IP:3000"
     log "Supabase API:    https://$APP_SUBDOMAIN.$DOMAIN_NAME"
-    log "ChromaDB:        https://$APP_SUBDOMAIN.$DOMAIN_NAME/chromadb"
-    log "PostgreSQL:      $PUBLIC_IP:5432"
+    log "PostgreSQL:      $PUBLIC_IP:5432 (with pgvector)"
     log "Redis:           $PUBLIC_IP:6379"
 else
     log "Supabase Studio: http://$PUBLIC_IP:3000"
     log "Supabase API:    http://$PUBLIC_IP"
-    log "ChromaDB:        http://$PUBLIC_IP:8001"
-    log "PostgreSQL:      $PUBLIC_IP:5432"
+    log "PostgreSQL:      $PUBLIC_IP:5432 (with pgvector)"
     log "Redis:           $PUBLIC_IP:6379"
 fi
 log ""
