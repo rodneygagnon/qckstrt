@@ -5,7 +5,8 @@
     "addresses": "Direcciones",
     "notifications": "Notificaciones",
     "privacy": "Privacidad",
-    "security": "Seguridad"
+    "security": "Seguridad",
+    "activity": "Actividad"
   },
   "profile": {
     "title": "Configuracion del Perfil",
@@ -279,6 +280,56 @@
       "changeTitle": "Cambiar Contrasena",
       "changeDescription": "Actualiza tu contrasena si aun usas inicio de sesion basado en contrasena",
       "changeButton": "Cambiar"
+    }
+  },
+  "activity": {
+    "title": "Registro de Actividad",
+    "subtitle": "Ve tu actividad de cuenta y administra sesiones activas",
+    "loadError": "Error al cargar la actividad. Por favor, intentalo de nuevo.",
+    "noActivity": "No hay actividad registrada todavia",
+    "noSessions": "No hay sesiones activas",
+    "showing": "Mostrando {{from}}-{{to}} de {{total}}",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "actions": {
+      "LOGIN": "Sesion iniciada",
+      "LOGOUT": "Sesion cerrada",
+      "LOGIN_FAILED": "Inicio de sesion fallido",
+      "CREDENTIAL_CHANGE": "Credenciales cambiadas",
+      "CREDENTIAL_RESET": "Credenciales restablecidas",
+      "CREATE": "Creado",
+      "READ": "Visto",
+      "UPDATE": "Actualizado",
+      "DELETE": "Eliminado",
+      "BULK_READ": "Vista masiva",
+      "BULK_UPDATE": "Actualizacion masiva",
+      "BULK_DELETE": "Eliminacion masiva",
+      "UPLOAD": "Subido",
+      "DOWNLOAD": "Descargado",
+      "SEARCH": "Buscado",
+      "EXPORT": "Exportado"
+    },
+    "tabs": {
+      "activity": "Actividad Reciente",
+      "sessions": "Sesiones Activas"
+    },
+    "summary": {
+      "totalActions": "Acciones Totales",
+      "successRate": "Tasa de Exito",
+      "activeSessions": "Sesiones Activas",
+      "lastLogin": "Ultimo Inicio de Sesion",
+      "never": "Nunca"
+    },
+    "sessions": {
+      "current": "Actual",
+      "unknownDevice": "Dispositivo Desconocido",
+      "lastActive": "Ultima actividad {{time}}",
+      "createdAt": "Creada {{time}}",
+      "revoke": "Revocar",
+      "revokeAll": "Revocar Todas las Otras Sesiones",
+      "revokeSuccess": "Sesion revocada exitosamente",
+      "revokeAllSuccess": "{{count}} sesiones revocadas",
+      "revokeAllConfirm": "Estas seguro de que quieres revocar todas las otras sesiones? Tendras que iniciar sesion de nuevo en esos dispositivos."
     }
   }
 }
