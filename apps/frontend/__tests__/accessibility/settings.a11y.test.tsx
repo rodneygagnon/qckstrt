@@ -123,6 +123,45 @@ jest.mock("@apollo/client/react", () => ({
   useMutation: () => [jest.fn(), { loading: false }],
 }));
 
+// Mock auth context for security page
+jest.mock("@/lib/auth-context", () => ({
+  useAuth: () => ({
+    user: { id: "user-1", email: "test@example.com", roles: ["user"] },
+    isLoading: false,
+    error: null,
+    clearError: jest.fn(),
+    supportsPasskeys: true,
+    tokens: null,
+    isAuthenticated: true,
+    login: jest.fn(),
+    loginWithPasskey: jest.fn(),
+    sendMagicLink: jest.fn(),
+    verifyMagicLink: jest.fn(),
+    register: jest.fn(),
+    registerPasskey: jest.fn(),
+    registerWithMagicLink: jest.fn(),
+    logout: jest.fn(),
+    magicLinkSent: false,
+    hasPlatformAuthenticator: true,
+  }),
+}));
+
+// Mock passkey hook for security page
+jest.mock("@/lib/hooks/usePasskey", () => ({
+  usePasskey: () => ({
+    passkeys: [],
+    passkeysLoading: false,
+    isLoading: false,
+    error: null,
+    supportsPasskeys: true,
+    registerPasskey: jest.fn(),
+    deletePasskey: jest.fn(),
+    authenticateWithPasskey: jest.fn(),
+    refetchPasskeys: jest.fn(),
+    clearError: jest.fn(),
+  }),
+}));
+
 const renderWithI18n = (ui: React.ReactElement) => {
   return render(<I18nProvider>{ui}</I18nProvider>);
 };

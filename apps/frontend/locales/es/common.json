@@ -2,6 +2,7 @@
   "buttons": {
     "save": "Guardar Cambios",
     "cancel": "Cancelar",
+    "confirm": "Confirmar",
     "delete": "Eliminar",
     "edit": "Editar",
     "add": "Agregar",
@@ -26,7 +27,8 @@
     "granted": "Concedido",
     "withdrawn": "Retirado",
     "denied": "Denegado",
-    "notSet": "No establecido"
+    "notSet": "No establecido",
+    "loading": "Cargando..."
   },
   "navigation": {
     "backToApp": "Volver a la App"

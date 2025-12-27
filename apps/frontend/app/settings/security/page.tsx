@@ -1,15 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-
-interface Passkey {
-  id: string;
-  friendlyName: string;
-  deviceType: string;
-  createdAt: string;
-  lastUsedAt: string;
-}
+import { useAuth } from "@/lib/auth-context";
+import { usePasskey } from "@/lib/hooks/usePasskey";
 
 interface Session {
   id: string;
@@ -20,9 +14,6 @@ interface Session {
   lastActivity: string;
   isCurrent: boolean;
 }
-
-// Mock data - will be replaced with actual GraphQL queries when passkey implementation is complete
-const mockPasskeys: Passkey[] = [];
 
 const mockSessions: Session[] = [
   {
@@ -94,20 +85,55 @@ function DeviceIcon({ type }: Readonly<{ type: string }>) {
 
 export default function SecurityPage() {
   const { t } = useTranslation("settings");
-  const [passkeys] = useState<Passkey[]>(mockPasskeys);
+  const { user } = useAuth();
+  const {
+    passkeys,
+    passkeysLoading,
+    isLoading: passkeyActionLoading,
+    error: passkeyError,
+    supportsPasskeys,
+    registerPasskey,
+    deletePasskey,
+    refetchPasskeys,
+    clearError,
+  } = usePasskey();
+
   const [sessions] = useState<Session[]>(mockSessions);
-  const [registering, setRegistering] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [friendlyName, setFriendlyName] = useState("");
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // Fetch passkeys on mount
+  useEffect(() => {
+    if (user) {
+      refetchPasskeys();
+    }
+  }, [user, refetchPasskeys]);
 
   const handleAddPasskey = async () => {
-    setRegistering(true);
-    // TODO: Implement WebAuthn registration when passkey backend is ready
-    setTimeout(() => {
-      alert(t("security.passkeys.registrationPending"));
-      setRegistering(false);
-    }, 500);
+    if (!user?.email) return;
+
+    clearError();
+    const success = await registerPasskey(
+      user.email,
+      friendlyName || undefined,
+    );
+
+    if (success) {
+      setShowAddModal(false);
+      setFriendlyName("");
+      refetchPasskeys();
+    }
   };
 
-  const handleRevokeSession = async (sessionId: string) => {
+  const handleDeletePasskey = async (credentialId: string) => {
+    const success = await deletePasskey(credentialId);
+    if (success) {
+      setDeleteConfirmId(null);
+    }
+  };
+
+  const handleRevokeSession = async (_sessionId: string) => {
     if (!confirm(t("security.sessions.revokeConfirm"))) return;
     // TODO: Implement session revocation
     alert(t("security.sessions.revokePending"));
@@ -117,6 +143,18 @@ export default function SecurityPage() {
     if (!confirm(t("security.sessions.revokeAllConfirm"))) return;
     // TODO: Implement revoke all sessions
     alert(t("security.sessions.revokeAllPending"));
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    } catch {
+      return dateString;
+    }
   };
 
   return (
@@ -144,17 +182,36 @@ export default function SecurityPage() {
               </p>
             </div>
             <button
-              onClick={handleAddPasskey}
-              disabled={registering}
+              onClick={() => setShowAddModal(true)}
+              disabled={!supportsPasskeys || passkeyActionLoading}
               className="px-4 py-2 bg-[#1e293b] text-white rounded-lg font-medium hover:bg-[#334155] transition-colors disabled:opacity-50"
             >
-              {registering
-                ? t("security.passkeys.adding")
-                : t("security.passkeys.addButton")}
+              {t("security.passkeys.addButton")}
             </button>
           </div>
 
-          {passkeys.length > 0 ? (
+          {/* Error display */}
+          {passkeyError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {passkeyError}
+            </div>
+          )}
+
+          {/* Not supported warning */}
+          {!supportsPasskeys && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700 text-sm">
+              {t("security.passkeys.notSupported")}
+            </div>
+          )}
+
+          {passkeysLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin w-8 h-8 border-2 border-[#1e293b] border-t-transparent rounded-full mx-auto" />
+              <p className="text-[#64748b] mt-2">
+                {t("common:status.loading")}
+              </p>
+            </div>
+          ) : passkeys.length > 0 ? (
             <div className="space-y-3">
               {passkeys.map((passkey) => (
                 <div
@@ -167,19 +224,46 @@ export default function SecurityPage() {
                     </div>
                     <div>
                       <p className="font-medium text-[#1e293b]">
-                        {passkey.friendlyName}
+                        {passkey.friendlyName || t("security.passkeys.unnamed")}
                       </p>
                       <p className="text-sm text-[#64748b]">
-                        {passkey.deviceType} •{" "}
-                        {t("security.passkeys.lastUsed", {
-                          time: passkey.lastUsedAt,
-                        })}
+                        {passkey.deviceType ||
+                          t("security.passkeys.unknownDevice")}{" "}
+                        • {t("security.passkeys.created")}:{" "}
+                        {formatDate(passkey.createdAt)}
                       </p>
+                      {passkey.lastUsedAt && (
+                        <p className="text-xs text-[#94a3b8]">
+                          {t("security.passkeys.lastUsed")}:{" "}
+                          {formatDate(passkey.lastUsedAt)}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <button className="text-sm text-red-500 hover:text-red-700 transition-colors">
-                    {t("common:buttons.remove")}
-                  </button>
+                  {deleteConfirmId === passkey.id ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleDeletePasskey(passkey.id)}
+                        disabled={passkeyActionLoading}
+                        className="text-sm text-red-600 font-medium hover:text-red-700 transition-colors disabled:opacity-50"
+                      >
+                        {t("common:buttons.confirm")}
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirmId(null)}
+                        className="text-sm text-[#64748b] hover:text-[#1e293b] transition-colors"
+                      >
+                        {t("common:buttons.cancel")}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setDeleteConfirmId(passkey.id)}
+                      className="text-sm text-red-500 hover:text-red-700 transition-colors"
+                    >
+                      {t("common:buttons.remove")}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -414,6 +498,72 @@ export default function SecurityPage() {
           </button>
         </div>
       </div>
+
+      {/* Add Passkey Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 className="text-xl font-semibold text-[#1e293b] mb-2">
+              {t("security.passkeys.addTitle")}
+            </h3>
+            <p className="text-[#64748b] text-sm mb-6">
+              {t("security.passkeys.addDescription")}
+            </p>
+
+            <div className="mb-6">
+              <label
+                htmlFor="friendlyName"
+                className="block text-sm font-medium text-[#1e293b] mb-2"
+              >
+                {t("security.passkeys.friendlyNameLabel")}
+              </label>
+              <input
+                id="friendlyName"
+                type="text"
+                value={friendlyName}
+                onChange={(e) => setFriendlyName(e.target.value)}
+                placeholder={t("security.passkeys.friendlyNamePlaceholder")}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e293b] focus:border-transparent"
+              />
+              <p className="text-xs text-[#64748b] mt-1">
+                {t("security.passkeys.friendlyNameHint")}
+              </p>
+            </div>
+
+            {passkeyError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {passkeyError}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowAddModal(false);
+                  setFriendlyName("");
+                  clearError();
+                }}
+                disabled={passkeyActionLoading}
+                className="px-4 py-2 text-sm font-medium text-[#64748b] hover:text-[#1e293b] transition-colors"
+              >
+                {t("common:buttons.cancel")}
+              </button>
+              <button
+                onClick={handleAddPasskey}
+                disabled={passkeyActionLoading}
+                className="px-4 py-2 bg-[#1e293b] text-white rounded-lg font-medium hover:bg-[#334155] transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {passkeyActionLoading && (
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                )}
+                {passkeyActionLoading
+                  ? t("security.passkeys.adding")
+                  : t("security.passkeys.addButton")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
