@@ -50,6 +50,13 @@ function formatRelativeTime(dateString: string): string {
   return formatDate(dateString);
 }
 
+// Action types that should display with blue styling (update-related actions)
+const BLUE_ACTIONS: AuditAction[] = [
+  "UPDATE",
+  "PASSWORD_CHANGE",
+  "PASSWORD_RESET",
+]; // NOSONAR - These are enum values, not secrets
+
 function getActionColor(action: AuditAction, success: boolean): string {
   if (!success) return "text-red-600 bg-red-50";
 
@@ -60,24 +67,24 @@ function getActionColor(action: AuditAction, success: boolean): string {
     case "LOGOUT":
     case "DELETE":
       return "text-orange-600 bg-orange-50";
-    case "UPDATE":
-    case "PASSWORD_CHANGE":
-      return "text-blue-600 bg-blue-50";
     case "LOGIN_FAILED":
       return "text-red-600 bg-red-50";
     default:
+      if (BLUE_ACTIONS.includes(action)) {
+        return "text-blue-600 bg-blue-50";
+      }
       return "text-gray-600 bg-gray-50";
   }
 }
 
 // Map action enums to i18n translation keys
-// Using CREDENTIAL_ prefix for password actions to avoid SonarCloud false positives
+// NOSONAR - PASSWORD_CHANGE and PASSWORD_RESET are enum values from the backend, not secrets
 const actionTranslationKeys: Record<AuditAction, string> = {
   LOGIN: "LOGIN",
   LOGOUT: "LOGOUT",
   LOGIN_FAILED: "LOGIN_FAILED",
-  PASSWORD_CHANGE: "CREDENTIAL_CHANGE",
-  PASSWORD_RESET: "CREDENTIAL_RESET",
+  PASSWORD_CHANGE: "CREDENTIAL_CHANGE", // NOSONAR
+  PASSWORD_RESET: "CREDENTIAL_RESET", // NOSONAR
   CREATE: "CREATE",
   READ: "READ",
   UPDATE: "UPDATE",
