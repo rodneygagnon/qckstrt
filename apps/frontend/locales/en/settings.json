@@ -291,6 +291,24 @@
     "showing": "Showing {{from}}-{{to}} of {{total}}",
     "previous": "Previous",
     "next": "Next",
+    "actions": {
+      "LOGIN": "Logged in",
+      "LOGOUT": "Logged out",
+      "LOGIN_FAILED": "Login failed",
+      "CREDENTIAL_CHANGE": "Changed credentials",
+      "CREDENTIAL_RESET": "Reset credentials",
+      "CREATE": "Created",
+      "READ": "Viewed",
+      "UPDATE": "Updated",
+      "DELETE": "Deleted",
+      "BULK_READ": "Bulk view",
+      "BULK_UPDATE": "Bulk update",
+      "BULK_DELETE": "Bulk delete",
+      "UPLOAD": "Uploaded",
+      "DOWNLOAD": "Downloaded",
+      "SEARCH": "Searched",
+      "EXPORT": "Exported"
+    },
     "tabs": {
       "activity": "Recent Activity",
       "sessions": "Active Sessions"

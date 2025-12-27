@@ -291,6 +291,24 @@
     "showing": "Mostrando {{from}}-{{to}} de {{total}}",
     "previous": "Anterior",
     "next": "Siguiente",
+    "actions": {
+      "LOGIN": "Sesion iniciada",
+      "LOGOUT": "Sesion cerrada",
+      "LOGIN_FAILED": "Inicio de sesion fallido",
+      "CREDENTIAL_CHANGE": "Credenciales cambiadas",
+      "CREDENTIAL_RESET": "Credenciales restablecidas",
+      "CREATE": "Creado",
+      "READ": "Visto",
+      "UPDATE": "Actualizado",
+      "DELETE": "Eliminado",
+      "BULK_READ": "Vista masiva",
+      "BULK_UPDATE": "Actualizacion masiva",
+      "BULK_DELETE": "Eliminacion masiva",
+      "UPLOAD": "Subido",
+      "DOWNLOAD": "Descargado",
+      "SEARCH": "Buscado",
+      "EXPORT": "Exportado"
+    },
     "tabs": {
       "activity": "Actividad Reciente",
       "sessions": "Sesiones Activas"

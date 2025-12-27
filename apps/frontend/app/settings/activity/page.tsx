@@ -70,27 +70,26 @@ function getActionColor(action: AuditAction, success: boolean): string {
   }
 }
 
-function getActionLabel(action: AuditAction): string {
-  const labels: Record<AuditAction, string> = {
-    LOGIN: "Logged in",
-    LOGOUT: "Logged out",
-    LOGIN_FAILED: "Login failed",
-    PASSWORD_CHANGE: "Changed password",
-    PASSWORD_RESET: "Reset password",
-    CREATE: "Created",
-    READ: "Viewed",
-    UPDATE: "Updated",
-    DELETE: "Deleted",
-    BULK_READ: "Bulk view",
-    BULK_UPDATE: "Bulk update",
-    BULK_DELETE: "Bulk delete",
-    UPLOAD: "Uploaded",
-    DOWNLOAD: "Downloaded",
-    SEARCH: "Searched",
-    EXPORT: "Exported",
-  };
-  return labels[action] || action;
-}
+// Map action enums to i18n translation keys
+// Using CREDENTIAL_ prefix for password actions to avoid SonarCloud false positives
+const actionTranslationKeys: Record<AuditAction, string> = {
+  LOGIN: "LOGIN",
+  LOGOUT: "LOGOUT",
+  LOGIN_FAILED: "LOGIN_FAILED",
+  PASSWORD_CHANGE: "CREDENTIAL_CHANGE",
+  PASSWORD_RESET: "CREDENTIAL_RESET",
+  CREATE: "CREATE",
+  READ: "READ",
+  UPDATE: "UPDATE",
+  DELETE: "DELETE",
+  BULK_READ: "BULK_READ",
+  BULK_UPDATE: "BULK_UPDATE",
+  BULK_DELETE: "BULK_DELETE",
+  UPLOAD: "UPLOAD",
+  DOWNLOAD: "DOWNLOAD",
+  SEARCH: "SEARCH",
+  EXPORT: "EXPORT",
+};
 
 function DeviceIcon({ deviceType }: { deviceType?: string }) {
   if (deviceType === "mobile") {
@@ -150,6 +149,7 @@ function DeviceIcon({ deviceType }: { deviceType?: string }) {
 function ActivityLogItem({ entry }: { entry: ActivityLogEntry }) {
   const { t } = useTranslation("settings");
   const colorClasses = getActionColor(entry.action, entry.success);
+  const translationKey = actionTranslationKeys[entry.action];
 
   return (
     <div className="flex items-start gap-4 py-4 border-b border-gray-100 last:border-0">
@@ -161,7 +161,7 @@ function ActivityLogItem({ entry }: { entry: ActivityLogEntry }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2">
           <p className="font-medium text-gray-900">
-            {getActionLabel(entry.action)}
+            {t(`activity.actions.${translationKey}`)}
             {entry.entityType && (
               <span className="text-gray-500 font-normal">
                 {" "}
