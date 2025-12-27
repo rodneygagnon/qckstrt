@@ -5,7 +5,8 @@
     "addresses": "Addresses",
     "notifications": "Notifications",
     "privacy": "Privacy",
-    "security": "Security"
+    "security": "Security",
+    "activity": "Activity"
   },
   "profile": {
     "title": "Profile Settings",
@@ -279,6 +280,38 @@
       "changeTitle": "Change Password",
       "changeDescription": "Update your password if you still use password-based login",
       "changeButton": "Change"
+    }
+  },
+  "activity": {
+    "title": "Activity Log",
+    "subtitle": "View your account activity and manage active sessions",
+    "loadError": "Failed to load activity. Please try again.",
+    "noActivity": "No activity recorded yet",
+    "noSessions": "No active sessions",
+    "showing": "Showing {{from}}-{{to}} of {{total}}",
+    "previous": "Previous",
+    "next": "Next",
+    "tabs": {
+      "activity": "Recent Activity",
+      "sessions": "Active Sessions"
+    },
+    "summary": {
+      "totalActions": "Total Actions",
+      "successRate": "Success Rate",
+      "activeSessions": "Active Sessions",
+      "lastLogin": "Last Login",
+      "never": "Never"
+    },
+    "sessions": {
+      "current": "Current",
+      "unknownDevice": "Unknown Device",
+      "lastActive": "Last active {{time}}",
+      "createdAt": "Created {{time}}",
+      "revoke": "Revoke",
+      "revokeAll": "Revoke All Other Sessions",
+      "revokeSuccess": "Session revoked successfully",
+      "revokeAllSuccess": "Revoked {{count}} sessions",
+      "revokeAllConfirm": "Are you sure you want to revoke all other sessions? You will need to sign in again on those devices."
     }
   }
 }
