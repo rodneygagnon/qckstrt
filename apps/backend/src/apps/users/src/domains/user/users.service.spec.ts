@@ -113,6 +113,37 @@ describe('UsersService', () => {
     }
   });
 
+  it('should create a passwordless user', async () => {
+    userRepo.create = jest.fn().mockReturnValue({ email: 'test@example.com' });
+    userRepo.save = jest.fn().mockResolvedValue({
+      id: 'new-user-id',
+      email: 'test@example.com',
+    });
+
+    const result =
+      await usersService.createPasswordlessUser('test@example.com');
+
+    expect(result).toEqual({ id: 'new-user-id', email: 'test@example.com' });
+    expect(userRepo.create).toHaveBeenCalledWith({ email: 'test@example.com' });
+    expect(userRepo.save).toHaveBeenCalledTimes(1);
+  });
+
+  it('should fail to create a passwordless user with DB error', async () => {
+    userRepo.create = jest.fn().mockReturnValue({ email: 'test@example.com' });
+    userRepo.save = jest.fn().mockRejectedValue(
+      new QueryFailedError('Failed user creation!', undefined, {
+        code: PostgresErrorCodes.UniqueViolation,
+        detail: 'Email already exists',
+      } as any),
+    );
+
+    try {
+      await usersService.createPasswordlessUser('test@example.com');
+    } catch (error) {
+      expect(error.message).toEqual('Email already exists');
+    }
+  });
+
   it('should update a user', async () => {
     userRepo.update = jest
       .fn()

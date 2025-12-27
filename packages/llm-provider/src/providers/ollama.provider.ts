@@ -71,9 +71,14 @@ export class OllamaLLMProvider implements ILLMProvider {
         `Generating completion with Ollama/${this.config.model} (${prompt.length} chars)`,
       );
 
+      // Add timeout to prevent hanging if Ollama isn't responding
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+
       const response = await fetch(`${this.config.url}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           model: this.config.model,
           prompt,
@@ -87,6 +92,8 @@ export class OllamaLLMProvider implements ILLMProvider {
           },
         }),
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${await response.text()}`);
@@ -108,6 +115,14 @@ export class OllamaLLMProvider implements ILLMProvider {
         finishReason: data.done ? "stop" : "length",
       };
     } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        this.logger.error("Ollama generation timed out after 60 seconds");
+        throw new LLMError(
+          this.getName(),
+          "generate",
+          new Error("Request timed out. Is Ollama running? Try: ollama serve"),
+        );
+      }
       this.logger.error("Ollama generation failed:", error);
       throw new LLMError(this.getName(), "generate", error as Error);
     }

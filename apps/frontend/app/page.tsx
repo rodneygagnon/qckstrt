@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { Header } from "@/components/Header";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Header />
       <main className="max-w-4xl mx-auto px-8 py-16">
         <div className="text-center mb-16">
           <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-4">
@@ -27,11 +29,11 @@ export default function Home() {
             </p>
           </Link>
 
-          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow opacity-50">
-            <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+          <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
+            <h2 className="text-2xl font-semibold text-gray-500 dark:text-gray-400 mb-2">
               More Features
             </h2>
-            <p className="text-gray-600 dark:text-gray-300">
+            <p className="text-gray-600 dark:text-gray-400">
               Additional features and demos coming soon. The platform includes
               user management, file processing, and more.
             </p>

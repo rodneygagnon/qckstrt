@@ -1,8 +1,8 @@
 # QCKSTRT Development Stack
 #
 # This docker-compose provides all services needed for local development:
-# - Supabase (Auth, Storage, Vault, PostgreSQL) - OSS platform
-# - ChromaDB - Vector database
+# - Supabase (Auth, Storage, Vault, PostgreSQL with pgvector) - OSS platform
+# - Inbucket - Local email testing (captures auth emails)
 # - Ollama - LLM inference
 #
 # Usage:
@@ -11,11 +11,18 @@
 # Access Points:
 #   - Supabase API: http://localhost:8000
 #   - Supabase Studio: http://localhost:3100
+#   - Inbucket (Email UI): http://localhost:54324
 #   - PostgreSQL: localhost:5432
-#   - ChromaDB: http://localhost:8001
 #   - Ollama: http://localhost:11434
-
-version: "3.8"
+#
+# Email Configuration:
+#   LOCAL DEV (default): Emails captured in Inbucket at http://localhost:54324
+#   PRODUCTION: Set these env vars for Resend (https://resend.com - free tier available):
+#     SMTP_HOST=smtp.resend.com
+#     SMTP_PORT=465
+#     SMTP_USER=resend
+#     SMTP_PASS=re_your_api_key
+#     SMTP_ADMIN_EMAIL=noreply@yourdomain.com
 
 networks:
   qckstrt-network:
@@ -41,7 +48,8 @@ services:
       JWT_EXP: ${JWT_EXP:-3600}
     volumes:
       - supabase-db-data:/var/lib/postgresql/data
-      - ./supabase/migrations:/docker-entrypoint-initdb.d
+      # Note: Custom migrations should be applied via Supabase Studio or psql after initialization
+      # The Supabase image has its own init scripts that must complete first
     networks:
       - qckstrt-network
     healthcheck:
@@ -51,6 +59,17 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # Inbucket - Local Email Testing (captures emails in web UI)
+  inbucket:
+    image: inbucket/inbucket:latest
+    container_name: qckstrt-inbucket
+    ports:
+      - "54324:9000"  # Web UI
+      - "2500:2500"   # SMTP
+    networks:
+      - qckstrt-network
+    restart: unless-stopped
+
   # GoTrue - Authentication Service
   supabase-auth:
     image: supabase/gotrue:v2.164.0
@@ -58,6 +77,8 @@ services:
     depends_on:
       supabase-db:
         condition: service_healthy
+      inbucket:
+        condition: service_started
     environment:
       GOTRUE_API_HOST: 0.0.0.0
       GOTRUE_API_PORT: 9999
@@ -66,19 +87,35 @@ services:
       GOTRUE_DB_DRIVER: postgres
       GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${POSTGRES_PASSWORD:-your-super-secret-password}@supabase-db:5432/postgres
 
-      GOTRUE_SITE_URL: ${SITE_URL:-http://localhost:3000}
-      GOTRUE_URI_ALLOW_LIST: ${ADDITIONAL_REDIRECT_URLS:-}
+      GOTRUE_SITE_URL: ${SITE_URL:-http://localhost:3200}
+      GOTRUE_URI_ALLOW_LIST: ${ADDITIONAL_REDIRECT_URLS:-http://localhost:3200/**}
       GOTRUE_DISABLE_SIGNUP: ${DISABLE_SIGNUP:-false}
 
-      GOTRUE_JWT_ADMIN_ROLES: service_role
       GOTRUE_JWT_AUD: authenticated
-      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
       GOTRUE_JWT_EXP: ${JWT_EXP:-3600}
       GOTRUE_JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-token-with-at-least-32-characters}
 
       GOTRUE_EXTERNAL_EMAIL_ENABLED: ${ENABLE_EMAIL_SIGNUP:-true}
       GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: ${ENABLE_ANONYMOUS_USERS:-false}
-      GOTRUE_MAILER_AUTOCONFIRM: ${ENABLE_EMAIL_AUTOCONFIRM:-true}
+      GOTRUE_MAILER_AUTOCONFIRM: ${ENABLE_EMAIL_AUTOCONFIRM:-false}
+
+      # SMTP Configuration
+      # Local dev: Uses Inbucket (no setup required)
+      # Production: Set SMTP_* env vars for Resend (https://resend.com)
+      #   SMTP_HOST=smtp.resend.com
+      #   SMTP_PORT=465
+      #   SMTP_USER=resend
+      #   SMTP_PASS=re_your_api_key
+      #   SMTP_ADMIN_EMAIL=noreply@yourdomain.com
+      GOTRUE_SMTP_HOST: ${SMTP_HOST:-inbucket}
+      GOTRUE_SMTP_PORT: ${SMTP_PORT:-2500}
+      GOTRUE_SMTP_USER: ${SMTP_USER:-}
+      GOTRUE_SMTP_PASS: ${SMTP_PASS:-}
+      GOTRUE_SMTP_ADMIN_EMAIL: ${SMTP_ADMIN_EMAIL:-noreply@qckstrt.local}
+      GOTRUE_MAILER_URLPATHS_CONFIRMATION: /auth/callback
+      GOTRUE_MAILER_URLPATHS_INVITE: /auth/callback
+      GOTRUE_MAILER_URLPATHS_RECOVERY: /auth/callback
+      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: /auth/callback
     networks:
       - qckstrt-network
     restart: unless-stopped
@@ -221,23 +258,6 @@ services:
   # AI/ML Services
   # ===========================================
 
-  # ChromaDB - Vector Database
-  chromadb:
-    image: chromadb/chroma:latest
-    container_name: qckstrt-chromadb
-    platform: "linux/amd64"
-    ports:
-      - "8001:8000"
-    volumes:
-      - chroma-data:/chroma/chroma
-    environment:
-      - IS_PERSISTENT=TRUE
-      - PERSIST_DIRECTORY=/chroma/chroma
-      - ANONYMIZED_TELEMETRY=FALSE
-    networks:
-      - qckstrt-network
-    restart: unless-stopped
-
   # Ollama - LLM Inference
   ollama:
     image: ollama/ollama:latest
@@ -264,7 +284,5 @@ volumes:
     name: qckstrt-supabase-db-data
   supabase-storage-data:
     name: qckstrt-supabase-storage-data
-  chroma-data:
-    name: qckstrt-chroma-data
   ollama-data:
     name: qckstrt-ollama-data

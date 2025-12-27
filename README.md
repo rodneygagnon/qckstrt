@@ -84,7 +84,7 @@ All documentation is located in the [`docs/`](docs/) directory:
 - [Kubernetes](https://kubernetes.io) - Production orchestration
 
 ### Platform Services
-- [Supabase](https://supabase.com) - Auth, Storage, and Vault (self-hosted or cloud)
+- [Supabase](https://supabase.com) - Auth (with Passkeys/Magic Links), Storage, and Vault (self-hosted or cloud)
 - [PostgreSQL](https://www.postgresql.org) + [pgvector](https://github.com/pgvector/pgvector) - Database and vector storage
 - [Ollama](https://ollama.ai) - Local LLM inference
 
@@ -128,7 +128,7 @@ The `packages/` directory contains reusable, publishable npm packages that provi
 | `@qckstrt/relationaldb-provider` | PostgreSQL | 7 |
 | `@qckstrt/extraction-provider` | Text extraction from URLs | 16 |
 | `@qckstrt/storage-provider` | Supabase Storage | 17 |
-| `@qckstrt/auth-provider` | Supabase Auth | 29 |
+| `@qckstrt/auth-provider` | Supabase Auth (Passkeys, Magic Links, Password) | 29 |
 | `@qckstrt/secrets-provider` | Supabase Vault | 10 |
 
 ## Development
@@ -159,6 +159,7 @@ docker-compose logs -f   # View logs
 
 ## Features
 
+- ✅ **Passwordless Authentication** - Passkeys (WebAuthn/FIDO2) and Magic Links
 - ✅ **RAG (Retrieval-Augmented Generation)** - Ask questions about your documents
 - ✅ **Semantic Search** - Find relevant information using vector similarity
 - ✅ **Document Indexing** - Automatic chunking and embedding generation

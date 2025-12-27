@@ -18,6 +18,11 @@ import { Request } from 'express';
 import { LoggingModule, LogLevel } from '@qckstrt/logging-provider';
 
 import configuration from 'src/config';
+import supabaseConfig from 'src/config/supabase.config';
+import storageConfig from 'src/config/storage.config';
+import authConfig from 'src/config/auth.config';
+import secretsConfig from 'src/config/secrets.config';
+import relationaldbConfig from 'src/config/relationaldb.config';
 
 import { HMACMiddleware } from 'src/common/middleware/hmac.middleware';
 import { PassportModule } from '@nestjs/passport';
@@ -31,17 +36,25 @@ interface GatewayContext {
 }
 
 const handleAuth = ({ req }: { req: Request }) => {
-  if (req.headers.authorization) {
-    return {
-      user: req.headers.user as string | undefined,
-    };
+  // Extract user from header (sent by frontend or from JWT auth)
+  const user = req.headers.user as string | undefined;
+  if (user && user !== 'undefined') {
+    return { user };
   }
+  return {};
 };
 
 @Module({
   imports: [
     ConfigModule.forRoot({
-      load: [configuration],
+      load: [
+        configuration,
+        supabaseConfig,
+        storageConfig,
+        authConfig,
+        secretsConfig,
+        relationaldbConfig,
+      ],
       isGlobal: true,
     }),
     LoggingModule.forRootAsync({

@@ -1,0 +1,45 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type User {
+  id: ID!
+  files: [File!]!
+}
+
+type File {
+  userId: ID!
+  filename: String!
+  size: Float!
+  status: DocumentStatus!
+  user: User!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+"""Document processing status"""
+enum DocumentStatus {
+  PROCESSINGNPENDING
+  TEXTEXTERACTIONSTARTED
+  TEXTEXTERACTIONCOMPLETE
+  TEXTEXTERACTIONFAILED
+  AIEMBEDDINGSSTARTED
+  AIEMBEDDINGSCOMPLETE
+  AIEMBEDDINGSFAILED
+  PROCESSINGNCOMPLETE
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Query {
+  listFiles(userId: ID!): [File!]!
+  getUploadUrl(userId: ID!, filename: String!): String!
+  getDownloadUrl(userId: ID!, filename: String!): String!
+}
+
+type Mutation {
+  deleteFile(userId: ID!, filename: String!): Boolean!
+}

@@ -71,7 +71,9 @@ psql -h localhost -p 5433 -U postgres -d postgres
 **Port**: 9999 (internal), 8000/auth/* (via Kong)
 
 **Features**:
-- Email/password authentication
+- **Passkeys (WebAuthn/FIDO2)** - Primary passwordless authentication
+- **Magic Links** - Email-based passwordless login
+- Email/password authentication (legacy fallback)
 - OAuth providers (Google, GitHub, etc.)
 - JWT tokens
 - User management
@@ -79,29 +81,132 @@ psql -h localhost -p 5433 -U postgres -d postgres
 
 **Environment Variables**:
 ```bash
+# Auth Provider
 AUTH_PROVIDER=supabase
 SUPABASE_URL=http://localhost:8000
 SUPABASE_SERVICE_ROLE_KEY=<your-key>
+
+# WebAuthn/Passkey Configuration
+WEBAUTHN_RP_NAME=Qckstrt
+WEBAUTHN_RP_ID=localhost              # yourdomain.com in production
+WEBAUTHN_ORIGIN=http://localhost:3000  # https://yourdomain.com in production
+
+# Frontend URL for Magic Link redirects
+FRONTEND_URL=http://localhost:3000
 ```
 
-**Usage in Code**:
+#### Passwordless Authentication
+
+QCKSTRT supports three authentication methods, with passwordless options as the primary approach:
+
+1. **Passkeys (WebAuthn/FIDO2)** - Biometric/PIN authentication using platform authenticators
+2. **Magic Links** - Email-based passwordless login (like Medium)
+3. **Password** - Traditional password-based authentication (legacy fallback)
+
+**Magic Link Usage**:
 ```typescript
 @Inject('AUTH_PROVIDER')
 private authProvider: IAuthProvider;
 
-// Register a user
+// Send magic link email
+await this.authProvider.sendMagicLink(
+  'user@example.com',
+  'http://localhost:3000/auth/callback'
+);
+
+// Verify magic link token (handled in callback)
+const tokens = await this.authProvider.verifyMagicLink(
+  'user@example.com',
+  tokenFromUrl
+);
+
+// Register with magic link (email-first flow)
+await this.authProvider.registerWithMagicLink(
+  'newuser@example.com',
+  'http://localhost:3000/auth/callback?type=register'
+);
+```
+
+**Passkey Usage** (via PasskeyService):
+```typescript
+@Inject(PasskeyService)
+private passkeyService: PasskeyService;
+
+// Generate registration options
+const options = await this.passkeyService.generateRegistrationOptions(
+  userId,
+  'user@example.com',
+  'John Doe'
+);
+
+// Verify registration response from browser
+const verification = await this.passkeyService.verifyRegistration(
+  'user@example.com',
+  browserResponse
+);
+
+// Save credential
+await this.passkeyService.saveCredential(userId, verification, 'MacBook Pro');
+
+// Generate authentication options
+const { options, identifier } = await this.passkeyService.generateAuthenticationOptions(
+  'user@example.com'
+);
+
+// Verify authentication response
+const { verification, user } = await this.passkeyService.verifyAuthentication(
+  identifier,
+  browserResponse
+);
+```
+
+**Password Authentication** (Legacy):
+```typescript
+@Inject('AUTH_PROVIDER')
+private authProvider: IAuthProvider;
+
+// Register a user with password
 const userId = await this.authProvider.registerUser({
   email: 'user@example.com',
   username: 'testuser',
   password: 'SecurePassword123!',
 });
 
-// Authenticate
+// Authenticate with password
 const tokens = await this.authProvider.authenticateUser(
   'user@example.com',
   'SecurePassword123!'
 );
 ```
+
+#### Passkey Database Schema
+
+Passkeys require two database tables (auto-created via TypeORM migrations):
+
+**passkey_credentials**:
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| userId | UUID | Foreign key to users |
+| credentialId | TEXT | WebAuthn credential ID (unique) |
+| publicKey | TEXT | COSE public key |
+| counter | BIGINT | Replay attack prevention |
+| aaguid | VARCHAR | Authenticator AAGUID |
+| deviceType | VARCHAR | 'singleDevice' or 'multiDevice' |
+| backedUp | BOOLEAN | Whether credential is backed up |
+| friendlyName | VARCHAR | User-provided name (e.g., "MacBook Pro") |
+| transports | JSON | Supported transports array |
+| createdAt | TIMESTAMP | Creation time |
+| lastUsedAt | TIMESTAMP | Last authentication time |
+
+**webauthn_challenges**:
+| Column | Type | Description |
+|--------|------|-------------|
+| identifier | VARCHAR | Email or session ID (PK) |
+| challenge | TEXT | Base64-encoded challenge |
+| type | VARCHAR | 'registration' or 'authentication' |
+| createdAt | TIMESTAMP | Creation time |
+| expiresAt | TIMESTAMP | Expiration (5 minutes) |
 
 ### Supabase Storage
 
@@ -261,13 +366,29 @@ const dbCredentials = await this.secretsProvider.getSecretJson<{
    ENABLE_EMAIL_AUTOCONFIRM=false
    ```
 
-6. **Configure SMTP**:
+6. **Configure SMTP** (Required for Magic Links):
    ```bash
    SMTP_HOST=smtp.example.com
    SMTP_PORT=587
    SMTP_USER=your-user
    SMTP_PASS=your-password
+   SMTP_SENDER_NAME=Qckstrt
    ```
+
+7. **Configure WebAuthn for Production**:
+   ```bash
+   # Must match your production domain
+   WEBAUTHN_RP_NAME=Your App Name
+   WEBAUTHN_RP_ID=yourdomain.com
+   WEBAUTHN_ORIGIN=https://yourdomain.com
+
+   # HTTPS is required for WebAuthn (except localhost)
+   ```
+
+8. **Magic Link Security**:
+   - Magic links expire after 2 hours (Supabase default)
+   - Links are single-use and invalidated after verification
+   - Always use HTTPS for redirect URLs in production
 
 ## Switching Providers
 

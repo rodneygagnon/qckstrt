@@ -1,31 +1,49 @@
-import {
-  ApolloClient,
-  ApolloLink,
-  HttpLink,
-  InMemoryCache,
-} from "@apollo/client";
+import { ApolloClient, HttpLink, InMemoryCache } from "@apollo/client";
+import { generateHmacHeader } from "./hmac";
+
+const GRAPHQL_URL =
+  process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:3000/api";
+
+// Custom fetch that adds HMAC and user headers
+const customFetch: typeof fetch = async (uri, options) => {
+  // Extract path from URL for HMAC signing
+  const url = new URL(
+    GRAPHQL_URL,
+    globalThis.location?.origin || "http://localhost:3200",
+  );
+  const path = url.pathname;
+
+  // Generate HMAC header
+  const hmacHeader = await generateHmacHeader("POST", path);
+
+  // Get user from localStorage if available (only in browser)
+  let userJson: string | null = null;
+  if (globalThis.localStorage !== undefined) {
+    userJson = globalThis.localStorage.getItem("user");
+  }
+
+  // Merge headers
+  const headers = new Headers(options?.headers as HeadersInit);
+  if (hmacHeader) {
+    headers.set("X-HMAC-Auth", hmacHeader);
+  }
+  if (userJson) {
+    headers.set("user", userJson);
+  }
+
+  return fetch(uri, {
+    ...options,
+    headers,
+  });
+};
 
 const httpLink = new HttpLink({
-  uri: process.env.NEXT_PUBLIC_GRAPHQL_URL || "http://localhost:3000/graphql",
-});
-
-const authLink = new ApolloLink((operation, forward) => {
-  // Get user from localStorage if available
-  const userJson =
-    typeof window !== "undefined" ? localStorage.getItem("user") : null;
-
-  operation.setContext(({ headers = {} }) => ({
-    headers: {
-      ...headers,
-      user: userJson || undefined,
-    },
-  }));
-
-  return forward(operation);
+  uri: GRAPHQL_URL,
+  fetch: customFetch,
 });
 
 export const apolloClient = new ApolloClient({
-  link: ApolloLink.from([authLink, httpLink]),
+  link: httpLink,
   cache: new InMemoryCache(),
 });
 
@@ -38,15 +56,15 @@ export interface DemoUser {
 }
 
 export const setDemoUser = (user: DemoUser) => {
-  localStorage.setItem("user", JSON.stringify(user));
+  globalThis.localStorage.setItem("user", JSON.stringify(user));
 };
 
 export const getDemoUser = (): DemoUser | null => {
-  if (typeof window === "undefined") return null;
-  const userJson = localStorage.getItem("user");
+  if (globalThis.localStorage === undefined) return null;
+  const userJson = globalThis.localStorage.getItem("user");
   return userJson ? JSON.parse(userJson) : null;
 };
 
 export const clearDemoUser = () => {
-  localStorage.removeItem("user");
+  globalThis.localStorage.removeItem("user");
 };

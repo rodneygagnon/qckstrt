@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Test, TestingModule } from '@nestjs/testing';
 import { createMock } from '@golevelup/ts-jest';
 
@@ -354,5 +355,176 @@ describe('AuthService', () => {
 
     expect(await authService.deleteUser(users[0].email)).toBe(true);
     expect(authProvider.deleteUser).toHaveBeenCalledTimes(1);
+  });
+
+  // ============================================
+  // Passwordless Authentication Tests
+  // ============================================
+
+  describe('getUserByEmail', () => {
+    it('should return user when found', async () => {
+      usersService.findByEmail = jest.fn().mockResolvedValue(users[0]);
+
+      const result = await authService.getUserByEmail(users[0].email);
+
+      expect(result).toEqual(users[0]);
+      expect(usersService.findByEmail).toHaveBeenCalledWith(users[0].email);
+    });
+
+    it('should return null when user not found', async () => {
+      usersService.findByEmail = jest.fn().mockResolvedValue(null);
+
+      const result = await authService.getUserByEmail(
+        'nonexistent@example.com',
+      );
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('sendMagicLink', () => {
+    it('should send magic link for existing user', async () => {
+      usersService.findByEmail = jest.fn().mockResolvedValue(users[0]);
+      (authProvider as any).sendMagicLink = jest.fn().mockResolvedValue(true);
+
+      const result = await authService.sendMagicLink(
+        users[0].email,
+        'http://redirect.com',
+      );
+
+      expect(result).toBe(true);
+      expect((authProvider as any).sendMagicLink).toHaveBeenCalledWith(
+        users[0].email,
+        'http://redirect.com',
+      );
+    });
+
+    it('should return true for non-existent user (security)', async () => {
+      usersService.findByEmail = jest.fn().mockResolvedValue(null);
+
+      const result = await authService.sendMagicLink('nonexistent@example.com');
+
+      expect(result).toBe(true);
+      expect((authProvider as any).sendMagicLink).not.toHaveBeenCalled();
+    });
+
+    it('should throw error if auth provider does not support magic link', async () => {
+      usersService.findByEmail = jest.fn().mockResolvedValue(users[0]);
+      (authProvider as any).sendMagicLink = undefined;
+
+      await expect(authService.sendMagicLink(users[0].email)).rejects.toThrow(
+        'Magic link not supported by auth provider',
+      );
+    });
+  });
+
+  describe('verifyMagicLink', () => {
+    it('should verify magic link and return auth tokens', async () => {
+      const mockAuth = { accessToken: 'token', refreshToken: 'refresh' };
+      usersService.findByEmail = jest.fn().mockResolvedValue(users[0]);
+      (authProvider as any).verifyMagicLink = jest
+        .fn()
+        .mockResolvedValue(mockAuth);
+
+      const result = await authService.verifyMagicLink(
+        users[0].email,
+        '123456',
+      );
+
+      expect(result).toEqual(mockAuth);
+      expect((authProvider as any).verifyMagicLink).toHaveBeenCalledWith(
+        users[0].email,
+        '123456',
+      );
+    });
+
+    it('should throw error when user not found', async () => {
+      usersService.findByEmail = jest.fn().mockResolvedValue(null);
+
+      await expect(
+        authService.verifyMagicLink('nonexistent@example.com', '123456'),
+      ).rejects.toThrow('User not found');
+    });
+
+    it('should throw error if auth provider does not support magic link', async () => {
+      usersService.findByEmail = jest.fn().mockResolvedValue(users[0]);
+      (authProvider as any).verifyMagicLink = undefined;
+
+      await expect(
+        authService.verifyMagicLink(users[0].email, '123456'),
+      ).rejects.toThrow('Magic link not supported by auth provider');
+    });
+  });
+
+  describe('registerWithMagicLink', () => {
+    it('should send login magic link if user already exists', async () => {
+      usersService.findByEmail = jest.fn().mockResolvedValue(users[0]);
+      (authProvider as any).sendMagicLink = jest.fn().mockResolvedValue(true);
+
+      const result = await authService.registerWithMagicLink(
+        users[0].email,
+        'http://redirect.com',
+      );
+
+      expect(result).toBe(true);
+      expect((authProvider as any).sendMagicLink).toHaveBeenCalled();
+    });
+
+    it('should create user and register with magic link for new user', async () => {
+      usersService.findByEmail = jest.fn().mockResolvedValue(null);
+      usersService.createPasswordlessUser = jest.fn().mockResolvedValue({
+        id: 'new-id',
+        email: 'new@example.com',
+      });
+      (authProvider as any).registerWithMagicLink = jest
+        .fn()
+        .mockResolvedValue(true);
+
+      const result = await authService.registerWithMagicLink(
+        'new@example.com',
+        'http://redirect.com',
+      );
+
+      expect(result).toBe(true);
+      expect(usersService.createPasswordlessUser).toHaveBeenCalledWith(
+        'new@example.com',
+      );
+      expect((authProvider as any).registerWithMagicLink).toHaveBeenCalledWith(
+        'new@example.com',
+        'http://redirect.com',
+      );
+    });
+
+    it('should throw error if auth provider does not support magic link registration', async () => {
+      usersService.findByEmail = jest.fn().mockResolvedValue(null);
+      (authProvider as any).registerWithMagicLink = undefined;
+
+      await expect(
+        authService.registerWithMagicLink('new@example.com'),
+      ).rejects.toThrow(
+        'Magic link registration not supported by auth provider',
+      );
+    });
+  });
+
+  describe('generateTokensForUser', () => {
+    it('should throw error when magic link not supported', async () => {
+      (authProvider as any).sendMagicLink = undefined;
+
+      await expect(
+        authService.generateTokensForUser({} as any),
+      ).rejects.toThrow(
+        'Token generation for passkey auth requires magic link support',
+      );
+    });
+
+    it('should throw error for passkey token generation not implemented', async () => {
+      (authProvider as any).sendMagicLink = jest.fn();
+      (authProvider as any).verifyMagicLink = jest.fn();
+
+      await expect(
+        authService.generateTokensForUser({} as any),
+      ).rejects.toThrow('Passkey token generation not yet implemented');
+    });
   });
 });

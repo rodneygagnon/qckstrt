@@ -95,6 +95,30 @@ export interface IAuthProvider {
     password: string,
     confirmationCode: string,
   ): Promise<boolean>;
+
+  /**
+   * Send magic link for passwordless login
+   * @param email User's email address
+   * @param redirectTo Optional URL to redirect after verification
+   * @returns true if email was sent successfully
+   */
+  sendMagicLink?(email: string, redirectTo?: string): Promise<boolean>;
+
+  /**
+   * Verify magic link token and authenticate user
+   * @param email User's email address
+   * @param token The OTP token from the magic link
+   * @returns Auth tokens if verification successful
+   */
+  verifyMagicLink?(email: string, token: string): Promise<IAuthResult>;
+
+  /**
+   * Register a new user with just email (passwordless registration)
+   * @param email User's email address
+   * @param redirectTo Optional URL to redirect after verification
+   * @returns true if registration email was sent successfully
+   */
+  registerWithMagicLink?(email: string, redirectTo?: string): Promise<boolean>;
 }
 
 /**

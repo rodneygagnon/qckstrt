@@ -9,7 +9,7 @@ As-built documentation describing how the system is designed and implemented.
 
 - [**System Overview**](architecture/system-overview.md) - High-level architecture and design principles
 - [**Provider Pattern**](architecture/provider-pattern.md) - Pluggable provider architecture
-- [**Data Layer**](architecture/data-layer.md) - Database and vector storage architecture
+- [**Data Layer**](architecture/data-layer.md) - Database, vector storage, and user profile data architecture
 - [**AI/ML Pipeline**](architecture/ai-ml-pipeline.md) - Embeddings, RAG, and LLM architecture
 - [**Frontend Architecture**](architecture/frontend-architecture.md) - React/Next.js frontend design
 
@@ -17,6 +17,7 @@ As-built documentation describing how the system is designed and implemented.
 Practical guides for common tasks and workflows.
 
 - [**Getting Started**](guides/getting-started.md) - Quick start guide for development
+- [**Supabase Setup**](guides/supabase-setup.md) - Configure Supabase Auth, Storage, and Vault
 - [**Docker Setup**](guides/docker-setup.md) - Running services with Docker
 - [**LLM Configuration**](guides/llm-configuration.md) - Configuring and switching LLM models
 - [**RAG Implementation**](guides/rag-implementation.md) - Using the RAG system (backend)
@@ -33,7 +34,7 @@ Practical guides for common tasks and workflows.
 - [Docker Setup](guides/docker-setup.md)
 
 ### For Frontend Developers
-- [Frontend Architecture](architecture/frontend-architecture.md)
+- [Frontend Architecture](architecture/frontend-architecture.md) - Includes i18n and WCAG 2.2 AA accessibility
 - [RAG Demo Guide](guides/frontend-rag-demo.md)
 - [Frontend Testing](guides/frontend-testing.md)
 
@@ -63,10 +64,12 @@ This platform is built on three core principles:
 | **Embeddings** | Xenova (in-process) |
 | **Vector DB** | pgvector (PostgreSQL) |
 | **Relational DB** | PostgreSQL (via Supabase) |
-| **Auth** | Supabase Auth |
+| **Auth** | Supabase Auth (Passkeys, Magic Links, Password) |
 | **Storage** | Supabase Storage |
 | **Secrets** | Supabase Vault |
 | **LLM** | Ollama (Falcon 7B) |
+| **i18n** | react-i18next (English, Spanish) |
+| **Accessibility** | WCAG 2.2 Level AA compliant |
 
 ## Platform Packages
 
@@ -81,7 +84,7 @@ The `packages/` directory contains reusable, publishable npm packages (`@qckstrt
 | `@qckstrt/relationaldb-provider` | PostgreSQL (via Supabase) |
 | `@qckstrt/extraction-provider` | Text extraction from URLs |
 | `@qckstrt/storage-provider` | Supabase Storage |
-| `@qckstrt/auth-provider` | Supabase Auth |
+| `@qckstrt/auth-provider` | Supabase Auth (Passkeys, Magic Links, Password) |
 | `@qckstrt/secrets-provider` | Supabase Vault |
 
 See [Provider Pattern](architecture/provider-pattern.md) for implementation details.

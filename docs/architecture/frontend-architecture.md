@@ -21,24 +21,34 @@ apps/frontend/
 ├── app/                    # Next.js App Router pages
 │   ├── layout.tsx         # Root layout with providers
 │   ├── page.tsx           # Home page
+│   ├── (auth)/            # Authentication pages (grouped)
+│   │   ├── login/         # Login page (multi-mode: passkey/magic-link/password)
+│   │   ├── register/      # Registration page (email-first)
+│   │   │   └── add-passkey/ # Post-registration passkey setup
+│   │   └── auth/
+│   │       └── callback/  # Magic link verification callback
 │   └── rag-demo/          # RAG Demo feature
 │       └── page.tsx       # RAG Demo page
 ├── lib/                    # Shared utilities
 │   ├── apollo-client.ts   # Apollo Client configuration
 │   ├── apollo-provider.tsx # Apollo Provider wrapper
+│   ├── auth-context.tsx   # Authentication context and provider
+│   ├── hooks/             # Custom React hooks
+│   │   ├── usePasskey.ts  # WebAuthn passkey operations
+│   │   └── useMagicLink.ts # Magic link operations
 │   └── graphql/           # GraphQL operations
+│       ├── auth.ts        # Auth queries/mutations
 │       └── knowledge.ts   # Knowledge service queries/mutations
 ├── __tests__/             # Jest unit tests
-├── cypress/               # Cypress E2E tests
+├── playwright/            # Playwright E2E tests
 │   ├── e2e/              # E2E test specs
-│   ├── fixtures/         # Test fixtures
-│   └── support/          # Custom commands
+│   └── fixtures/         # Test fixtures
 ├── public/               # Static assets
 ├── next.config.ts        # Next.js configuration
 ├── tailwind.config.ts    # Tailwind CSS configuration
 ├── tsconfig.json         # TypeScript configuration
 ├── jest.config.js        # Jest configuration
-└── cypress.config.ts     # Cypress configuration
+└── playwright.config.ts  # Playwright configuration
 ```
 
 ## Core Architecture
@@ -171,12 +181,120 @@ export default function RootLayout({ children }) {
     <html>
       <body>
         <ApolloProvider>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </ApolloProvider>
       </body>
     </html>
   );
 }
+```
+
+## Authentication
+
+### Auth Context
+
+The `AuthContext` provides global authentication state and methods:
+
+```typescript
+// lib/auth-context.tsx
+interface AuthContextType {
+  // State
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+  supportsPasskeys: boolean;
+
+  // Passwordless methods
+  loginWithPasskey: (email?: string) => Promise<boolean>;
+  registerPasskey: (email: string, friendlyName?: string) => Promise<boolean>;
+  sendMagicLink: (email: string, redirectTo?: string) => Promise<boolean>;
+  verifyMagicLink: (email: string, token: string) => Promise<AuthTokens | null>;
+  registerWithMagicLink: (email: string, redirectTo?: string) => Promise<boolean>;
+
+  // Legacy methods
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (email: string, password: string) => Promise<boolean>;
+  logout: () => void;
+  clearError: () => void;
+}
+```
+
+### Authentication Hooks
+
+**usePasskey Hook** - WebAuthn operations:
+```typescript
+// lib/hooks/usePasskey.ts
+interface UsePasskeyResult {
+  isLoading: boolean;
+  error: string | null;
+  supportsPasskeys: boolean;
+  hasPlatformAuthenticator: boolean;
+  passkeys: PasskeyCredential[];
+
+  registerPasskey: (email: string, friendlyName?: string) => Promise<boolean>;
+  authenticateWithPasskey: (email?: string) => Promise<AuthTokens | null>;
+  deletePasskey: (credentialId: string) => Promise<boolean>;
+  refetchPasskeys: () => void;
+}
+```
+
+**useMagicLink Hook** - Email-based login:
+```typescript
+// lib/hooks/useMagicLink.ts
+interface UseMagicLinkResult {
+  isLoading: boolean;
+  error: string | null;
+  emailSent: boolean;
+
+  sendMagicLink: (email: string, redirectTo?: string) => Promise<boolean>;
+  verifyMagicLink: (email: string, token: string) => Promise<AuthTokens | null>;
+  registerWithMagicLink: (email: string, redirectTo?: string) => Promise<boolean>;
+}
+```
+
+### Authentication Pages
+
+| Route | Purpose |
+|-------|---------|
+| `/login` | Multi-mode login (passkey, magic link, password) |
+| `/register` | Email-first registration with magic link |
+| `/register/add-passkey` | Post-registration passkey setup |
+| `/auth/callback` | Magic link verification callback |
+
+### Login Flow
+
+The login page supports three authentication methods:
+
+```tsx
+// Login page with mode selection
+const LoginPage = () => {
+  const [mode, setMode] = useState<'passkey' | 'magic-link' | 'password'>('passkey');
+  const { loginWithPasskey, supportsPasskeys } = useAuth();
+  const { sendMagicLink, emailSent } = useMagicLink();
+
+  // Show passkey button if supported (primary)
+  // Fall back to magic link or password
+};
+```
+
+### Registration Flow
+
+Email-first passwordless registration:
+
+```tsx
+// Register page - email only, no password
+const RegisterPage = () => {
+  const { registerWithMagicLink } = useAuth();
+
+  const handleSubmit = async (email: string) => {
+    // Send magic link to verify email
+    await registerWithMagicLink(email, '/auth/callback?type=register');
+    // User clicks link → account created → prompted to add passkey
+  };
+};
 ```
 
 ## Styling
@@ -208,6 +326,175 @@ The frontend uses Tailwind CSS 4 with the new configuration format:
     Action
   </button>
 </div>
+```
+
+## Internationalization (i18n)
+
+The frontend supports multiple languages using **react-i18next**, with English (en) and Spanish (es) as the initial supported languages.
+
+### i18n Architecture
+
+```
+ApolloProvider
+  └── AuthProvider
+        └── I18nProvider (syncs with user's preferredLanguage)
+              └── App Components (use useTranslation hook)
+```
+
+### Translation Files
+
+```
+apps/frontend/locales/
+├── en/
+│   ├── common.json     # Shared (buttons, errors, status, accessibility)
+│   └── settings.json   # Settings pages
+└── es/
+    ├── common.json
+    └── settings.json
+```
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `lib/i18n/index.ts` | i18n configuration and initialization |
+| `lib/i18n/context.tsx` | I18nProvider with locale state management |
+| `locales/{lang}/common.json` | Shared translations (buttons, errors, status) |
+| `locales/{lang}/settings.json` | Settings pages translations |
+
+### Using Translations
+
+```typescript
+import { useTranslation } from 'react-i18next';
+
+function Component() {
+  const { t } = useTranslation('settings');
+
+  return (
+    <label>{t('profile.firstName')}</label>
+    <button>{t('common:buttons.save')}</button>
+  );
+}
+```
+
+### Language Switching
+
+```typescript
+import { useLocale } from '@/lib/i18n/context';
+
+function LanguageSelector() {
+  const { locale, setLocale } = useLocale();
+
+  return (
+    <select value={locale} onChange={(e) => setLocale(e.target.value)}>
+      <option value="en">English</option>
+      <option value="es">Español</option>
+    </select>
+  );
+}
+```
+
+### Language Sync Behavior
+
+1. **Authenticated users**: Language syncs with profile's `preferredLanguage` field
+2. **Language selector**: Changes locale immediately + persists to profile
+3. **Unauthenticated users**: Falls back to browser language or English
+4. **HTML lang attribute**: Updated dynamically via `document.documentElement.lang`
+
+### Translation Namespaces
+
+| Namespace | Purpose |
+|-----------|---------|
+| `common` | Shared UI elements (buttons, errors, status badges) |
+| `settings` | Settings pages (profile, addresses, notifications, privacy, security) |
+
+## Accessibility (WCAG 2.2 AA)
+
+The frontend is designed to meet **WCAG 2.2 Level AA** accessibility standards.
+
+### Accessibility Patterns
+
+#### Decorative Icons
+
+All decorative SVG icons include `aria-hidden="true"` to hide them from screen readers:
+
+```tsx
+<svg className="w-5 h-5" aria-hidden="true">
+  <path ... />
+</svg>
+```
+
+#### Icon-Only Buttons
+
+Buttons that contain only icons include accessible labels:
+
+```tsx
+<button
+  onClick={handleEdit}
+  aria-label={t("common:buttons.edit")}
+>
+  <svg className="w-5 h-5" aria-hidden="true">...</svg>
+</button>
+```
+
+#### Live Regions for Dynamic Content
+
+The I18nProvider includes an ARIA live region to announce language changes to screen readers:
+
+```tsx
+<output
+  aria-live="polite"
+  aria-atomic="true"
+  className="sr-only"
+  style={{
+    position: "absolute",
+    width: "1px",
+    height: "1px",
+    padding: 0,
+    margin: "-1px",
+    overflow: "hidden",
+    clip: "rect(0, 0, 0, 0)",
+    whiteSpace: "nowrap",
+    border: 0,
+  }}
+>
+  {announcement}
+</output>
+```
+
+### WCAG 2.2 AA Compliance Checklist
+
+| Criterion | Implementation |
+|-----------|----------------|
+| **1.1.1 Non-text Content** | `aria-hidden="true"` on decorative icons |
+| **1.3.1 Info and Relationships** | Semantic HTML, proper heading hierarchy |
+| **2.1.1 Keyboard** | All interactive elements focusable |
+| **2.4.4 Link Purpose** | Clear link text and button labels |
+| **3.1.1 Language of Page** | Dynamic `lang` attribute on `<html>` |
+| **3.1.2 Language of Parts** | Translations via react-i18next |
+| **4.1.2 Name, Role, Value** | `aria-label` on icon-only buttons |
+| **4.1.3 Status Messages** | `aria-live` regions for dynamic updates |
+
+### Accessibility Translation Keys
+
+The `common.json` translation files include accessibility-specific keys:
+
+```json
+{
+  "accessibility": {
+    "languageChanged": "Language changed to English"
+  }
+}
+```
+
+### Testing Accessibility
+
+The frontend tests verify accessibility by querying elements using accessible names:
+
+```typescript
+// Query buttons by accessible name (aria-label)
+const deleteButtons = screen.getAllByRole("button", { name: "Delete" });
+const editButton = screen.getByRole("button", { name: "Edit" });
 ```
 
 ## API Communication
@@ -260,26 +547,57 @@ try {
 
 ## Security
 
-### Demo Mode
+### Authentication
 
-The current implementation uses demo mode without full authentication:
+The frontend uses **passwordless-first authentication** with three methods:
 
+1. **Passkeys (WebAuthn/FIDO2)** - Primary method using biometric/PIN
+2. **Magic Links** - Email-based passwordless login
+3. **Password** - Legacy fallback for compatibility
+
+**Token Storage**:
 ```typescript
-// Demo user stored in localStorage
+// JWT tokens stored securely
+localStorage.setItem('accessToken', tokens.accessToken);
+localStorage.setItem('refreshToken', tokens.refreshToken);
+
 // Headers sent with each GraphQL request
 headers: {
-  "x-user-id": user.id,
+  Authorization: `Bearer ${accessToken}`,
 }
 ```
 
-### Production Considerations
+**WebAuthn Browser Support**:
+```typescript
+// Check for passkey support on mount
+const webAuthnSupported = browserSupportsWebAuthn();
+const platformAvailable = await platformAuthenticatorIsAvailable();
+```
 
-For production, integrate with AWS Cognito:
+### Protected Routes
 
-- JWT tokens for authentication
-- Refresh token handling
-- Protected routes
-- Session management
+Routes are protected via the AuthContext:
+
+```tsx
+// Protected route wrapper (using Next.js redirect)
+import { redirect } from 'next/navigation';
+
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) return <LoadingSpinner />;
+  if (!isAuthenticated) redirect('/login');
+  return children;
+};
+```
+
+### Production Security
+
+- HTTPS required for WebAuthn (except localhost)
+- Magic link tokens expire after 2 hours
+- Passkey challenges expire after 5 minutes
+- JWT access tokens with short expiration
+- Refresh token rotation
 
 ## Environment Configuration
 
@@ -333,3 +651,5 @@ CMD ["pnpm", "start"]
 - [RAG Demo Guide](../guides/frontend-rag-demo.md) - Using the RAG demo
 - [Frontend Testing](../guides/frontend-testing.md) - Testing guide
 - [Getting Started](../guides/getting-started.md) - Development setup
+- [WCAG 2.2 Quick Reference](https://www.w3.org/WAI/WCAG22/quickref/) - Full accessibility guidelines
+- [react-i18next Documentation](https://react.i18next.com/) - i18n library docs
