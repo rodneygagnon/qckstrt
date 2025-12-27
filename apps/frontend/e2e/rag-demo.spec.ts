@@ -215,8 +215,8 @@ test.describe("RAG Demo Page", () => {
     });
 
     test("should handle index document API call", async ({ page }) => {
-      // Mock the GraphQL endpoint
-      await page.route("**/graphql", async (route) => {
+      // Mock the GraphQL endpoint (URL is /api, not /graphql)
+      await page.route("**/api", async (route) => {
         const request = route.request();
         const postData = request.postDataJSON();
 
@@ -253,8 +253,8 @@ test.describe("RAG Demo Page", () => {
     });
 
     test("should handle answer query API call", async ({ page }) => {
-      // Mock the GraphQL endpoint
-      await page.route("**/graphql", async (route) => {
+      // Mock the GraphQL endpoint (URL is /api, not /graphql)
+      await page.route("**/api", async (route) => {
         const request = route.request();
         const postData = request.postDataJSON();
 
@@ -295,8 +295,8 @@ test.describe("RAG Demo Page", () => {
     });
 
     test("should handle search API call", async ({ page }) => {
-      // Mock the GraphQL endpoint
-      await page.route("**/graphql", async (route) => {
+      // Mock the GraphQL endpoint (URL is /api, not /graphql)
+      await page.route("**/api", async (route) => {
         const request = route.request();
         const postData = request.postDataJSON();
 
@@ -362,8 +362,8 @@ test.describe("RAG Demo Page", () => {
     });
 
     test("should handle API error gracefully", async ({ page }) => {
-      // Mock the GraphQL endpoint to return an error
-      await page.route("**/graphql", async (route) => {
+      // Mock the GraphQL endpoint to return an error (URL is /api, not /graphql)
+      await page.route("**/api", async (route) => {
         const request = route.request();
         const postData = request.postDataJSON();
 

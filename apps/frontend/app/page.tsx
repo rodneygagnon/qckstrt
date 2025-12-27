@@ -30,10 +30,10 @@ export default function Home() {
           </Link>
 
           <div className="p-6 bg-white dark:bg-gray-800 rounded-lg shadow">
-            <h2 className="text-2xl font-semibold text-gray-400 dark:text-gray-500 mb-2">
+            <h2 className="text-2xl font-semibold text-gray-500 dark:text-gray-400 mb-2">
               More Features
             </h2>
-            <p className="text-gray-500 dark:text-gray-400">
+            <p className="text-gray-600 dark:text-gray-400">
               Additional features and demos coming soon. The platform includes
               user management, file processing, and more.
             </p>
