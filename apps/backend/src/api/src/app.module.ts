@@ -30,6 +30,7 @@ import { JwtStrategy } from 'src/common/auth/jwt.strategy';
 import { AuthMiddleware } from 'src/common/middleware/auth.middleware';
 import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { HttpExceptionFilter } from 'src/common/exceptions/http-exception.filter';
+import { HealthModule } from './health/health.module';
 
 interface GatewayContext {
   user?: string;
@@ -46,6 +47,7 @@ const handleAuth = ({ req }: { req: Request }) => {
 
 @Module({
   imports: [
+    HealthModule,
     ConfigModule.forRoot({
       load: [
         configuration,
@@ -131,6 +133,7 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(HMACMiddleware, AuthMiddleware)
+      .exclude({ path: 'health', method: RequestMethod.GET })
       .forRoutes({ path: '*', method: RequestMethod.ALL });
   }
 }
