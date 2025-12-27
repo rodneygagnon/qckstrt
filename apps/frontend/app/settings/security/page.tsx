@@ -1,40 +1,84 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-
-interface Passkey {
-  id: string;
-  friendlyName: string;
-  deviceType: string;
-  createdAt: string;
-  lastUsedAt: string;
-}
+import { useAuth } from "@/lib/auth-context";
+import { usePasskey } from "@/lib/hooks/usePasskey";
 
 interface Session {
   id: string;
   deviceType: string;
   deviceName: string;
   browser: string;
-  location: string;
   lastActivity: string;
   isCurrent: boolean;
 }
 
-// Mock data - will be replaced with actual GraphQL queries when passkey implementation is complete
-const mockPasskeys: Passkey[] = [];
+/**
+ * Detect current session info from browser
+ */
+function useCurrentSession(): Session {
+  return useMemo(() => {
+    if (typeof window === "undefined") {
+      return {
+        id: "current",
+        deviceType: "desktop",
+        deviceName: "Unknown Device",
+        browser: "Unknown Browser",
+        lastActivity: "Active now",
+        isCurrent: true,
+      };
+    }
 
-const mockSessions: Session[] = [
-  {
-    id: "1",
-    deviceType: "desktop",
-    deviceName: "MacBook Pro",
-    browser: "Chrome 120",
-    location: "San Francisco, CA",
-    lastActivity: "Active now",
-    isCurrent: true,
-  },
-];
+    const ua = navigator.userAgent;
+
+    // Detect device type
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
+    const isTablet = /iPad|Android(?!.*Mobile)/i.test(ua);
+    const deviceType = isTablet ? "tablet" : isMobile ? "mobile" : "desktop";
+
+    // Detect device name
+    let deviceName = "Unknown Device";
+    if (/Macintosh|MacIntel|MacPPC|Mac68K/i.test(ua)) {
+      deviceName = "Mac";
+    } else if (/Win32|Win64|Windows|WinCE/i.test(ua)) {
+      deviceName = "Windows PC";
+    } else if (/Linux/i.test(ua)) {
+      deviceName = "Linux PC";
+    } else if (/iPhone/i.test(ua)) {
+      deviceName = "iPhone";
+    } else if (/iPad/i.test(ua)) {
+      deviceName = "iPad";
+    } else if (/Android/i.test(ua)) {
+      deviceName = "Android Device";
+    }
+
+    // Detect browser
+    let browser = "Unknown Browser";
+    if (/Chrome\/(\d+)/i.test(ua) && !/Edg/i.test(ua)) {
+      const match = ua.match(/Chrome\/(\d+)/i);
+      browser = `Chrome ${match?.[1] || ""}`;
+    } else if (/Safari\/(\d+)/i.test(ua) && !/Chrome/i.test(ua)) {
+      const match = ua.match(/Version\/(\d+)/i);
+      browser = `Safari ${match?.[1] || ""}`;
+    } else if (/Firefox\/(\d+)/i.test(ua)) {
+      const match = ua.match(/Firefox\/(\d+)/i);
+      browser = `Firefox ${match?.[1] || ""}`;
+    } else if (/Edg\/(\d+)/i.test(ua)) {
+      const match = ua.match(/Edg\/(\d+)/i);
+      browser = `Edge ${match?.[1] || ""}`;
+    }
+
+    return {
+      id: "current",
+      deviceType,
+      deviceName,
+      browser,
+      lastActivity: "Active now",
+      isCurrent: true,
+    };
+  }, []);
+}
 
 function PasskeyIcon() {
   return (
@@ -94,29 +138,76 @@ function DeviceIcon({ type }: Readonly<{ type: string }>) {
 
 export default function SecurityPage() {
   const { t } = useTranslation("settings");
-  const [passkeys] = useState<Passkey[]>(mockPasskeys);
-  const [sessions] = useState<Session[]>(mockSessions);
-  const [registering, setRegistering] = useState(false);
+  const { user, logout } = useAuth();
+  const {
+    passkeys,
+    passkeysLoading,
+    isLoading: passkeyActionLoading,
+    error: passkeyError,
+    supportsPasskeys,
+    registerPasskey,
+    deletePasskey,
+    refetchPasskeys,
+    clearError,
+  } = usePasskey();
+
+  const currentSession = useCurrentSession();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [friendlyName, setFriendlyName] = useState("");
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // Fetch passkeys on mount
+  useEffect(() => {
+    if (user) {
+      refetchPasskeys();
+    }
+  }, [user, refetchPasskeys]);
 
   const handleAddPasskey = async () => {
-    setRegistering(true);
-    // TODO: Implement WebAuthn registration when passkey backend is ready
-    setTimeout(() => {
-      alert(t("security.passkeys.registrationPending"));
-      setRegistering(false);
-    }, 500);
+    if (!user?.email) return;
+
+    clearError();
+    const success = await registerPasskey(
+      user.email,
+      friendlyName || undefined,
+    );
+
+    if (success) {
+      setShowAddModal(false);
+      setFriendlyName("");
+      refetchPasskeys();
+    }
   };
 
-  const handleRevokeSession = async (sessionId: string) => {
-    if (!confirm(t("security.sessions.revokeConfirm"))) return;
-    // TODO: Implement session revocation
-    alert(t("security.sessions.revokePending"));
+  const handleDeletePasskey = async (credentialId: string) => {
+    const success = await deletePasskey(credentialId);
+    if (success) {
+      setDeleteConfirmId(null);
+    }
   };
 
-  const handleRevokeAllSessions = async () => {
-    if (!confirm(t("security.sessions.revokeAllConfirm"))) return;
-    // TODO: Implement revoke all sessions
-    alert(t("security.sessions.revokeAllPending"));
+  const handleSignOut = () => {
+    if (!confirm(t("security.sessions.signOutConfirm"))) return;
+    logout();
+  };
+
+  const handleSignOutAllSessions = () => {
+    if (!confirm(t("security.sessions.signOutAllConfirm"))) return;
+    // Sign out the current session (this will invalidate the token)
+    // Note: To revoke sessions on other devices, backend session tracking is required
+    logout();
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    } catch {
+      return dateString;
+    }
   };
 
   return (
@@ -144,17 +235,36 @@ export default function SecurityPage() {
               </p>
             </div>
             <button
-              onClick={handleAddPasskey}
-              disabled={registering}
+              onClick={() => setShowAddModal(true)}
+              disabled={!supportsPasskeys || passkeyActionLoading}
               className="px-4 py-2 bg-[#1e293b] text-white rounded-lg font-medium hover:bg-[#334155] transition-colors disabled:opacity-50"
             >
-              {registering
-                ? t("security.passkeys.adding")
-                : t("security.passkeys.addButton")}
+              {t("security.passkeys.addButton")}
             </button>
           </div>
 
-          {passkeys.length > 0 ? (
+          {/* Error display */}
+          {passkeyError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+              {passkeyError}
+            </div>
+          )}
+
+          {/* Not supported warning */}
+          {!supportsPasskeys && (
+            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700 text-sm">
+              {t("security.passkeys.notSupported")}
+            </div>
+          )}
+
+          {passkeysLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin w-8 h-8 border-2 border-[#1e293b] border-t-transparent rounded-full mx-auto" />
+              <p className="text-[#64748b] mt-2">
+                {t("common:status.loading")}
+              </p>
+            </div>
+          ) : passkeys.length > 0 ? (
             <div className="space-y-3">
               {passkeys.map((passkey) => (
                 <div
@@ -167,19 +277,46 @@ export default function SecurityPage() {
                     </div>
                     <div>
                       <p className="font-medium text-[#1e293b]">
-                        {passkey.friendlyName}
+                        {passkey.friendlyName || t("security.passkeys.unnamed")}
                       </p>
                       <p className="text-sm text-[#64748b]">
-                        {passkey.deviceType} •{" "}
-                        {t("security.passkeys.lastUsed", {
-                          time: passkey.lastUsedAt,
-                        })}
+                        {passkey.deviceType ||
+                          t("security.passkeys.unknownDevice")}{" "}
+                        • {t("security.passkeys.created")}:{" "}
+                        {formatDate(passkey.createdAt)}
                       </p>
+                      {passkey.lastUsedAt && (
+                        <p className="text-xs text-[#94a3b8]">
+                          {t("security.passkeys.lastUsed")}:{" "}
+                          {formatDate(passkey.lastUsedAt)}
+                        </p>
+                      )}
                     </div>
                   </div>
-                  <button className="text-sm text-red-500 hover:text-red-700 transition-colors">
-                    {t("common:buttons.remove")}
-                  </button>
+                  {deleteConfirmId === passkey.id ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleDeletePasskey(passkey.id)}
+                        disabled={passkeyActionLoading}
+                        className="text-sm text-red-600 font-medium hover:text-red-700 transition-colors disabled:opacity-50"
+                      >
+                        {t("common:buttons.confirm")}
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirmId(null)}
+                        className="text-sm text-[#64748b] hover:text-[#1e293b] transition-colors"
+                      >
+                        {t("common:buttons.cancel")}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setDeleteConfirmId(passkey.id)}
+                      className="text-sm text-red-500 hover:text-red-700 transition-colors"
+                    >
+                      {t("common:buttons.remove")}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -254,7 +391,7 @@ export default function SecurityPage() {
               </p>
             </div>
             <button
-              onClick={handleRevokeAllSessions}
+              onClick={handleSignOutAllSessions}
               className="text-sm text-red-500 hover:text-red-700 transition-colors"
             >
               {t("security.sessions.signOutAll")}
@@ -262,54 +399,43 @@ export default function SecurityPage() {
           </div>
 
           <div className="space-y-3">
-            {sessions.map((session) => (
-              <div
-                key={session.id}
-                className={`flex items-center justify-between p-4 border rounded-lg ${
-                  session.isCurrent
-                    ? "border-green-200 bg-green-50"
-                    : "border-gray-200"
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`p-2 rounded-lg ${
-                      session.isCurrent
-                        ? "bg-green-100 text-green-600"
-                        : "bg-gray-100 text-[#64748b]"
-                    }`}
-                  >
-                    <DeviceIcon type={session.deviceType} />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-[#1e293b]">
-                        {session.deviceName}
-                      </p>
-                      {session.isCurrent && (
-                        <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded">
-                          {t("common:status.current")}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-[#64748b]">
-                      {session.browser} • {session.location}
-                    </p>
-                    <p className="text-xs text-[#94a3b8]">
-                      {session.lastActivity}
-                    </p>
-                  </div>
+            {/* Current Session */}
+            <div className="flex items-center justify-between p-4 border rounded-lg border-green-200 bg-green-50">
+              <div className="flex items-center gap-4">
+                <div className="p-2 rounded-lg bg-green-100 text-green-600">
+                  <DeviceIcon type={currentSession.deviceType} />
                 </div>
-                {!session.isCurrent && (
-                  <button
-                    onClick={() => handleRevokeSession(session.id)}
-                    className="text-sm text-red-500 hover:text-red-700 transition-colors"
-                  >
-                    {t("security.sessions.revoke")}
-                  </button>
-                )}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-[#1e293b]">
+                      {currentSession.deviceName}
+                    </p>
+                    <span className="px-2 py-0.5 text-xs font-medium bg-green-100 text-green-700 rounded">
+                      {t("common:status.current")}
+                    </span>
+                  </div>
+                  <p className="text-sm text-[#64748b]">
+                    {currentSession.browser}
+                  </p>
+                  <p className="text-xs text-[#94a3b8]">
+                    {currentSession.lastActivity}
+                  </p>
+                </div>
               </div>
-            ))}
+              <button
+                onClick={handleSignOut}
+                className="text-sm text-red-500 hover:text-red-700 transition-colors"
+              >
+                {t("security.sessions.signOut")}
+              </button>
+            </div>
+
+            {/* Info about other sessions */}
+            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <p className="text-sm text-[#64748b]">
+                {t("security.sessions.otherSessionsNote")}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -414,6 +540,72 @@ export default function SecurityPage() {
           </button>
         </div>
       </div>
+
+      {/* Add Passkey Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 className="text-xl font-semibold text-[#1e293b] mb-2">
+              {t("security.passkeys.addTitle")}
+            </h3>
+            <p className="text-[#64748b] text-sm mb-6">
+              {t("security.passkeys.addDescription")}
+            </p>
+
+            <div className="mb-6">
+              <label
+                htmlFor="friendlyName"
+                className="block text-sm font-medium text-[#1e293b] mb-2"
+              >
+                {t("security.passkeys.friendlyNameLabel")}
+              </label>
+              <input
+                id="friendlyName"
+                type="text"
+                value={friendlyName}
+                onChange={(e) => setFriendlyName(e.target.value)}
+                placeholder={t("security.passkeys.friendlyNamePlaceholder")}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1e293b] focus:border-transparent"
+              />
+              <p className="text-xs text-[#64748b] mt-1">
+                {t("security.passkeys.friendlyNameHint")}
+              </p>
+            </div>
+
+            {passkeyError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                {passkeyError}
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowAddModal(false);
+                  setFriendlyName("");
+                  clearError();
+                }}
+                disabled={passkeyActionLoading}
+                className="px-4 py-2 text-sm font-medium text-[#64748b] hover:text-[#1e293b] transition-colors"
+              >
+                {t("common:buttons.cancel")}
+              </button>
+              <button
+                onClick={handleAddPasskey}
+                disabled={passkeyActionLoading}
+                className="px-4 py-2 bg-[#1e293b] text-white rounded-lg font-medium hover:bg-[#334155] transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {passkeyActionLoading && (
+                  <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                )}
+                {passkeyActionLoading
+                  ? t("security.passkeys.adding")
+                  : t("security.passkeys.addButton")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
