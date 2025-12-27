@@ -146,19 +146,30 @@ describe("SecurityPage", () => {
     it("should render current session with badge", () => {
       render(<SecurityPage />);
 
-      expect(screen.getByText("MacBook Pro")).toBeInTheDocument();
+      // Device name is detected from userAgent - in test environment it shows as detected value
       expect(screen.getByText("Current")).toBeInTheDocument();
-      expect(
-        screen.getByText("Chrome 120 • San Francisco, CA"),
-      ).toBeInTheDocument();
       expect(screen.getByText("Active now")).toBeInTheDocument();
     });
 
     it("should render sign out all button", () => {
       render(<SecurityPage />);
 
+      expect(screen.getByText("Sign out all devices")).toBeInTheDocument();
+    });
+
+    it("should render sign out button for current session", () => {
+      render(<SecurityPage />);
+
       expect(
-        screen.getByText("Sign out all other devices"),
+        screen.getByRole("button", { name: "Sign Out" }),
+      ).toBeInTheDocument();
+    });
+
+    it("should render note about other sessions", () => {
+      render(<SecurityPage />);
+
+      expect(
+        screen.getByText(/To manage sessions on other devices/),
       ).toBeInTheDocument();
     });
 
@@ -388,42 +399,60 @@ describe("SecurityPage", () => {
     });
   });
 
-  describe("sign out all devices", () => {
-    it("should show confirmation when clicked", async () => {
+  describe("sign out functionality", () => {
+    it("should show confirmation when sign out all is clicked", async () => {
       const user = userEvent.setup();
 
       render(<SecurityPage />);
 
-      await user.click(screen.getByText("Sign out all other devices"));
+      await user.click(screen.getByText("Sign out all devices"));
 
       expect(globalThis.confirm).toHaveBeenCalledWith(
-        "Are you sure you want to sign out of all other devices?",
+        "Are you sure you want to sign out of all devices? You will need to sign in again.",
       );
     });
 
-    it("should show alert for feature not available", async () => {
+    it("should call logout when sign out all is confirmed", async () => {
       const user = userEvent.setup();
 
       render(<SecurityPage />);
 
-      await user.click(screen.getByText("Sign out all other devices"));
+      await user.click(screen.getByText("Sign out all devices"));
 
-      await waitFor(() => {
-        expect(globalThis.alert).toHaveBeenCalledWith(
-          "This feature will be available soon.",
-        );
-      });
+      expect(mockAuthContextValue.logout).toHaveBeenCalled();
     });
 
-    it("should not show alert when cancelled", async () => {
+    it("should not logout when sign out all is cancelled", async () => {
       const user = userEvent.setup();
       (globalThis.confirm as jest.Mock).mockReturnValueOnce(false);
 
       render(<SecurityPage />);
 
-      await user.click(screen.getByText("Sign out all other devices"));
+      await user.click(screen.getByText("Sign out all devices"));
 
-      expect(globalThis.alert).not.toHaveBeenCalled();
+      expect(mockAuthContextValue.logout).not.toHaveBeenCalled();
+    });
+
+    it("should show confirmation when sign out current session is clicked", async () => {
+      const user = userEvent.setup();
+
+      render(<SecurityPage />);
+
+      await user.click(screen.getByRole("button", { name: "Sign Out" }));
+
+      expect(globalThis.confirm).toHaveBeenCalledWith(
+        "Are you sure you want to sign out of this device?",
+      );
+    });
+
+    it("should call logout when sign out current session is confirmed", async () => {
+      const user = userEvent.setup();
+
+      render(<SecurityPage />);
+
+      await user.click(screen.getByRole("button", { name: "Sign Out" }));
+
+      expect(mockAuthContextValue.logout).toHaveBeenCalled();
     });
   });
 

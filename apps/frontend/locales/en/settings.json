@@ -253,12 +253,11 @@
     "sessions": {
       "title": "Active Sessions",
       "description": "Devices currently signed in to your account",
-      "signOutAll": "Sign out all other devices",
-      "revoke": "Revoke",
-      "revokeConfirm": "Are you sure you want to revoke this session?",
-      "revokePending": "Session revocation will be available soon.",
-      "revokeAllConfirm": "Are you sure you want to sign out of all other devices?",
-      "revokeAllPending": "This feature will be available soon."
+      "signOutAll": "Sign out all devices",
+      "signOut": "Sign Out",
+      "signOutConfirm": "Are you sure you want to sign out of this device?",
+      "signOutAllConfirm": "Are you sure you want to sign out of all devices? You will need to sign in again.",
+      "otherSessionsNote": "To manage sessions on other devices, sign out here and change your password. This will require all devices to sign in again."
     },
     "twoFactor": {
       "title": "Two-Factor Authentication",
